@@ -1,0 +1,1561 @@
+<!DOCTYPE html>
+<html lang="vi" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NovaQuiz v3.6 - Nền Tảng Ôn Thi &amp; Thi Thử Trắc Nghiệm Thông Minh</title>
+  <meta name="description" content="Nền tảng tạo đề thi, ôn tập trắc nghiệm thông minh, trộn nhiều mã đề Word/PDF, chế độ Sinh Tồn, ghi chú cá nhân và ngoại tuyến PWA.">
+  <meta name="theme-color" content="#4f46e5">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="manifest" href="manifest.json">
+  
+  <!-- Google Fonts for Vietnamese Typography -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- Math Formula Support (KaTeX) -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"></script>
+
+  <link rel="stylesheet" href="style.css?v=3.6.0">
+</head>
+<body>
+
+  <!-- Celebration Neon Confetti Canvas -->
+  <canvas id="celebration-canvas" style="position: fixed; inset: 0; pointer-events: none; z-index: 9999; display: none;"></canvas>
+
+  <!-- Printable Paper Exam Area -->
+  <div id="print-paper-area" class="print-paper-exam" style="display: none;"></div>
+
+
+  <!-- ==================== HEADER / NAVBAR ==================== -->
+  <header class="main-header">
+    <div class="nav-container">
+      <div class="brand" id="btn-nav-home" title="Về trang chủ">
+        <div class="brand-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"></path>
+            <path d="M6 6h10"></path>
+            <path d="M6 10h10"></path>
+            <path d="m9 16 2 2 4-4"></path>
+          </svg>
+        </div>
+        <div class="brand-name">
+          NovaQuiz
+          <span class="brand-badge brand-badge-v3">v3.6</span>
+        </div>
+      </div>
+
+      <div class="nav-actions">
+        <button class="btn-install-pwa" id="btn-install-pwa" title="Cài đặt NovaQuiz vào thiết bị để dùng mượt mà ngoại tuyến (Offline)">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+          <span>Cài Đặt App</span>
+        </button>
+
+        <button class="btn btn-primary" id="btn-open-create">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+          </svg>
+          <span>Tạo / Tải đề lên</span>
+        </button>
+
+        <button class="btn-icon-only" id="btn-sound-toggle" title="Bật / Tắt âm thanh hiệu ứng (Phím S)" style="font-size: 1.1rem;">
+          <span id="sound-toggle-icon">🔊</span>
+        </button>
+
+        <button class="btn-icon-only" id="btn-open-shortcuts" title="Bảng phím tắt bàn phím (Phím ?)" style="font-size: 1.1rem;">
+          ⌨️
+        </button>
+
+        <button class="btn-icon-only" id="btn-theme-toggle" title="Chuyển chế độ Sáng / Tối / Giấy Sepia dịu mắt">
+          <svg class="theme-icon-light" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="5"></circle>
+            <line x1="12" y1="1" x2="12" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="23"></line>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+            <line x1="1" y1="12" x2="3" y2="12"></line>
+            <line x1="21" y1="12" x2="23" y2="12"></line>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ==================== MAIN CONTENT CONTAINER ==================== -->
+  <main class="app-container">
+
+    <!-- ==================== VIEW 1: DASHBOARD / LIBRARY ==================== -->
+    <section class="view active" id="view-dashboard">
+      <!-- Hero Banner -->
+      <div class="hero-banner">
+        <div class="hero-content">
+          <h1>Nền Tảng Ôn Thi & Thi Thử Trắc Nghiệm Thông Minh</h1>
+          <p>Tải đề thi nhanh chóng từ Word/PDF hoặc dán văn bản trắc nghiệm. Tự động xáo trộn câu hỏi và đáp án, hỗ trợ 2 chế độ Ôn tập tức thì & Thi thử tính giờ chuẩn xác!</p>
+        </div>
+        <div class="hero-actions">
+          <button class="btn btn-primary btn-lg" id="btn-hero-create">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="17 8 12 3 7 8"></polyline>
+              <line x1="12" y1="3" x2="12" y2="15"></line>
+            </svg>
+            Tải Đề Lên Ngay
+          </button>
+          <div style="display: flex; gap: 0.5rem;">
+            <button class="btn btn-secondary btn-sm" id="btn-export-all" title="Sao lưu tất cả đề thi thành file JSON">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+              Sao lưu dữ liệu
+            </button>
+            <button class="btn btn-secondary btn-sm" id="btn-import-all" title="Khôi phục đề thi từ file JSON">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+              Khôi phục JSON
+            </button>
+            <input type="file" id="input-import-json" accept=".json" style="display: none;">
+            <button class="btn btn-outline-danger btn-sm" id="btn-delete-all-quizzes" title="Xóa tất cả các đề thi trong danh sách">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+              Xóa tất cả đề
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Toolbar: Search & Category Filter -->
+      <div class="toolbar">
+        <div class="search-box">
+          <div class="search-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+          </div>
+          <input type="text" id="search-input" placeholder="Tìm kiếm bộ đề thi theo tên hoặc môn học...">
+        </div>
+
+        <div class="filter-group" id="category-filters">
+          <button class="filter-chip active" data-category="ALL">Tất cả đề</button>
+          <button class="filter-chip" data-category="Tin học">Tin học</button>
+          <button class="filter-chip" data-category="Tiếng Anh">Tiếng Anh</button>
+          <button class="filter-chip" data-category="Kiến thức chung">Kiến thức chung</button>
+          <button class="filter-chip" data-category="Tự tạo">Đề tự tạo</button>
+          <button class="filter-chip" id="btn-open-mistake-vault">
+            📚 Sổ tay câu sai (<span id="mistake-vault-count">0</span>)
+          </button>
+          <button class="filter-chip" id="btn-open-analytics">
+            📊 Tiến độ & Thống kê
+          </button>
+        </div>
+      </div>
+
+      <!-- Quiz Grid -->
+      <div class="quiz-grid" id="quiz-list-container">
+        <!-- Rendered dynamically by app.js -->
+      </div>
+    </section>
+
+    <!-- ==================== VIEW 2: QUIZ CREATOR & UPLOADER ==================== -->
+    <section class="view" id="view-creator">
+      <div style="margin-bottom: 1.25rem;">
+        <button class="btn btn-ghost" id="btn-back-from-creator">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="19" y1="12" x2="5" y2="12"></line>
+            <polyline points="12 19 5 12 12 5"></polyline>
+          </svg>
+          Quay lại Thư viện
+        </button>
+      </div>
+
+      <div class="creator-card">
+        <div class="creator-header">
+          <div>
+            <h2 style="font-size: 1.35rem; font-weight: 800;">Tạo & Nhập Đề Thi Mới</h2>
+            <p style="color: var(--text-muted); font-size: 0.875rem;">Hỗ trợ nhận diện tự động định dạng câu hỏi Word, PDF, NovaQuiz hoặc tải file lên.</p>
+          </div>
+
+          <div class="creator-tabs">
+            <button class="creator-tab active" data-tab="tab-smart-paste">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+              Dán văn bản nhanh
+            </button>
+            <button class="creator-tab" data-tab="tab-upload-file">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+              Tải file lên
+            </button>
+            <button class="creator-tab" data-tab="tab-manual-builder">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+              Soạn thủ công
+            </button>
+          </div>
+        </div>
+
+        <div class="creator-body">
+          <!-- Quiz Metadata -->
+          <div class="form-grid">
+            <div class="form-group">
+              <label class="form-label" for="input-quiz-title">Tên bộ đề thi <span style="color: var(--danger);">*</span></label>
+              <input type="text" class="form-input" id="input-quiz-title" placeholder="VD: Ôn tập Trắc nghiệm Lịch sử 12...">
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="input-quiz-category">Môn học / Phân loại</label>
+              <input type="text" class="form-input" id="input-quiz-category" placeholder="VD: Lịch sử, Tin học, Tiếng Anh...">
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="input-quiz-time">Thời gian làm bài mặc định (phút)</label>
+              <input type="number" class="form-input" id="input-quiz-time" value="15" min="1" max="180">
+            </div>
+          </div>
+
+          <div class="form-group" style="margin-bottom: 1.5rem;">
+            <label class="form-label" for="input-quiz-desc">Mô tả ngắn về đề thi (tùy chọn)</label>
+            <input type="text" class="form-input" id="input-quiz-desc" placeholder="VD: Gồm 30 câu hỏi trọng tâm thi học kỳ I...">
+          </div>
+
+          <!-- TAB 1: SMART PASTE -->
+          <div class="tab-pane active" id="tab-smart-paste">
+            <!-- Format guide -->
+            <div class="format-guide">
+              <h4>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                Quy ước định dạng nhận diện tự động:
+              </h4>
+              <p>Hệ thống tự động nhận diện câu hỏi từ Word/PDF hoặc văn bản trắc nghiệm. Đặt dấu <strong>*</strong> trước đáp án đúng (ví dụ <code>*A. Hà Nội</code>) HOẶC viết thêm dòng <code>Đáp án: A</code> dưới các lựa chọn. Kèm theo dòng <code>Giải thích: ...</code> (nếu có):</p>
+              <div class="format-code-preview">Câu 1: Thủ đô của Việt Nam là gì?
+*A. Hà Nội
+B. Hồ Chí Minh
+C. Đà Nẵng
+D. Cần Thơ
+Giải thích: Hà Nội là thủ đô của nước CHXHCN Việt Nam.
+
+Câu 2: Số nguyên tố chẵn duy nhất là số nào?
+A. 0
+B. 1
+C. 2
+D. 4
+Đáp án: C
+Giải thích: Số 2 là số nguyên tố chẵn duy nhất trong tập hợp số tự nhiên.</div>
+            </div>
+
+            <!-- AI Smart Filter & Enhancement Toolbar -->
+            <div class="ai-toolbar">
+              <div class="ai-toolbar-left">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v4"></path><path d="M12 18v4"></path><path d="M4.93 4.93l2.83 2.83"></path><path d="M16.24 16.24l2.83 2.83"></path><path d="M2 12h4"></path><path d="M18 12h4"></path><path d="M4.93 19.07l2.83-2.83"></path><path d="M16.24 7.76l2.83-2.83"></path></svg>
+                <span>Công Cụ AI & Chuẩn Hóa:</span>
+              </div>
+              <div class="ai-toolbar-actions">
+                <button type="button" class="btn btn-spellcheck btn-sm" id="btn-quick-fix-spelling" title="Tự động sửa toàn bộ lỗi chính tả, dãn chữ tiếng Việt, nối âm tiết, gỡ watermark rác nhưng TUYỆT ĐỐI GIỮ NGUYÊN ĐÁP ÁN ĐÚNG BAN ĐẦU">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+                  ✍️ Sửa chính tả (Giữ đáp án)
+                </button>
+                <button type="button" class="btn btn-detect-answers btn-sm" id="btn-auto-detect-answers" title="Tự động chuẩn hóa câu hỏi, lọc sạch rác, bổ sung tiền tố A-D và khớp đáp án từ DA:, Key: hoặc bảng đáp án riêng">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                  ⚡ Chuẩn hóa & Khớp đáp án
+                </button>
+                <button type="button" class="btn btn-secondary btn-sm" id="btn-open-separate-answers" title="Ghép bảng đáp án riêng (1.A 2.B 3.C... hoặc dán từ tệp khác) cho đề không tô đậm">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect><path d="m9 14 2 2 4-4"></path></svg>
+                  📋 Ghép đáp án riêng
+                </button>
+                <button type="button" class="btn btn-ai btn-sm" id="btn-open-gemini-modal" title="Trung tâm Trợ Lý AI: Soát lỗi đề thi, Sửa chính tả chuyên sâu với AI, Giải đề & Viết lời giải chi tiết">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                  ✨ Trợ lý AI Thông Minh
+                </button>
+              </div>
+            </div>
+
+            <div class="smart-textarea-container">
+              <div class="form-label" style="display: flex; justify-content: space-between; align-items: center;">
+                <span>Dán nội dung câu hỏi vào đây:</span>
+                <div style="display: flex; gap: 0.5rem;">
+                  <button type="button" class="btn btn-ghost btn-sm" id="btn-insert-sample-text">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"></polyline><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>
+                    Chèn mẫu thử
+                  </button>
+                  <button type="button" class="btn btn-outline-danger btn-sm" id="btn-clear-smart-text" title="Xóa trắng khung văn bản để dán đề mới">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                    Xóa trắng văn bản
+                  </button>
+                </div>
+              </div>
+              <textarea class="form-textarea smart-textarea" id="smart-text-input" placeholder="Dán danh sách câu hỏi tại đây..."></textarea>
+            </div>
+
+            <!-- Real-time Parse Status Bar -->
+            <div class="parse-status-bar">
+              <div class="parse-stats">
+                <div class="stat-item" style="color: var(--primary);">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 14 14"></polyline></svg>
+                  Đã nhận diện: <span id="parse-stat-total">0</span> câu
+                </div>
+                <div class="stat-item" style="color: var(--success);">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                  Hợp lệ: <span id="parse-stat-valid">0</span> câu
+                </div>
+                <div class="stat-item" style="color: var(--danger);" id="parse-stat-invalid-container">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
+                  Chưa có đáp án: <span id="parse-stat-invalid">0</span> câu
+                </div>
+                <div class="stat-item" style="color: #d97706; display: none;" id="parse-stat-audited-container" title="Bấm để xem các câu hỏi AI vừa sửa đáp án">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+                  AI vừa sửa: <span id="parse-stat-audited-count">0</span> câu
+                </div>
+              </div>
+              <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                <button type="button" class="btn btn-warning btn-sm" id="btn-toggle-audited-panel" style="display: none; font-weight: 700;">
+                  ⚡ Mục câu AI vừa sửa (<span id="btn-toggle-audited-count">0</span>)
+                </button>
+                <button type="button" class="btn btn-secondary btn-sm" id="btn-toggle-parsed-preview">
+                  Xem chi tiết các câu đã phân tích
+                </button>
+              </div>
+            </div>
+
+            <!-- ==================== MỤC RIÊNG: CÁC CÂU HỎI AI VỪA SỬA ĐÁP ÁN ==================== -->
+            <div id="ai-audit-diff-panel" class="ai-audit-diff-panel" style="display: none;">
+              <div class="ai-audit-diff-header">
+                <div class="ai-audit-diff-title-group">
+                  <div class="ai-audit-diff-icon">⚡</div>
+                  <div>
+                    <div style="display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap;">
+                      <h4 style="margin: 0; font-size: 1.05rem; font-weight: 800; color: #b45309;">Mục Các Câu Hỏi AI Vừa Sửa Đáp Án</h4>
+                      <span class="badge badge-warning" id="ai-audit-diff-badge" style="background: rgba(245, 158, 11, 0.2); color: #b45309; border: 1px solid rgba(245, 158, 11, 0.4); font-weight: 700;">0 câu đã sửa</span>
+                    </div>
+                    <p style="margin: 0.25rem 0 0 0; font-size: 0.85rem; color: var(--text-muted);">
+                      Dưới đây là danh sách riêng các câu hỏi có đáp án bị thay đổi hoặc bổ sung sau khi AI rà soát. Bạn có thể kiểm tra, giữ đáp án AI hoặc đổi lại đáp án cũ tùy ý!
+                    </p>
+                  </div>
+                </div>
+                <div class="ai-audit-diff-header-actions">
+                  <button type="button" class="btn btn-outline-danger btn-sm" id="btn-revert-all-ai-audit" title="Hoàn tác toàn bộ đề thi về trước khi AI sửa">
+                    ↩️ Hoàn tác tất cả
+                  </button>
+                  <button type="button" class="btn btn-success btn-sm" id="btn-accept-all-ai-audit" title="Đồng ý và áp dụng toàn bộ đáp án AI đã sửa">
+                    ✓ Đồng ý tất cả
+                  </button>
+                  <button type="button" class="btn btn-ghost btn-sm" id="btn-close-ai-audit-panel" title="Đóng bảng này (vẫn lưu lại các câu đã sửa)" style="padding: 0.35rem 0.5rem; font-size: 1.1rem; line-height: 1;">
+                    ✕
+                  </button>
+                </div>
+              </div>
+
+              <!-- Danh sách chi tiết từng câu hỏi bị sửa -->
+              <div id="ai-audit-diff-items-container" class="ai-audit-diff-items-container">
+                <!-- Nội dung render động -->
+              </div>
+            </div>
+
+            <div id="parsed-preview-container" class="preview-questions-list" style="display: none; margin-bottom: 1.5rem;">
+              <!-- Realtime parsed list preview -->
+            </div>
+          </div>
+
+          <!-- TAB 2: UPLOAD FILE (HỖ TRỢ FILE WORD .DOCX VÀ ĐỌC MÀU SẮC) -->
+          <div class="tab-pane" id="tab-upload-file" style="display: none;">
+            <!-- Word & PDF Feature Highlight Banner -->
+            <div style="background: linear-gradient(135deg, rgba(79, 70, 229, 0.08), rgba(16, 185, 129, 0.08)); border: 1.5px solid var(--border-subtle); border-radius: var(--radius-lg); padding: 1.25rem; margin-bottom: 1.5rem;">
+              <div style="display: flex; align-items: flex-start; gap: 0.75rem;">
+                <div style="display: flex; gap: 0.35rem; flex-shrink: 0;">
+                  <div style="width: 36px; height: 36px; border-radius: var(--radius-md); background: #2b579a; color: white; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1.05rem;" title="Microsoft Word">W</div>
+                  <div style="width: 36px; height: 36px; border-radius: var(--radius-md); background: #d9381e; color: white; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1.05rem;" title="Adobe PDF">PDF</div>
+                </div>
+                <div style="flex: 1;">
+                  <h4 style="font-weight: 700; font-size: 1rem; margin-bottom: 0.3rem; display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+                    Đọc Đề Từ File Word (.docx) & Tệp PDF (.pdf)
+                    <span class="badge badge-success">Mới: Hỗ trợ PDF</span>
+                  </h4>
+                  <p style="font-size: 0.85rem; color: var(--text-muted); line-height: 1.5;">
+                    Hệ thống tự động quét tệp Word và PDF: nhận diện đáp án <strong>Tô màu</strong>, <strong>Highlight</strong>, <strong>Gạch chân</strong>, <strong>In đậm</strong>, HOẶC <strong>tự động nhận diện bảng đáp án riêng</strong> (ví dụ: 1.A 2.B 3.C...) ở cuối tệp!
+                  </p>
+                </div>
+              </div>
+
+              <!-- Word & PDF Style Detection Settings -->
+              <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 0.75rem; margin-top: 1rem; padding-top: 1rem; border-top: 1px dashed var(--border-subtle); font-size: 0.85rem;">
+                <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                  <input type="checkbox" id="docx-opt-color" checked style="accent-color: var(--primary); width: 16px; height: 16px;">
+                  <span>Nhận diện <strong>Màu chữ & Highlight</strong></span>
+                </label>
+                <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                  <input type="checkbox" id="docx-opt-underline" checked style="accent-color: var(--primary); width: 16px; height: 16px;">
+                  <span>Nhận diện <strong>Gạch chân (Underline)</strong></span>
+                </label>
+                <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                  <input type="checkbox" id="docx-opt-bold" checked style="accent-color: var(--primary); width: 16px; height: 16px;">
+                  <span>Nhận diện <strong>In đậm (Bold)</strong></span>
+                </label>
+              </div>
+            </div>
+
+            <!-- Upload Dropzone -->
+            <div class="upload-dropzone" id="upload-dropzone">
+              <input type="file" id="file-uploader" accept=".docx,.doc,.pdf,.txt,.json,.csv" style="display: none;">
+              <div class="upload-icon">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                  <polyline points="14 2 14 8 20 8"></polyline>
+                  <line x1="12" y1="18" x2="12" y2="12"></line>
+                  <line x1="9" y1="15" x2="15" y2="15"></line>
+                </svg>
+              </div>
+              <h3 style="font-size: 1.15rem; font-weight: 700; margin-bottom: 0.4rem;">Kéo thả tệp Word (.docx) hoặc PDF (.pdf) vào đây</h3>
+              <p style="color: var(--text-muted); font-size: 0.875rem; margin-bottom: 1.25rem;">Hỗ trợ: <strong>Microsoft Word (.docx)</strong>, <strong>Adobe PDF (.pdf)</strong>, <strong>.txt</strong>, <strong>.json</strong>, <strong>.csv</strong></p>
+              
+              <div style="display: flex; gap: 0.75rem; justify-content: center; flex-wrap: wrap;">
+                <button type="button" class="btn btn-primary" onclick="event.stopPropagation(); document.getElementById('file-uploader').click();">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                  Chọn tệp Word / PDF từ máy tính
+                </button>
+                <button type="button" class="btn btn-secondary" id="btn-load-sample-docx">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polygon points="10 8 16 12 10 16 10 8"></polygon></svg>
+                  Nạp thử file Word mẫu
+                </button>
+                <button type="button" class="btn btn-outline" id="btn-open-separate-answers-tab2" title="Nếu đề thi có bảng đáp án riêng ở file khác">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect><path d="m9 14 2 2 4-4"></path></svg>
+                  📋 Ghép Tệp / Bảng Đáp Án Riêng
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- TAB 3: MANUAL BUILDER -->
+          <div class="tab-pane" id="tab-manual-builder" style="display: none;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.5rem;">
+              <h4 style="font-weight: 700;">Danh sách câu hỏi soạn thảo:</h4>
+              <div style="display: flex; gap: 0.5rem; align-items: center;">
+                <button type="button" class="btn btn-spellcheck btn-sm" id="btn-fix-spelling-manual-all" title="Tự động sửa toàn bộ lỗi chính tả, dãn chữ & ngắt dòng OCR cho tất cả câu hỏi bên dưới (Tuyệt đối giữ nguyên đáp án đúng)">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+                  ✍️ Sửa chính tả tất cả (Giữ đáp án)
+                </button>
+                <button class="btn btn-secondary btn-sm" id="btn-add-manual-q">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                  Thêm câu hỏi mới
+                </button>
+              </div>
+            </div>
+            <div id="manual-questions-container" style="display: flex; flex-direction: column; gap: 1rem;">
+              <!-- Manual questions rendered dynamically -->
+            </div>
+          </div>
+
+          <!-- Actions -->
+          <div style="display: flex; justify-content: flex-end; gap: 1rem; margin-top: 2rem; border-top: 1px solid var(--border-subtle); padding-top: 1.5rem; flex-wrap: wrap;">
+            <button class="btn btn-secondary" id="btn-cancel-creator">Hủy bỏ</button>
+            <button class="btn btn-secondary btn-lg" id="btn-save-quiz">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                <polyline points="7 3 7 8 15 8"></polyline>
+              </svg>
+              Lưu Vào Thư Viện
+            </button>
+            <button class="btn btn-primary btn-lg" id="btn-save-and-start-quiz">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+              Lưu & Bắt Đầu Làm Bài Ngay
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== VIEW 3: QUIZ RUNNER (ÔN TẬP & THI THỬ) ==================== -->
+    <section class="view" id="view-runner">
+      <!-- Runner Header -->
+      <div class="quiz-runner-header">
+        <div class="quiz-runner-title">
+          <div style="display: flex; align-items: center; gap: 0.6rem;">
+            <span class="badge badge-primary" id="runner-mode-badge">CHẾ ĐỘ ÔN TẬP</span>
+            <span class="badge badge-muted" id="runner-category-badge">Môn học</span>
+          </div>
+          <h2 id="runner-quiz-title">Tên Đề Thi</h2>
+        </div>
+
+        <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
+          <div class="quiz-timer-box" id="quiz-timer-container">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"></circle>
+              <polyline points="12 6 12 12 16 14"></polyline>
+            </svg>
+            <span id="quiz-timer-display">00:00</span>
+          </div>
+
+          <!-- Nút Cài Đặt Tự Động Chuyển Câu Ở Thanh Tiêu Đề Trên Cùng -->
+          <div class="auto-advance-dropdown-wrapper" id="auto-advance-wrapper">
+            <button class="btn-auto-advance" id="btn-toggle-auto-advance" type="button" title="Cài đặt tự động chuyển câu sau khi chọn đáp án">
+              <span class="auto-advance-flash">⚡</span>
+              <span id="auto-advance-display-text">Tự chuyển: 1.5s</span>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"></polyline></svg>
+            </button>
+            <div class="auto-advance-menu" id="auto-advance-menu">
+              <div class="auto-advance-header">
+                <span>⚡ Tự Động Chuyển</span>
+                <span style="font-size: 0.68rem; color: var(--primary); text-transform: none; font-weight: 700;">(Sau khi chọn)</span>
+              </div>
+              <button type="button" class="auto-advance-opt" data-speed="off">
+                <span class="opt-bullet">❌</span>
+                <span class="opt-title">Tắt (Thủ công)</span>
+                <span class="opt-check">✓</span>
+              </button>
+              <button type="button" class="auto-advance-opt" data-speed="0">
+                <span class="opt-bullet">⚡</span>
+                <span class="opt-title">Chuyển ngay (0s)</span>
+                <span class="opt-check">✓</span>
+              </button>
+              <button type="button" class="auto-advance-opt" data-speed="1">
+                <span class="opt-bullet">⏱️</span>
+                <span class="opt-title">Sau 1.0 giây</span>
+                <span class="opt-check">✓</span>
+              </button>
+              <button type="button" class="auto-advance-opt" data-speed="1.5">
+                <span class="opt-bullet">✨</span>
+                <span class="opt-title">Sau 1.5s (Khuyên dùng)</span>
+                <span class="opt-check">✓</span>
+              </button>
+              <button type="button" class="auto-advance-opt" data-speed="2">
+                <span class="opt-bullet">⏱️</span>
+                <span class="opt-title">Sau 2.0 giây</span>
+                <span class="opt-check">✓</span>
+              </button>
+              <button type="button" class="auto-advance-opt" data-speed="3">
+                <span class="opt-bullet">⏱️</span>
+                <span class="opt-title">Sau 3.0 giây</span>
+                <span class="opt-check">✓</span>
+              </button>
+              <button type="button" class="auto-advance-opt" data-speed="5">
+                <span class="opt-bullet">⏱️</span>
+                <span class="opt-title">Sau 5.0 giây</span>
+                <span class="opt-check">✓</span>
+              </button>
+            </div>
+          </div>
+
+          <button class="btn btn-secondary btn-sm" id="btn-toggle-zen-mode" title="Bật/Tắt chế độ tập trung (ẩn thanh điều hướng, mở rộng màn hình)">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h6v6"></path><path d="M9 21H3v-6"></path><path d="M21 3l-7 7"></path><path d="M3 21l7-7"></path></svg>
+            <span id="zen-mode-text">Tập trung</span>
+          </button>
+
+          <button class="btn btn-success" id="btn-finish-quiz">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+            <span id="btn-finish-quiz-text">Nộp Bài</span>
+          </button>
+
+          <button class="btn btn-ghost btn-sm" id="btn-quit-quiz" title="Thoát ra thư viện">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Main Runner Layout -->
+      <div class="quiz-runner-layout">
+        <!-- Question Main Area -->
+        <div class="question-card-main">
+          <!-- Auto-Advance Top Bar (Tự Động Chuyển Câu trên đỉnh thẻ câu hỏi, KHÔNG nằm dưới câu hỏi) -->
+          <div class="auto-advance-top-indicator" id="auto-advance-indicator" style="display: none;">
+            <div class="auto-advance-top-content">
+              <div class="auto-advance-top-left">
+                <span class="pulse-dot"></span>
+                <span id="auto-advance-toast-text">⚡ Tự động chuyển câu sau 1.5s...</span>
+              </div>
+              <button type="button" class="btn-cancel-advance" id="btn-cancel-auto-advance" title="Hủy chuyển câu này">✕ Dừng lại</button>
+            </div>
+            <div class="auto-advance-progress-line" id="auto-advance-progress-line"></div>
+          </div>
+          <!-- Survival Mode Live HUD -->
+          <div id="survival-hud-container" class="survival-hud-bar" style="display: none;">
+            <div class="survival-stat-group">
+              <div class="survival-hearts" id="survival-hearts-box" title="3 Mạng sống">
+                <span class="survival-heart" id="heart-1">❤️</span>
+                <span class="survival-heart" id="heart-2">❤️</span>
+                <span class="survival-heart" id="heart-3">❤️</span>
+              </div>
+              <div class="survival-combo-badge" id="survival-combo-box">
+                <span>🔥</span> <span id="survival-combo-text">Combo x1</span>
+              </div>
+            </div>
+            <div class="survival-stat-group">
+              <div class="survival-score-badge">
+                <span>🏆 Điểm:</span> <strong id="survival-score-val">0</strong>
+              </div>
+              <div style="font-size: 0.9rem; font-weight: 800; color: #ef4444; min-width: 32px; text-align: right;" id="survival-time-num">15s</div>
+            </div>
+            <div class="survival-timer-track">
+              <div class="survival-timer-bar" id="survival-timer-bar-el" style="width: 100%;"></div>
+            </div>
+          </div>
+
+          <!-- Top bar with question number, flag, flashcard toggle -->
+          <div class="question-top-bar">
+            <div class="question-counter">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 14 14"></polyline></svg>
+              <span>Câu hỏi <strong id="current-question-index">1</strong> / <span id="total-questions-count">10</span></span>
+              <span id="question-difficulty-badge" style="margin-left: 0.4rem;"></span>
+            </div>
+
+            <div class="question-actions-top">
+              <!-- Practice Mode only: Flashcard Flip Toggle -->
+              <button class="btn btn-secondary btn-sm" id="btn-toggle-flashcard-mode" style="display: none;">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>
+                Chế độ Flashcard
+              </button>
+
+              <button class="btn-icon-only btn-sm" id="btn-runner-sound-toggle" title="Bật/Tắt âm thanh hiệu ứng (Phím S)" style="font-size: 1rem;">
+                <span id="runner-sound-icon">🔊</span>
+              </button>
+
+              <button class="btn-icon-only btn-sm" id="btn-open-shortcuts-runner" title="Xem danh sách phím tắt (Phím ?)" style="font-size: 1rem;">
+                ⌨️
+              </button>
+
+              <button class="btn-note" id="btn-toggle-note" title="Mở sổ tay ghi chú cá nhân cho câu hỏi này">
+                <span>📝 Ghi chú</span>
+              </button>
+
+              <button class="btn-flag" id="btn-flag-question" title="Đánh dấu câu hỏi cần xem lại (Phím F)">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"></path><line x1="4" y1="22" x2="4" y2="15"></line></svg>
+                <span id="flag-btn-text">Đặt cờ</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- STANDARD MULTIPLE CHOICE VIEW -->
+          <div id="standard-question-view">
+            <h3 class="question-text" id="question-text-content">Nội dung câu hỏi hiển thị tại đây...</h3>
+
+            <!-- Question Image Container -->
+            <div id="question-image-box" class="question-image-container" style="display: none;">
+              <img id="question-img-el" class="question-img" alt="Hình ảnh minh họa câu hỏi" title="Bấm vào để phóng to" />
+            </div>
+
+            <!-- Options Stack -->
+            <div class="options-stack" id="options-container">
+              <!-- Options generated by app.js -->
+            </div>
+
+            <!-- Personal Sticky Note Drawer -->
+            <div class="sticky-note-drawer" id="sticky-note-drawer" style="display: none;">
+              <div class="sticky-note-header">
+                <span style="display: flex; align-items: center; gap: 0.35rem;">
+                  <span>📌</span> Ghi chú cá nhân (Tự động lưu)
+                </span>
+                <button type="button" class="btn-ghost btn-sm" id="btn-close-note" style="padding: 0.15rem 0.45rem; font-size: 0.75rem;">✕ Đóng</button>
+              </div>
+              <div class="sticky-note-quick-tags">
+                <button type="button" class="sticky-tag-chip" onclick="appendQuickTagToNote('⚡ Nhớ công thức:')">+ Nhớ công thức</button>
+                <button type="button" class="sticky-tag-chip" onclick="appendQuickTagToNote('⚠️ Chú ý bẫy đề:')">+ Bẫy trắc nghiệm</button>
+                <button type="button" class="sticky-tag-chip" onclick="appendQuickTagToNote('📖 Đọc lại tài liệu:')">+ Đọc tài liệu</button>
+                <button type="button" class="sticky-tag-chip" onclick="appendQuickTagToNote('⭐ Câu trọng tâm!')">+ Trọng tâm</button>
+              </div>
+              <textarea class="sticky-note-textarea" id="sticky-note-input" placeholder="Viết ghi chú cá nhân, mẹo giải hoặc công thức... Tự động lưu vào thiết bị."></textarea>
+            </div>
+
+            <!-- Explanation Box (Active in Practice mode) -->
+            <div class="explanation-card" id="explanation-container" style="display: none;">
+              <div class="explanation-header">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                Giải thích chi tiết:
+              </div>
+              <div class="explanation-text" id="explanation-text-content">
+                Nội dung giải thích đáp án...
+              </div>
+            </div>
+
+          </div>
+
+          <!-- FLASHCARD VIEW (Interactive Flip Card) -->
+          <div id="flashcard-view" style="display: none;">
+            <div class="flashcard-container" id="flashcard-element">
+              <div class="flashcard-inner">
+                <div class="flashcard-front">
+                  <div style="display: flex; justify-content: flex-start; align-items: center; width: 100%; margin-bottom: 1.25rem;">
+                    <span class="badge badge-primary">CÂU HỎI TRẮC NGHIỆM</span>
+                  </div>
+                  <div style="font-size: 1.35rem; font-weight: 700; line-height: 1.6;" id="flashcard-front-text">Nội dung câu hỏi</div>
+                  <div id="flashcard-front-img-box" style="display: none; margin: 1rem 0;">
+                    <img id="flashcard-front-img" style="max-height: 160px; max-width: 100%; border-radius: 8px; border: 1px solid var(--border-subtle);" alt="Hình ảnh câu hỏi" />
+                  </div>
+                  <div class="flashcard-hint">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display: inline-block; vertical-align: middle; margin-right: 4px;"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path></svg>
+                    Bấm vào thẻ hoặc nhấn [Space] để lật xem đáp án & giải thích
+                  </div>
+                </div>
+                <div class="flashcard-back">
+                  <span class="badge badge-success" style="margin-bottom: 1rem;">ĐÁP ÁN ĐÚNG</span>
+                  <div style="font-size: 1.25rem; font-weight: 700; color: var(--success); margin-bottom: 0.75rem;" id="flashcard-back-answer">Đáp án đúng</div>
+                  <div style="font-size: 0.95rem; line-height: 1.6; color: var(--text-main); max-width: 500px;" id="flashcard-back-explanation">Giải thích chi tiết</div>
+                  <div class="flashcard-hint">Bấm vào thẻ hoặc nhấn [Space] để lật lại mặt câu hỏi</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Flashcard Review Action Buttons -->
+            <div class="flashcard-action-bar">
+              <button type="button" class="btn btn-outline-danger" id="btn-flashcard-need-review" title="Phím tắt: 1">
+                ❌ Cần ôn lại (Phím 1)
+              </button>
+              <button type="button" class="btn btn-secondary" id="btn-flashcard-flip-btn" title="Phím tắt: Space">
+                🔄 Lật thẻ (Space)
+              </button>
+              <button type="button" class="btn btn-success" id="btn-flashcard-mastered" title="Phím tắt: 2">
+                ✅ Đã thuộc (Phím 2)
+              </button>
+            </div>
+          </div>
+
+          <!-- Navigation Footer Buttons -->
+          <div class="runner-footer-nav">
+            <button class="btn btn-secondary" id="btn-prev-question">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"></polyline></svg>
+              Câu trước
+            </button>
+
+            <div style="font-size: 0.85rem; color: var(--text-muted); display: flex; align-items: center; gap: 0.5rem;">
+              <span>Phím tắt: <strong>A, B, C, D</strong> hoặc <strong>1, 2, 3, 4</strong> để chọn</span>
+            </div>
+
+            <button class="btn btn-primary" id="btn-next-question">
+              Câu tiếp theo
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Question Palette Sidebar -->
+        <aside class="palette-sidebar">
+          <div class="palette-header">
+            <span style="display: flex; align-items: center; gap: 0.55rem;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect width="7" height="7" x="3" y="3" rx="1"></rect><rect width="7" height="7" x="14" y="3" rx="1"></rect><rect width="7" height="7" x="14" y="14" rx="1"></rect><rect width="7" height="7" x="3" y="14" rx="1"></rect></svg>
+              Danh sách câu hỏi
+            </span>
+            <span class="badge badge-primary" id="palette-progress-badge" style="font-weight: 800;">0 / 10</span>
+          </div>
+
+          <!-- Palette Legend -->
+          <div class="palette-legend" id="palette-legend-container">
+            <div class="legend-item" id="legend-item-status">
+              <div class="legend-dot dot-answered" id="legend-dot-status"></div>
+              <span id="legend-text-status">Đã làm</span>
+            </div>
+            <div class="legend-item" id="legend-item-wrong" style="display: none;">
+              <div class="legend-dot dot-wrong"></div>
+              <span>Sai</span>
+            </div>
+            <div class="legend-item">
+              <div class="legend-dot dot-unanswered"></div>
+              <span>Chưa làm</span>
+            </div>
+            <div class="legend-item">
+              <div class="legend-dot dot-flagged"></div>
+              <span>Cắm cờ 🚩</span>
+            </div>
+          </div>
+
+          <!-- Palette Cells Grid -->
+          <div class="palette-grid" id="palette-grid-container">
+            <!-- Numbers 1..N generated by app.js -->
+          </div>
+        </aside>
+      </div>
+    </section>
+
+    <!-- ==================== VIEW 4: RESULTS & REVIEW ==================== -->
+    <section class="view" id="view-result">
+      <div class="result-card-header">
+        <div class="result-score-circle">
+          <div class="result-score-num" id="result-score-10">8.5</div>
+          <div class="result-score-sub"><span id="result-score-percent">85</span>% Chính xác</div>
+        </div>
+
+        <h2 class="result-verdict" id="result-verdict-title">Xuất sắc! Bạn đã vượt qua bài thi</h2>
+        <p style="color: var(--text-muted);" id="result-verdict-desc">Bạn nắm rất vững các kiến thức trọng tâm của đề thi này.</p>
+
+        <!-- Stats Breakdown Row -->
+        <div class="result-stats-row">
+          <div class="result-stat-card">
+            <div class="result-stat-val" style="color: var(--success);" id="result-stat-correct">17</div>
+            <div class="result-stat-lbl">Câu đúng</div>
+          </div>
+          <div class="result-stat-card">
+            <div class="result-stat-val" style="color: var(--danger);" id="result-stat-wrong">3</div>
+            <div class="result-stat-lbl">Câu sai</div>
+          </div>
+          <div class="result-stat-card">
+            <div class="result-stat-val" style="color: var(--text-muted);" id="result-stat-skipped">0</div>
+            <div class="result-stat-lbl">Bỏ qua</div>
+          </div>
+          <div class="result-stat-card">
+            <div class="result-stat-val" style="color: var(--primary);" id="result-stat-time">08:45</div>
+            <div class="result-stat-lbl">Thời gian làm bài</div>
+          </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div style="display: flex; justify-content: center; gap: 1rem; margin-top: 2rem; flex-wrap: wrap;">
+          <button class="btn btn-primary btn-lg" id="btn-retry-all">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"></polyline><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path></svg>
+            Làm lại toàn bộ đề
+          </button>
+          <button class="btn btn-danger btn-lg" id="btn-retry-wrongs">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
+            Chỉ làm lại các câu SAI
+          </button>
+          <button class="btn btn-ai btn-lg" id="btn-ai-tutor-wrongs" style="display: none; align-items: center; gap: 0.5rem;" title="Nhờ AI Gemini phân tích cặn kẽ vì sao các câu trên bạn làm sai và cách khắc phục">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+            🤖 AI Chữa & Giải Thích Các Câu Sai
+          </button>
+          <button class="btn btn-secondary btn-lg" id="btn-print-result" title="In hoặc lưu kết quả bài thi ra file PDF chuẩn A4">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+            In Đề / PDF
+          </button>
+          <button class="btn btn-secondary btn-lg" id="btn-export-docx-result" title="Xuất toàn bộ đề thi và đáp án ra file Microsoft Word (.docx)">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
+            Xuất Word (.docx)
+          </button>
+          <button class="btn btn-secondary btn-lg" id="btn-result-to-home">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+            Về thư viện đề thi
+          </button>
+        </div>
+      </div>
+
+      <!-- Detailed Review Filter & List -->
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+        <h3 style="font-size: 1.35rem; font-weight: 700;">Xem lại chi tiết từng câu hỏi</h3>
+        <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
+          <div class="filter-group" id="review-filters">
+            <button class="filter-chip active" data-review-filter="ALL">Tất cả câu hỏi</button>
+            <button class="filter-chip" data-review-filter="WRONG">Chỉ xem câu SAI</button>
+            <button class="filter-chip" data-review-filter="CORRECT">Chỉ xem câu ĐÚNG</button>
+          </div>
+          <button class="btn btn-ai btn-sm" id="btn-ai-tutor-wrongs-sub" style="display: none; align-items: center; gap: 0.4rem;">
+            🤖 AI Chữa Câu Sai
+          </button>
+        </div>
+      </div>
+
+      <div class="review-section" id="review-list-container">
+        <!-- Rendered by app.js -->
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ==================== SETUP / START QUIZ MODAL ==================== -->
+  <div class="modal-backdrop" id="modal-setup">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <div>
+          <h3 class="modal-title" id="setup-modal-title">Cài Đặt Bài Thi & Ôn Tập</h3>
+          <p style="font-size: 0.85rem; color: var(--text-muted);" id="setup-modal-subtitle">Tùy chỉnh chế độ làm bài và xáo trộn câu hỏi</p>
+        </div>
+        <button class="btn-ghost btn-sm" id="btn-close-setup-modal" style="padding: 0.4rem; border-radius: 50%;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <!-- Step 1: Select Mode -->
+        <div>
+          <div class="settings-section-title">1. Chọn hình thức làm bài</div>
+          <div class="mode-selection-grid">
+            <div class="mode-card selected" id="mode-card-practice" data-mode="PRACTICE">
+              <div class="mode-card-icon">🎯</div>
+              <div class="mode-card-title">Chế độ Ôn tập</div>
+              <div class="mode-card-desc">Biết ngay đáp án Đúng/Sai sau khi chọn, hiện giải thích chi tiết, tùy chọn lật thẻ.</div>
+            </div>
+
+            <div class="mode-card" id="mode-card-exam" data-mode="EXAM">
+              <div class="mode-card-icon">⏱️</div>
+              <div class="mode-card-title">Chế độ Thi thử</div>
+              <div class="mode-card-desc">Bấm giờ đếm ngược, làm bài trong áp lực phòng thi, chỉ hiển thị kết quả sau khi nộp.</div>
+            </div>
+
+            <div class="mode-card" id="mode-card-flashcard" data-mode="FLASHCARD">
+              <div class="mode-card-icon">🗂️</div>
+              <div class="mode-card-title">Thẻ Flashcard 3D</div>
+              <div class="mode-card-desc">Lật mặt thẻ 3D ghi nhớ thần tốc, ẩn/hiện đáp án, đánh dấu câu thuộc hoặc cần ôn lại.</div>
+            </div>
+
+            <div class="mode-card" id="mode-card-survival" data-mode="SURVIVAL">
+              <div class="mode-card-icon">⚡</div>
+              <div class="mode-card-title">Chế độ Sinh Tồn</div>
+              <div class="mode-card-desc">15 giây/câu, 3 mạng ❤️❤️❤️, combo streak điểm số, đúng cộng +5s thời gian sống sót!</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 2: Randomization Settings -->
+        <div>
+          <div class="settings-section-title">2. Cài đặt xáo trộn &amp; ngẫu nhiên hóa</div>
+          <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+            <!-- Switch 1: Shuffle Questions -->
+            <div class="setting-switch-item">
+              <div class="setting-switch-info">
+                <h5>Xáo trộn thứ tự câu hỏi</h5>
+                <p>Đổi ngẫu nhiên vị trí các câu hỏi hoặc giữ nguyên theo thứ tự đề gốc</p>
+              </div>
+              <label class="switch">
+                <input type="checkbox" id="toggle-shuffle-questions" checked>
+                <span class="slider"></span>
+              </label>
+            </div>
+
+            <!-- Switch 2: Shuffle Options -->
+            <div class="setting-switch-item">
+              <div class="setting-switch-info">
+                <h5>Xáo trộn các đáp án (A, B, C, D)</h5>
+                <p>Đảo vị trí các phương án lựa chọn ngẫu nhiên để chống học vẹt</p>
+              </div>
+              <label class="switch">
+                <input type="checkbox" id="toggle-shuffle-options" checked>
+                <span class="slider"></span>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 3: Question Count & Time Limits & Difficulty Filter -->
+        <div>
+          <div class="settings-section-title">3. Tùy chọn đề &amp; Thời gian</div>
+          <div class="form-grid" style="margin-bottom: 0;">
+            <div class="form-group">
+              <label class="form-label" for="select-question-limit">Số câu muốn làm</label>
+              <select class="form-select" id="select-question-limit">
+                <option value="ALL">Làm toàn bộ câu hỏi trong đề</option>
+                <option value="5">Làm 5 câu ngẫu nhiên</option>
+                <option value="10">Làm 10 câu ngẫu nhiên</option>
+                <option value="15">Làm 15 câu ngẫu nhiên</option>
+                <option value="20">Làm 20 câu ngẫu nhiên</option>
+              </select>
+            </div>
+
+            <div class="form-group" id="group-difficulty-filter">
+              <label class="form-label" for="select-difficulty-filter">Lọc theo độ khó</label>
+              <select class="form-select" id="select-difficulty-filter">
+                <option value="ALL" selected>Tất cả độ khó (Mặc định)</option>
+                <option value="EASY">🟢 Chỉ câu Dễ</option>
+                <option value="MEDIUM">🟡 Chỉ câu Vừa</option>
+                <option value="HARD">🔴 Chỉ câu Khó</option>
+              </select>
+            </div>
+
+            <div class="form-group" id="group-setup-auto-advance">
+              <label class="form-label" for="select-setup-auto-advance">⚡ Tự động chuyển câu khi chọn đáp án:</label>
+              <select class="form-select" id="select-setup-auto-advance">
+                <option value="off">Tắt (Bấm nút Tiếp thủ công)</option>
+                <option value="0">Chuyển ngay lập tức (0s)</option>
+                <option value="1">Chuyển sau 1.0 giây</option>
+                <option value="1.5" selected>Chuyển sau 1.5 giây (Khuyên dùng ôn tập)</option>
+                <option value="2">Chuyển sau 2.0 giây</option>
+                <option value="3">Chuyển sau 3.0 giây</option>
+                <option value="5">Chuyển sau 5.0 giây</option>
+              </select>
+            </div>
+
+            <div class="form-group" id="group-custom-time">
+              <label class="form-label" for="input-custom-duration">Thời gian thi (phút)</label>
+              <input type="number" class="form-input" id="input-custom-duration" min="1" max="180" value="15">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-secondary" id="btn-cancel-setup">Hủy</button>
+        <button class="btn btn-primary btn-lg" id="btn-start-quiz-now">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+          Bắt Đầu Ngay
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== SUBMIT CONFIRMATION MODAL ==================== -->
+  <div class="modal-backdrop" id="modal-confirm-submit">
+    <div class="modal-dialog" style="max-width: 440px;">
+      <div class="modal-header">
+        <h3 class="modal-title">Xác nhận nộp bài</h3>
+      </div>
+      <div class="modal-body" style="padding: 1.5rem;">
+        <div id="submit-warning-text" style="font-size: 0.95rem; line-height: 1.6;">
+          Bạn có chắc chắn muốn nộp bài thi không?
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" id="btn-cancel-submit">Làm tiếp</button>
+        <button class="btn btn-success" id="btn-confirm-submit">Nộp bài ngay</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== DELETE QUIZ CONFIRMATION MODAL ==================== -->
+  <div class="modal-backdrop" id="modal-confirm-delete">
+    <div class="modal-dialog" style="max-width: 440px;">
+      <div class="modal-header">
+        <div style="display: flex; align-items: center; gap: 0.6rem;">
+          <div style="width: 36px; height: 36px; border-radius: var(--radius-md); background: var(--danger-light); color: var(--danger); display: flex; align-items: center; justify-content: center; font-size: 1.1rem;">
+            🗑️
+          </div>
+          <div>
+            <h3 class="modal-title" style="color: var(--danger);">Xóa Bộ Đề Thi</h3>
+            <p style="font-size: 0.8rem; color: var(--text-muted); margin: 0;">Xác nhận xóa khỏi thư viện</p>
+          </div>
+        </div>
+        <button class="btn-ghost btn-sm" id="btn-close-delete-modal" style="padding: 0.4rem; border-radius: 50%;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+      </div>
+      <div class="modal-body" style="padding: 1.5rem;">
+        <div id="delete-quiz-warning-text" style="font-size: 0.95rem; line-height: 1.6; color: var(--text-main);">
+          Bạn có chắc chắn muốn xóa bộ đề thi này không?
+        </div>
+        <div style="margin-top: 0.75rem; font-size: 0.825rem; color: var(--danger); background: var(--danger-light); padding: 0.6rem 0.8rem; border-radius: var(--radius-sm); border: 1px solid rgba(239, 68, 68, 0.2);">
+          ⚠️ Dữ liệu câu hỏi của đề này sẽ bị xóa khỏi bộ nhớ và không thể khôi phục lại.
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" id="btn-cancel-delete">Hủy</button>
+        <button class="btn btn-outline-danger" id="btn-confirm-delete-action" style="background: var(--danger); color: white; border-color: var(--danger);">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+          Xác Nhận Xóa
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== AI GEMINI ENHANCER MODAL ==================== -->
+  <div class="modal-backdrop" id="modal-ai-gemini">
+    <div class="modal-dialog" style="max-width: 640px; max-height: 92vh; display: flex; flex-direction: column;">
+      <div class="modal-header" style="padding: 1.25rem 1.75rem;">
+        <div style="display: flex; align-items: center; gap: 0.6rem;">
+          <div style="width: 38px; height: 38px; border-radius: var(--radius-md); background: linear-gradient(135deg, #ec4899, #8b5cf6); color: white; display: flex; align-items: center; justify-content: center; font-size: 1.15rem;">
+            ✨
+          </div>
+          <div>
+            <h3 class="modal-title" style="font-size: 1.2rem;">Trợ Lý AI Phân Tích & Giải Đề</h3>
+            <p style="font-size: 0.8rem; color: var(--text-muted);">Sử dụng mô hình Google Gemini AI để nhận diện, giải đề & phân loại</p>
+          </div>
+        </div>
+        <button class="btn-ghost btn-sm" id="btn-close-gemini-modal" style="padding: 0.4rem; border-radius: 50%;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+      </div>
+      <div class="modal-body" style="padding: 1.2rem 1.75rem; display: flex; flex-direction: column; gap: 0.95rem; overflow-y: auto; flex: 1;">
+        <div style="background: var(--primary-light); padding: 0.75rem 1rem; border-radius: var(--radius-md); font-size: 0.825rem; line-height: 1.5; color: var(--text-main); border: 1px solid var(--border-subtle);">
+          💡 <strong>Khả năng của AI Gemini:</strong> Tự động nhận diện cấu trúc đề thi, bổ sung 4 phương án A/B/C/D, rà soát phát hiện câu sai đáp án và viết lời giải thích chi tiết!
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="input-gemini-api-key">
+            <span>Google Gemini API Key:</span>
+            <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener" style="color: var(--primary); font-size: 0.8rem; text-decoration: underline;">Lấy API Key miễn phí</a>
+          </label>
+          <div style="display: flex; gap: 0.5rem;">
+            <input type="password" class="form-input" id="input-gemini-api-key" placeholder="Dán Gemini API Key (AIzaSy...) tại đây..." style="flex: 1;">
+            <button type="button" class="btn btn-secondary" id="btn-test-gemini-key" title="Kiểm tra xem API Key có hoạt động không">
+              🔍 Kiểm tra Key
+            </button>
+          </div>
+          <div id="gemini-key-test-result" style="display: none; font-size: 0.825rem; padding: 0.5rem 0.75rem; border-radius: var(--radius-sm); margin-top: 0.4rem;"></div>
+          <span style="font-size: 0.75rem; color: var(--text-muted); display: block; margin-top: 0.25rem;">
+            Khóa được lưu cục bộ trên trình duyệt. Hỗ trợ đầy đủ các thế hệ mới nhất: <strong>gemini-3.8-flash</strong>, <strong>gemini-3.8-pro</strong>, <strong>gemini-3.5-flash-lite</strong>.
+          </span>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="select-gemini-model" style="display: flex; justify-content: space-between; align-items: center;">
+            <span>Mô hình AI (Google Gemini):</span>
+            <span id="gemini-model-badge-info" style="font-size: 0.75rem; color: var(--primary); font-weight: 600;">Tự động chọn mới nhất</span>
+          </label>
+          <select class="form-select" id="select-gemini-model" style="width: 100%; padding: 0.55rem 0.75rem; border-radius: var(--radius-md); background: var(--bg-app); border: 1px solid var(--border-subtle); color: var(--text-main); font-size: 0.875rem;">
+            <option value="auto">🚀 Tự động chọn mô hình tối ưu (Ưu tiên Gemini 3.8 Flash / 3.5 Flash-Lite)</option>
+            <option value="gemini-3.8-flash" selected>🔥 Gemini 3.8 Flash (Thế hệ 3.8 MỚI NHẤT - Đỉnh cao trí tuệ & siêu tốc)</option>
+            <option value="gemini-3.8-pro">🧠 Gemini 3.8 Pro (Tư duy suy luận sâu thế hệ 3.8)</option>
+            <option value="gemini-3.5-flash-lite">⚡ Gemini 3.5 Flash-Lite (Siêu nhanh, ổn định & tối ưu Quota miễn phí)</option>
+            <option value="gemini-3.5-flash">⚡ Gemini 3.5 Flash (Thế hệ 3.5 toàn diện & chính xác cao)</option>
+            <option value="gemini-3.5-pro">🧠 Gemini 3.5 Pro (Tư duy chuyên gia 3.5)</option>
+            <option value="gemini-2.0-flash">⚡ Gemini 2.0 Flash (Thế hệ 2.0 đa nhiệm)</option>
+            <option value="custom">✏️ Nhập mã mô hình tùy chọn khác...</option>
+          </select>
+          
+          <div id="container-custom-gemini-model" style="display: none; margin-top: 0.5rem;">
+            <input type="text" class="form-input" id="input-custom-gemini-model" placeholder="Nhập mã mô hình Google AI, VD: gemini-3.8-flash, gemini-3.8-flash-lite..." style="font-size: 0.85rem; padding: 0.5rem 0.75rem;">
+            <span style="font-size: 0.725rem; color: var(--text-muted); display: block; margin-top: 0.25rem;">
+              💡 Nhập trực tiếp tên mã model bất kỳ từ Google AI Studio (hỗ trợ cả các bản preview mới ra mắt).
+            </span>
+          </div>
+
+          <span style="font-size: 0.75rem; color: var(--text-muted); display: block; margin-top: 0.35rem; line-height: 1.4;">
+            💡 <em>Lưu ý: <strong>Gemini 3.8 Flash</strong> là thế hệ mới nhất của Google DeepMind với khả năng xử lý bài thi và tư duy vượt bậc. Nếu tài khoản đạt ngưỡng giới hạn RPM của 3.8, hệ thống tự động chuyển sang <strong>3.5 Flash-Lite</strong> để không gián đoạn!</em>
+          </span>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Chọn nhiệm vụ AI:</label>
+          <div style="display: flex; flex-direction: column; gap: 0.55rem; font-size: 0.875rem;">
+            <label style="display: flex; align-items: flex-start; gap: 0.65rem; cursor: pointer; background: var(--bg-card); padding: 0.75rem 0.95rem; border-radius: var(--radius-md); border: 2px solid #10b981; box-shadow: 0 3px 12px rgba(16, 185, 129, 0.15);">
+              <input type="radio" name="ai-task" value="fix-spelling-only" checked style="accent-color: #10b981; margin-top: 3px;">
+              <span>
+                <strong style="color: #10b981; font-size: 0.95rem;">✍️ Sửa lỗi chính tả & OCR (TUYỆT ĐỐI GIỮ NGUYÊN ĐÁP ÁN):</strong><br>
+                <span style="font-size: 0.8rem; color: var(--text-muted); line-height: 1.45; display: block; margin-top: 3px;">
+                  Tự động sửa toàn bộ lỗi chính tả, dãn chữ tiếng Việt, lỗi ngắt dòng OCR, font, xóa watermark rác... nhưng <strong>CAM KẾT BẢO LƯU 100% ĐÁP ÁN ĐÚNG GỐC CỦA BẠN</strong> (không can thiệp hoặc thay đổi bất kỳ đáp án nào)!
+                </span>
+              </span>
+            </label>
+
+            <label style="display: flex; align-items: flex-start; gap: 0.65rem; cursor: pointer; background: var(--bg-card); padding: 0.65rem 0.95rem; border-radius: var(--radius-md); border: 1px solid var(--border-subtle);">
+              <input type="radio" name="ai-task" value="audit-correct" style="accent-color: var(--primary); margin-top: 3px;">
+              <span>
+                <strong style="font-size: 0.95rem;">🔍 Soát lỗi & Sửa đáp án sai (AI Fact-Check):</strong><br>
+                <span style="font-size: 0.8rem; color: var(--text-muted); line-height: 1.4; display: block; margin-top: 2px;">
+                  Rà soát tính chính xác của đề thi, tự động phát hiện câu bị đánh dấu sai đáp án và sửa lại đáp án đúng chuẩn xác, kèm giải thích chi tiết!
+                </span>
+              </span>
+            </label>
+
+            <label style="display: flex; align-items: flex-start; gap: 0.65rem; cursor: pointer; background: var(--bg-card); padding: 0.65rem 0.95rem; border-radius: var(--radius-md); border: 1px solid var(--border-subtle);">
+              <input type="radio" name="ai-task" value="full-solve" style="accent-color: var(--primary); margin-top: 3px;">
+              <span>
+                <strong style="font-size: 0.95rem;">🎯 Giải đề toàn diện & Bổ sung phương án:</strong><br>
+                <span style="font-size: 0.8rem; color: var(--text-muted); line-height: 1.4; display: block; margin-top: 2px;">
+                  Tự động tạo 4 phương án A, B, C, D cho câu tự luận hoặc thiếu đáp án, xác định đáp án đúng & viết giải thích chi tiết.
+                </span>
+              </span>
+            </label>
+
+            <label style="display: flex; align-items: flex-start; gap: 0.65rem; cursor: pointer; background: var(--bg-card); padding: 0.65rem 0.95rem; border-radius: var(--radius-md); border: 1px solid var(--border-subtle);">
+              <input type="radio" name="ai-task" value="add-explanations" style="accent-color: var(--primary); margin-top: 3px;">
+              <span>
+                <strong style="font-size: 0.95rem;">💡 Viết thêm lời giải thích chi tiết:</strong><br>
+                <span style="font-size: 0.8rem; color: var(--text-muted); line-height: 1.4; display: block; margin-top: 2px;">
+                  Giữ nguyên 100% câu hỏi và các phương án hiện tại, chỉ viết thêm lời giải thích chi tiết từng bước.
+                </span>
+              </span>
+            </label>
+          </div>
+        </div>
+
+        <div id="ai-loading-indicator" style="display: none; text-align: center; padding: 1rem;">
+          <div style="font-size: 1.5rem; margin-bottom: 0.5rem; animation: pulse 1s infinite;">🤖 ✨</div>
+          <div style="font-weight: 600; color: var(--primary);" id="ai-loading-title">AI Gemini đang đọc và phân tích đề thi...</div>
+          <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.25rem;" id="ai-loading-sub">Hệ thống đang thẩm định kiến thức, sửa câu sai và tạo lời giải chi tiết.</div>
+        </div>
+      </div>
+      <div class="modal-footer" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.6rem; padding: 1rem 1.75rem;">
+        <button class="btn btn-secondary btn-sm" id="btn-use-offline-ai-modal" title="Lọc rác và thêm A, B, C, D miễn phí không cần kết nối mạng hoặc API Key" style="padding: 0.55rem 0.85rem;">
+          ⚡ Dùng AI Lọc Offline (Không Key)
+        </button>
+        <div style="display: flex; gap: 0.6rem; align-items: center;">
+          <button class="btn btn-secondary" id="btn-cancel-gemini">Đóng</button>
+          <button class="btn btn-ai" id="btn-execute-gemini">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+            Bắt Đầu Xử Lý Với AI Gemini
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== AI TUTOR / AUDIT MODAL ==================== -->
+  <div class="modal-backdrop" id="modal-ai-tutor">
+    <div class="modal-dialog" style="max-width: 760px; max-height: 90vh; display: flex; flex-direction: column;">
+      <div class="modal-header">
+        <div style="display: flex; align-items: center; gap: 0.6rem;">
+          <div style="width: 38px; height: 38px; border-radius: var(--radius-md); background: linear-gradient(135deg, #ec4899, #8b5cf6); color: white; display: flex; align-items: center; justify-content: center; font-size: 1.2rem;">
+            🤖
+          </div>
+          <div>
+            <h3 class="modal-title" id="ai-tutor-modal-title">Gia Sư AI Phân Tích & Chữa Câu Sai</h3>
+            <p style="font-size: 0.8rem; color: var(--text-muted);" id="ai-tutor-modal-subtitle">Phân tích cặn kẽ nguyên nhân làm sai, bẫy trắc nghiệm và phương pháp ghi nhớ</p>
+          </div>
+        </div>
+        <button class="btn-ghost btn-sm" id="btn-close-ai-tutor" style="padding: 0.4rem; border-radius: 50%;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+      </div>
+      <div class="modal-body" id="ai-tutor-modal-body" style="padding: 1.25rem 1.5rem; overflow-y: auto; flex: 1; display: flex; flex-direction: column; gap: 1rem;">
+        <!-- Dynamic content rendered by app.js -->
+      </div>
+      <div class="modal-footer" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem;">
+        <span style="font-size: 0.8rem; color: var(--text-muted);">Trợ lý: <strong id="ai-tutor-model-badge" style="color: var(--primary);">Google Gemini AI</strong></span>
+        <button class="btn btn-secondary" id="btn-close-ai-tutor-footer">Đóng</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== SEPARATE ANSWERS MODAL ==================== -->
+  <div class="modal-backdrop" id="modal-separate-answers">
+    <div class="modal-dialog" style="max-width: 620px; max-height: 92vh; display: flex; flex-direction: column;">
+      <div class="modal-header" style="padding: 1.25rem 1.75rem;">
+        <div style="display: flex; align-items: center; gap: 0.6rem;">
+          <div style="width: 38px; height: 38px; border-radius: var(--radius-md); background: linear-gradient(135deg, #10b981, #059669); color: white; display: flex; align-items: center; justify-content: center; font-size: 1.15rem;">
+            📋
+          </div>
+          <div>
+            <h3 class="modal-title" style="font-size: 1.15rem;">Ghép Bảng Đáp Án Riêng Vào Đề Thi</h3>
+            <p style="font-size: 0.8rem; color: var(--text-muted);">Dành cho đề thi không tô đậm/màu, có bảng đáp án ở cuối hoặc ở tệp riêng</p>
+          </div>
+        </div>
+        <button class="btn-ghost btn-sm" id="btn-close-separate-answers" style="padding: 0.4rem; border-radius: 50%;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+      </div>
+
+      <div class="modal-body" style="padding: 1.25rem 1.75rem; display: flex; flex-direction: column; gap: 0.95rem; overflow-y: auto; flex: 1;">
+        <div style="background: var(--primary-light); padding: 0.75rem 1rem; border-radius: var(--radius-md); font-size: 0.825rem; line-height: 1.5; color: var(--text-main); border: 1px solid var(--border-subtle);">
+          💡 <strong>Cách hoạt động:</strong> Hệ thống tự động nhận biết mọi định dạng đáp án (ví dụ: <code>1.A 2.B 3.C...</code> hoặc <code>1-A, 2-B...</code> hoặc <code>1A 2B 3C...</code> hoặc <code>Câu 1: A, Câu 2: B...</code>) và tự động gắn dấu <code>*</code> vào phương án đúng của từng câu hỏi trong đề!
+        </div>
+
+        <div class="form-group">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.4rem;">
+            <label class="form-label" for="textarea-separate-answers" style="margin-bottom: 0;">
+              Dán nội dung bảng đáp án:
+            </label>
+            <input type="file" id="input-separate-answers-file" accept=".txt,.docx,.pdf,.csv" style="display: none;">
+            <button type="button" class="btn btn-secondary btn-sm" id="btn-upload-separate-answers-file" style="padding: 0.35rem 0.65rem; font-size: 0.8rem;">
+              📎 Tải tệp đáp án (.txt, .docx, .pdf)
+            </button>
+          </div>
+          <textarea class="form-textarea" id="textarea-separate-answers" rows="6" placeholder="Dán bảng đáp án tại đây...&#10;Ví dụ:&#10;1.A  2.B  3.C  4.D  5.A&#10;6.B  7.C  8.D  9.A  10.C&#10;Hoặc: 1-A, 2-B, 3-C, 4-D...&#10;Hoặc: Câu 1: A, Câu 2: B..." style="font-family: monospace; font-size: 0.85rem; line-height: 1.5;"></textarea>
+          
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.4rem;">
+            <span id="separate-answers-status" style="font-size: 0.8rem; color: var(--text-muted);">Chưa nhập đáp án</span>
+            <button type="button" class="btn btn-ghost btn-sm" id="btn-clear-separate-answers" style="font-size: 0.75rem; padding: 0.2rem 0.5rem;">
+              Xóa trắng
+            </button>
+          </div>
+        </div>
+
+        <div id="separate-answers-preview-badge" style="display: none; background: var(--success-light); color: var(--success); padding: 0.6rem 0.85rem; border-radius: var(--radius-sm); font-size: 0.825rem; border: 1px solid rgba(16, 185, 129, 0.2);">
+          <!-- Dynamic summary: Đã phát hiện 40 đáp án: 1:A, 2:B... -->
+        </div>
+      </div>
+
+      <div class="modal-footer" style="display: flex; justify-content: flex-end; gap: 0.75rem; padding: 1rem 1.75rem;">
+        <button class="btn btn-secondary" id="btn-cancel-separate-answers">Đóng</button>
+        <button class="btn btn-primary" id="btn-apply-separate-answers">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
+          ⚡ Ghép Đáp Án Vào Đề Thi
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== MISTAKE VAULT MODAL (SỔ TAY CÂU SAI) ==================== -->
+  <div class="modal-backdrop" id="modal-mistake-vault">
+    <div class="modal-dialog" style="max-width: 680px; max-height: 90vh; display: flex; flex-direction: column;">
+      <div class="modal-header" style="padding: 1.25rem 1.75rem;">
+        <div style="display: flex; align-items: center; gap: 0.6rem;">
+          <div style="width: 38px; height: 38px; border-radius: var(--radius-md); background: linear-gradient(135deg, #ef4444, #dc2626); color: white; display: flex; align-items: center; justify-content: center; font-size: 1.15rem;">
+            📚
+          </div>
+          <div>
+            <h3 class="modal-title" style="font-size: 1.2rem;">Sổ Tay Câu Hỏi Sai Tích Lũy</h3>
+            <p style="font-size: 0.8rem; color: var(--text-muted);">Tự động lưu các câu làm sai từ mọi đề thi để luyện tập lại</p>
+          </div>
+        </div>
+        <button class="btn-ghost btn-sm" id="btn-close-mistake-vault" style="padding: 0.4rem; border-radius: 50%;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+      </div>
+
+      <div class="modal-body" style="padding: 1.25rem 1.75rem; overflow-y: auto; flex: 1;">
+        <div id="mistake-vault-empty" style="text-align: center; padding: 2.5rem 1rem; display: none;">
+          <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">🎉</div>
+          <div style="font-weight: 700; font-size: 1.1rem; color: var(--success);">Sổ tay câu sai đang trống!</div>
+          <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.35rem;">Bạn chưa có câu nào làm sai hoặc đã chinh phục thành công tất cả các câu hỏi!</p>
+        </div>
+
+        <div id="mistake-vault-content">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+            <span style="font-weight: 700; font-size: 0.95rem;">Danh sách <span id="mistake-vault-modal-count" style="color: var(--danger);">0</span> câu hỏi cần ôn lại:</span>
+            <button class="btn btn-outline-danger btn-sm" id="btn-clear-mistake-vault" style="font-size: 0.75rem; padding: 0.3rem 0.6rem;">
+              🗑️ Xóa sạch sổ tay
+            </button>
+          </div>
+          <div id="mistake-vault-list" style="display: flex; flex-direction: column; gap: 0.75rem; max-height: 48vh; overflow-y: auto; padding-right: 4px;">
+            <!-- Questions rendered by app.js -->
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer" style="padding: 1rem 1.75rem; display: flex; justify-content: space-between; align-items: center;">
+        <button class="btn btn-secondary" id="btn-cancel-mistake-vault">Đóng</button>
+        <button class="btn btn-danger" id="btn-practice-mistake-vault">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"></polyline><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path></svg>
+          ⚡ Luyện Tập Các Câu Này Ngay
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== LEARNING ANALYTICS MODAL (TIẾN ĐỘ & THỐNG KÊ) ==================== -->
+  <div class="modal-backdrop" id="modal-analytics">
+    <div class="modal-dialog" style="max-width: 740px; max-height: 90vh; display: flex; flex-direction: column;">
+      <div class="modal-header" style="padding: 1.25rem 1.75rem;">
+        <div style="display: flex; align-items: center; gap: 0.75rem;">
+          <div style="width: 40px; height: 40px; border-radius: var(--radius-md); background: linear-gradient(135deg, #4f46e5, #06b6d4); color: white; display: flex; align-items: center; justify-content: center; font-size: 1.25rem;">
+            📊
+          </div>
+          <div>
+            <h3 class="modal-title" style="font-size: 1.2rem;">Tiến Độ Học Tập & Lịch Sử Làm Bài</h3>
+            <p style="font-size: 0.8rem; color: var(--text-muted); margin: 0.15rem 0 0 0;">Phân tích kết quả luyện thi và xu hướng điểm số của bạn</p>
+          </div>
+        </div>
+        <button class="btn-ghost btn-sm" id="btn-close-analytics" style="padding: 0.4rem; border-radius: 50%;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+      </div>
+
+      <div class="modal-body" style="padding: 1.25rem 1.75rem; overflow-y: auto; flex: 1;">
+        <!-- KPI Cards Grid -->
+        <div class="analytics-kpi-grid">
+          <div class="analytics-kpi-card">
+            <div class="kpi-icon">🎯</div>
+            <div class="kpi-val" id="kpi-total-tests">0</div>
+            <div class="kpi-label">Tổng bài đã làm</div>
+          </div>
+          <div class="analytics-kpi-card">
+            <div class="kpi-icon">📈</div>
+            <div class="kpi-val" id="kpi-avg-score" style="color: var(--primary);">0%</div>
+            <div class="kpi-label">Điểm trung bình</div>
+          </div>
+          <div class="analytics-kpi-card">
+            <div class="kpi-icon">🏆</div>
+            <div class="kpi-val" id="kpi-best-score" style="color: var(--success);">0%</div>
+            <div class="kpi-label">Điểm cao nhất</div>
+          </div>
+          <div class="analytics-kpi-card">
+            <div class="kpi-icon">⏱️</div>
+            <div class="kpi-val" id="kpi-total-time" style="color: #f59e0b;">0 phút</div>
+            <div class="kpi-label">Tổng thời gian ôn</div>
+          </div>
+        </div>
+
+        <!-- Canvas Chart Section -->
+        <div class="analytics-chart-section">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; flex-wrap: wrap; gap: 0.5rem;">
+            <h4 style="font-size: 0.95rem; font-weight: 700; margin: 0; display: flex; align-items: center; gap: 0.4rem;">
+              <span>📈</span> Biểu đồ xu hướng điểm số (% chính xác)
+            </h4>
+            <span style="font-size: 0.75rem; color: var(--text-muted);">(Theo các lần làm bài gần đây)</span>
+          </div>
+          <div class="analytics-canvas-wrapper" style="position: relative; width: 100%; height: 210px; background: rgba(0,0,0,0.02); border-radius: var(--radius-md); border: 1px solid var(--border-subtle); display: flex; align-items: center; justify-content: center;">
+            <canvas id="analytics-chart-canvas" width="650" height="210" style="max-width: 100%; height: 100%;"></canvas>
+            <div id="analytics-chart-empty" style="position: absolute; text-align: center; color: var(--text-muted); font-size: 0.85rem; display: none;">
+              Chưa có dữ liệu làm bài để vẽ biểu đồ.<br>Hãy hoàn thành bài thi đầu tiên để theo dõi tiến độ!
+            </div>
+          </div>
+        </div>
+
+        <!-- Recent Attempts List -->
+        <div style="margin-top: 1.5rem;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+            <h4 style="font-size: 0.95rem; font-weight: 700; margin: 0;">Lịch sử làm bài gần đây:</h4>
+            <button type="button" class="btn btn-outline-danger btn-xs" id="btn-clear-test-history">
+              🗑️ Xóa lịch sử
+            </button>
+          </div>
+          <div id="analytics-history-list" class="analytics-history-list">
+            <!-- Dynamic history rows -->
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer" style="padding: 1rem 1.75rem; display: flex; justify-content: flex-end;">
+        <button class="btn btn-secondary" id="btn-close-analytics-footer">Đóng</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== KEYBOARD SHORTCUTS MODAL ==================== -->
+  <div class="modal-backdrop" id="modal-shortcuts">
+    <div class="modal-dialog" style="max-width: 520px;">
+      <div class="modal-header" style="padding: 1.25rem 1.75rem;">
+        <div style="display: flex; align-items: center; gap: 0.6rem;">
+          <div style="width: 38px; height: 38px; border-radius: var(--radius-md); background: linear-gradient(135deg, #10b981, #059669); color: white; display: flex; align-items: center; justify-content: center; font-size: 1.2rem;">
+            ⌨️
+          </div>
+          <div>
+            <h3 class="modal-title" style="font-size: 1.15rem;">Phím Tắt Thao Tác Nhanh (Pro)</h3>
+            <p style="font-size: 0.8rem; color: var(--text-muted); margin: 0.15rem 0 0 0;">Làm bài trắc nghiệm thần tốc không cần dùng chuột</p>
+          </div>
+        </div>
+        <button class="btn-ghost btn-sm" id="btn-close-shortcuts" style="padding: 0.4rem; border-radius: 50%;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+      </div>
+
+      <div class="modal-body" style="padding: 1.25rem 1.75rem;">
+        <div class="shortcuts-grid">
+          <div class="shortcut-item">
+            <div class="shortcut-keys"><kbd>A</kbd> <kbd>B</kbd> <kbd>C</kbd> <kbd>D</kbd> hoặc <kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd> <kbd>4</kbd></div>
+            <div class="shortcut-desc">Chọn nhanh phương án trả lời tương ứng</div>
+          </div>
+          <div class="shortcut-item">
+            <div class="shortcut-keys"><kbd>→</kbd> hoặc <kbd>K</kbd></div>
+            <div class="shortcut-desc">Chuyển sang câu hỏi tiếp theo</div>
+          </div>
+          <div class="shortcut-item">
+            <div class="shortcut-keys"><kbd>←</kbd> hoặc <kbd>J</kbd></div>
+            <div class="shortcut-desc">Quay lại câu hỏi trước đó</div>
+          </div>
+          <div class="shortcut-item">
+            <div class="shortcut-keys"><kbd>F</kbd></div>
+            <div class="shortcut-desc">Cắm cờ đánh dấu câu hỏi xem lại sau</div>
+          </div>
+          <div class="shortcut-item">
+            <div class="shortcut-keys"><kbd>Space</kbd></div>
+            <div class="shortcut-desc">Lật mặt thẻ ghi nhớ (ở chế độ Flashcard)</div>
+          </div>
+          <div class="shortcut-item">
+            <div class="shortcut-keys"><kbd>Z</kbd></div>
+            <div class="shortcut-desc">Bật / Tắt chế độ Tập trung (Zen Mode)</div>
+          </div>
+          <div class="shortcut-item">
+            <div class="shortcut-keys"><kbd>S</kbd></div>
+            <div class="shortcut-desc">Bật / Tắt âm thanh hiệu ứng (Sound FX)</div>
+          </div>
+          <div class="shortcut-item">
+            <div class="shortcut-keys"><kbd>?</kbd></div>
+            <div class="shortcut-desc">Mở bảng trợ giúp phím tắt này</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer" style="padding: 1rem 1.75rem; display: flex; justify-content: flex-end;">
+        <button class="btn btn-primary" id="btn-close-shortcuts-footer">Đã hiểu</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== MULTI-CODE EXAM GENERATOR MODAL ==================== -->
+  <div class="modal-backdrop" id="modal-multi-code">
+    <div class="modal-dialog" style="max-width: 650px; max-height: 92vh; display: flex; flex-direction: column;">
+      <div class="modal-header" style="padding: 1.25rem 1.75rem;">
+        <div style="display: flex; align-items: center; gap: 0.65rem;">
+          <div style="width: 40px; height: 40px; border-radius: var(--radius-md); background: linear-gradient(135deg, #4f46e5, #06b6d4); color: white; display: flex; align-items: center; justify-content: center; font-size: 1.2rem;">
+            🔀
+          </div>
+          <div>
+            <h3 class="modal-title" style="font-size: 1.2rem;" id="multi-code-modal-title">Trộn Đề Thi Ra Nhiều Mã Đề (101, 102...)</h3>
+            <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 2px;">Tạo nhiều phiên bản đề thi độc lập &amp; xuất Word kèm Ma trận đáp án chuẩn</p>
+          </div>
+        </div>
+        <button class="btn-ghost btn-sm" id="btn-close-multi-code" style="padding: 0.4rem; border-radius: 50%;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+      </div>
+
+      <div class="modal-body" style="padding: 1.25rem 1.75rem; overflow-y: auto; flex: 1; display: flex; flex-direction: column; gap: 1rem;">
+        <div style="background: var(--primary-light); padding: 0.85rem 1.1rem; border-radius: var(--radius-md); font-size: 0.85rem; line-height: 1.5; color: var(--text-main); border: 1px solid var(--border-subtle);">
+          💡 <strong>Tính năng cao cấp cho Thầy Cô &amp; Nhóm ôn:</strong> Tự động xáo trộn ngẫu nhiên câu hỏi &amp; các phương án lựa chọn, gán mã đề (101, 102, 103, 104...), đồng thời lập sẵn <strong>Ma trận đáp án đối chiếu</strong> đầy đủ giữa các mã đề để chấm thi thần tốc!
+        </div>
+
+        <div class="form-grid" style="margin-bottom: 0;">
+          <div class="form-group">
+            <label class="form-label" for="select-multicode-count">Số lượng mã đề cần tạo:</label>
+            <select class="form-select" id="select-multicode-count">
+              <option value="2">2 mã đề (101, 102)</option>
+              <option value="4" selected>4 mã đề (101, 102, 103, 104)</option>
+              <option value="6">6 mã đề (101 -> 106)</option>
+              <option value="8">8 mã đề (101 -> 108)</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="input-multicode-start">Mã đề bắt đầu:</label>
+            <input type="number" class="form-input" id="input-multicode-start" value="101" min="1" max="999">
+          </div>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 0.75rem; background: var(--bg-surface); padding: 1rem; border-radius: var(--radius-md); border: 1px solid var(--border-subtle);">
+          <label style="display: flex; align-items: center; gap: 0.65rem; cursor: pointer; font-size: 0.9rem;">
+            <input type="checkbox" id="multicode-opt-shuffle-q" checked style="accent-color: var(--primary); width: 17px; height: 17px;">
+            <span><strong>Xáo trộn thứ tự các câu hỏi</strong> trong từng mã đề</span>
+          </label>
+          <label style="display: flex; align-items: center; gap: 0.65rem; cursor: pointer; font-size: 0.9rem;">
+            <input type="checkbox" id="multicode-opt-shuffle-opts" checked style="accent-color: var(--primary); width: 17px; height: 17px;">
+            <span><strong>Xáo trộn vị trí đáp án (A, B, C, D)</strong> để chống sao chép</span>
+          </label>
+        </div>
+
+        <div id="multicode-preview-section">
+          <div style="font-weight: 700; font-size: 0.9rem; margin-bottom: 0.4rem;">Các mã đề sẽ được tạo:</div>
+          <div id="multicode-badge-list" style="display: flex; flex-wrap: wrap; gap: 0.4rem;">
+            <!-- Generated badges like 101, 102, 103, 104 -->
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer" style="padding: 1rem 1.75rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem;">
+        <button class="btn btn-secondary" id="btn-cancel-multicode">Đóng</button>
+        <div style="display: flex; gap: 0.65rem; flex-wrap: wrap;">
+          <button class="btn btn-secondary" id="btn-save-multicode-to-library" title="Lưu các mã đề này thành các đề thi độc lập trong Thư viện">
+            💾 Lưu vào Thư viện
+          </button>
+          <button class="btn btn-primary" id="btn-export-multicode-docx" title="Xuất file Word chứa tất cả mã đề (ngắt trang) kèm Bảng ma trận đáp án ở cuối">
+            📄 Xuất Word (.docx) Kèm Ma Trận ĐA
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== SURVIVAL GAMEOVER MODAL ==================== -->
+  <div class="modal-backdrop" id="modal-survival-gameover">
+    <div class="modal-dialog" style="max-width: 480px; text-align: center;">
+      <div class="modal-header" style="justify-content: center; padding: 1.5rem 1.75rem 0.5rem 1.75rem; border-bottom: none;">
+        <div style="font-size: 3.2rem; animation: pulseTimer 1s infinite;">⚡ 💀</div>
+      </div>
+      <div class="modal-body" style="padding: 0.5rem 1.75rem 1.5rem 1.75rem;">
+        <h3 style="font-size: 1.5rem; font-weight: 800; color: #ef4444; margin-bottom: 0.35rem;">HẾT MẠNG - GAME OVER!</h3>
+        <p style="color: var(--text-muted); font-size: 0.875rem;">Bạn đã chiến đấu kiên cường trong chế độ Sinh Tồn!</p>
+
+        <div style="margin: 1.25rem 0; display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+          <div style="background: var(--bg-surface); padding: 0.85rem; border-radius: var(--radius-md); border: 1px solid var(--border-subtle);">
+            <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700;">Điểm số</div>
+            <div style="font-size: 1.6rem; font-weight: 800; color: var(--primary);" id="survival-final-score">0</div>
+          </div>
+          <div style="background: var(--bg-surface); padding: 0.85rem; border-radius: var(--radius-md); border: 1px solid var(--border-subtle);">
+            <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700;">Chuỗi Combo cao nhất</div>
+            <div style="font-size: 1.6rem; font-weight: 800; color: #f59e0b;" id="survival-max-combo">0</div>
+          </div>
+          <div style="background: var(--bg-surface); padding: 0.85rem; border-radius: var(--radius-md); border: 1px solid var(--border-subtle);">
+            <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700;">Số câu sống sót</div>
+            <div style="font-size: 1.6rem; font-weight: 800; color: var(--success);" id="survival-survived-count">0</div>
+          </div>
+          <div style="background: var(--bg-surface); padding: 0.85rem; border-radius: var(--radius-md); border: 1px solid var(--border-subtle);">
+            <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700;">Kỷ lục cá nhân</div>
+            <div style="font-size: 1.6rem; font-weight: 800; color: #ec4899;" id="survival-high-score">0</div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer" style="padding: 1rem 1.75rem; display: flex; justify-content: center; gap: 0.75rem; border-top: 1px solid var(--border-subtle);">
+        <button class="btn btn-secondary" id="btn-survival-quit">Về Thư Viện</button>
+        <button class="btn btn-survival btn-lg" id="btn-survival-retry">
+          ⚡ Chơi Lại Ngay
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== IMAGE LIGHTBOX OVERLAY ==================== -->
+  <div class="image-zoom-overlay" id="image-zoom-overlay">
+    <img id="image-zoom-img" src="" alt="Ảnh phóng to">
+  </div>
+
+  <!-- Toast notification container -->
+  <div class="toast-container" id="toast-container"></div>
+
+  <!-- Scripts -->
+  <script src="jszip.min.js"></script>
+  <script src="pdf.min.js"></script>
+  <script src="sample-data.js"></script>
+  <script src="app.js?v=3.6.0"></script>
+</body>
+</html>
