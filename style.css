@@ -1755,7 +1755,7 @@ input:checked + .slider:before {
   padding-bottom: 1.15rem;
   border-bottom: 1px solid var(--glass-border);
   position: relative;
-  z-index: 2;
+  z-index: 100;
 }
 
 .question-counter {
@@ -4930,22 +4930,29 @@ kbd {
 .zen-ambient-wrapper {
   position: relative;
   display: inline-block;
+  z-index: 101;
 }
 
 .zen-ambient-popover {
   position: absolute;
   top: calc(100% + 8px);
   right: 0;
-  width: 280px;
+  width: 285px;
   background: var(--bg-surface-elevated);
-  backdrop-filter: var(--glass-blur);
-  -webkit-backdrop-filter: var(--glass-blur);
-  border: 1px solid var(--border-strong);
+  backdrop-filter: blur(28px) saturate(190%);
+  -webkit-backdrop-filter: blur(28px) saturate(190%);
+  border: 1.5px solid var(--border-strong);
   border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-xl);
-  padding: 1rem;
-  z-index: 1000;
-  animation: fadeInDown 0.2s ease;
+  box-shadow: 0 16px 40px -6px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(217, 119, 6, 0.25);
+  padding: 1.1rem;
+  z-index: 99999;
+  animation: fadeInDown 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+[data-theme="dark"] .zen-ambient-popover {
+  background: #1f1610;
+  border-color: rgba(245, 158, 11, 0.35);
+  box-shadow: 0 20px 50px -6px rgba(0, 0, 0, 0.9), 0 0 25px rgba(217, 119, 6, 0.2);
 }
 
 @keyframes fadeInDown {
