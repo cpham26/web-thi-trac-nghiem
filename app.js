@@ -9056,7 +9056,11 @@ async function openShareQuizModal(quizId, event) {
 
   try {
     const payload = await compressQuizForShare(quiz);
-    const baseUrl = window.location.origin + window.location.pathname;
+    // Nếu mở file cục bộ (file:///C:/Users...), dùng link online GitHub Pages để bạn bè mở được qua Internet
+    let baseUrl = window.location.origin + window.location.pathname;
+    if (!window.location.origin || window.location.origin === "null" || window.location.protocol === "file:") {
+      baseUrl = "https://cpham26.github.io/web-thi-trac-nghiem/";
+    }
     currentShareUrl = baseUrl + "#share=" + payload;
     if (urlInput) {
       urlInput.value = currentShareUrl;
