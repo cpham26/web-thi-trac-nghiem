@@ -38,16 +38,17 @@ function setSavedGeminiKey(val) {
 }
 
 function getSavedGeminiModel() {
-  let m = localStorage.getItem(STORAGE_KEYS.GEMINI_MODEL) || localStorage.getItem(STORAGE_KEYS.GEMINI_MODEL_LEGACY) || "gemini-3.8-flash";
-  if (!m || m.includes("2.5") || m.includes("interactions") || m.includes("tts") || m.includes("8b") || m.includes("2.0-flash-lite") || m.includes("1.5")) {
-    m = "gemini-3.8-flash";
+  let m = localStorage.getItem(STORAGE_KEYS.GEMINI_MODEL) || localStorage.getItem(STORAGE_KEYS.GEMINI_MODEL_LEGACY) || "gemini-2.5-flash";
+  // Migration: Tự động khôi phục về model Google Gemini chính thức nếu trước đó lưu model ảo hoặc không hợp lệ
+  if (!m || m.includes("3.8") || m.includes("3.5") || m.includes("interactions") || m.includes("tts") || m.includes("embedding") || m.includes("8b")) {
+    m = "gemini-2.5-flash";
     setSavedGeminiModel(m);
   }
   return m;
 }
 
 function setSavedGeminiModel(val) {
-  const modelVal = val || "gemini-3.8-flash";
+  const modelVal = val || "gemini-2.5-flash";
   localStorage.setItem(STORAGE_KEYS.GEMINI_MODEL, modelVal);
   localStorage.setItem(STORAGE_KEYS.GEMINI_MODEL_LEGACY, modelVal);
 }
@@ -1836,28 +1837,24 @@ function aiFilterAndCleanExam(rawText) {
 // GEMINI AI INTEGRATION - DYNAMIC MODEL DISCOVERY & QUIZ AUDITOR
 // =============================================================================
 
-// Danh sách các mô hình Google Gemini văn bản hỗ trợ chuẩn generateContent ổn định nhất (Thế hệ 3.8 & 3.5 mới nhất)
+// Danh sách các mô hình Google Gemini văn bản hỗ trợ chuẩn generateContent ổn định nhất (Thế hệ 2.5 & 2.0 & 1.5 chính thức)
 const GEMINI_FALLBACK_MODELS = [
-  "gemini-3.8-flash",
-  "gemini-3.8-pro",
-  "gemini-3.5-flash-lite",
-  "gemini-3.5-flash",
-  "gemini-3.5-pro",
-  "gemini-2.0-flash"
+  "gemini-2.5-flash",
+  "gemini-2.0-flash",
+  "gemini-1.5-flash",
+  "gemini-2.0-flash-lite",
+  "gemini-1.5-pro",
+  "gemini-2.5-pro"
 ];
 
 // Danh sách độ ưu tiên mô hình văn bản MỚI NHẤT & ỔN ĐỊNH của Google cho generateContent
 const GEMINI_NEWEST_PRIORITY = [
-  "gemini-3.8-flash",
-  "gemini-3.8-pro",
-  "gemini-3.5-flash-lite",
-  "gemini-3.5-flash",
-  "gemini-3.5-pro",
-  "gemini-3.5-flash-001",
-  "gemini-3-flash",
-  "gemini-3-pro",
+  "gemini-2.5-flash",
+  "gemini-2.5-pro",
   "gemini-2.0-flash",
-  "gemini-2.0-flash-001"
+  "gemini-2.0-flash-lite",
+  "gemini-1.5-flash",
+  "gemini-1.5-pro"
 ];
 
 let activeGeminiModel = getSavedGeminiModel();
@@ -1875,7 +1872,7 @@ async function discoverGeminiModels(apiKey) {
     }
     const data = await resp.json();
     const nonGenerateContentPatterns = [
-      "2.5", "deep-research", "research", "interactions", "computer-use", "8b", "2.0-flash-lite",
+      "deep-research", "research", "interactions", "computer-use", "8b",
       "tts", "-audio", "audio", "embedding", "imagen", "veo", "aqa", "robotics", "whisper", "sound",
       "learnlm", "medlm"
     ];
@@ -1887,7 +1884,7 @@ async function discoverGeminiModels(apiKey) {
           return false;
         }
         const modelId = m.name.toLowerCase();
-        // 2. Loại bỏ các model 2.5 (chỉ hỗ trợ Interactions API), deep-research, 8b, âm thanh, hình ảnh, hoặc model đã bị Google ngưng
+        // 2. Loại bỏ các model không hỗ trợ văn bản, audio, hoặc model chuyên biệt không tương thích
         if (nonGenerateContentPatterns.some(p => modelId.includes(p))) {
           return false;
         }
@@ -1907,7 +1904,7 @@ async function discoverGeminiModels(apiKey) {
         };
       });
 
-    // Sắp xếp các model theo thứ tự ưu tiên (Gemini 3.8 Flash -> 3.8 Pro -> 3.5 Flash-Lite -> 3.5 Flash...)
+    // Sắp xếp các model theo thứ tự ưu tiên (Gemini 2.5 Flash -> 2.5 Pro -> 2.0 Flash -> 2.0 Flash-Lite -> 1.5 Flash...)
     validModels.sort((a, b) => {
       const idxA = GEMINI_NEWEST_PRIORITY.indexOf(a.id);
       const idxB = GEMINI_NEWEST_PRIORITY.indexOf(b.id);
@@ -1935,21 +1932,21 @@ function populateGeminiModelDropdown(modelsList, preferredModel) {
 
   const autoOpt = document.createElement("option");
   autoOpt.value = "auto";
-  autoOpt.textContent = "🚀 Tự động chọn mô hình tối ưu (Ưu tiên Gemini 3.8 Flash / 3.5 Flash-Lite)";
+  autoOpt.textContent = "🚀 Tự động chọn mô hình tối ưu (Ưu tiên Gemini 2.5 Flash / 2.0 Flash)";
   select.appendChild(autoOpt);
 
   if (modelsList && modelsList.length > 0) {
     modelsList.forEach(m => {
-      if (m.id.includes("2.5") || m.id.includes("interactions") || m.id.includes("deep-research") || m.id.includes("tts") || m.id.includes("8b") || m.id.includes("2.0-flash-lite")) return;
+      if (m.id.includes("interactions") || m.id.includes("deep-research") || m.id.includes("tts") || m.id.includes("8b")) return;
       const opt = document.createElement("option");
       opt.value = m.id;
       let label = m.displayName || m.id;
-      if (m.id.includes("3.8-flash")) label = `🔥 ${label} (Thế hệ 3.8 MỚI NHẤT - Đỉnh cao trí tuệ & siêu tốc)`;
-      else if (m.id.includes("3.8-pro")) label = `🧠 ${label} (Tư duy suy luận sâu 3.8)`;
-      else if (m.id.includes("3.5-flash-lite")) label = `⚡ ${label} (Thế hệ 3.5 siêu tốc & tối ưu Quota - Khuyên dùng)`;
-      else if (m.id.includes("3.5-flash")) label = `⚡ ${label} (Thế hệ 3.5 toàn diện & chính xác cao)`;
-      else if (m.id.includes("3.5-pro")) label = `🧠 ${label} (Tư duy chuyên gia 3.5)`;
-      else if (m.id.includes("2.0-flash")) label = `⚡ ${label} (Thế hệ 2.0 đa nhiệm)`;
+      if (m.id.includes("2.5-flash")) label = `🔥 ${label} (Thế hệ mới nhất - Đỉnh cao trí tuệ & siêu tốc)`;
+      else if (m.id.includes("2.5-pro")) label = `🧠 ${label} (Tư duy suy luận sâu 2.5)`;
+      else if (m.id.includes("2.0-flash-lite")) label = `⚡ ${label} (Siêu tốc & tối ưu Quota - Khuyên dùng)`;
+      else if (m.id.includes("2.0-flash")) label = `⚡ ${label} (Chuẩn thế hệ 2.0 đa nhiệm)`;
+      else if (m.id.includes("1.5-flash")) label = `⚡ ${label} (Thế hệ 1.5 bền bỉ & chính xác cao)`;
+      else if (m.id.includes("1.5-pro")) label = `🧠 ${label} (Tư duy chuyên gia 1.5)`;
       else if (m.id.includes("pro")) label = `🧠 ${label} (Tư duy sâu & lập luận chuyên gia)`;
       else label = `⚡ ${label}`;
       opt.textContent = label;
@@ -1960,12 +1957,12 @@ function populateGeminiModelDropdown(modelsList, preferredModel) {
       const opt = document.createElement("option");
       opt.value = id;
       let label = id;
-      if (id.includes("3.8-flash")) label = `🔥 ${id} (Thế hệ 3.8 MỚI NHẤT - Đỉnh cao trí tuệ & siêu tốc)`;
-      else if (id.includes("3.8-pro")) label = `🧠 ${id} (Tư duy suy luận sâu 3.8)`;
-      else if (id.includes("3.5-flash-lite")) label = `⚡ ${id} (Thế hệ 3.5 siêu tốc & tối ưu Quota - Khuyên dùng)`;
-      else if (id.includes("3.5-flash")) label = `⚡ ${id} (Thế hệ 3.5 toàn diện & chính xác cao)`;
-      else if (id.includes("3.5-pro")) label = `🧠 ${id} (Tư duy chuyên gia 3.5)`;
-      else if (id.includes("2.0-flash")) label = `⚡ ${id} (Thế hệ 2.0 đa nhiệm)`;
+      if (id.includes("2.5-flash")) label = `🔥 ${id} (Thế hệ mới nhất - Đỉnh cao trí tuệ & siêu tốc)`;
+      else if (id.includes("2.5-pro")) label = `🧠 ${id} (Tư duy suy luận sâu 2.5)`;
+      else if (id.includes("2.0-flash-lite")) label = `⚡ ${id} (Siêu tốc & tối ưu Quota - Khuyên dùng)`;
+      else if (id.includes("2.0-flash")) label = `⚡ ${id} (Chuẩn thế hệ 2.0 đa nhiệm)`;
+      else if (id.includes("1.5-flash")) label = `⚡ ${id} (Thế hệ 1.5 bền bỉ & chính xác cao)`;
+      else if (id.includes("1.5-pro")) label = `🧠 ${id} (Tư duy chuyên gia 1.5)`;
       else label = `⚡ ${id}`;
       opt.textContent = label;
       select.appendChild(opt);
@@ -1980,7 +1977,7 @@ function populateGeminiModelDropdown(modelsList, preferredModel) {
   if (currentVal && currentVal !== "auto" && Array.from(select.options).some(o => o.value === currentVal)) {
     select.value = currentVal;
   } else {
-    select.value = "gemini-3.8-flash";
+    select.value = "gemini-2.5-flash";
   }
 }
 
@@ -2047,23 +2044,22 @@ async function testGeminiApiKey(apiKey) {
     }
     let candidateIds = [];
 
-    // Nếu người dùng chọn mô hình tương thích hợp lệ và không phải model đã bị khai tử
-    if (userSelected && userSelected !== "auto" && !userSelected.includes("2.5") && !userSelected.includes("interactions") && !userSelected.includes("2.0-flash-lite") && !userSelected.includes("8b")) {
+    // Nếu người dùng chọn mô hình tương thích hợp lệ
+    if (userSelected && userSelected !== "auto" && !userSelected.includes("interactions") && !userSelected.includes("8b")) {
       candidateIds = [userSelected, ...availableModels.map(m => m.id).filter(id => id !== userSelected)];
     } else {
       candidateIds = availableModels.map(m => m.id);
     }
 
-    // Đảm bảo các mô hình thế hệ 3.8 và 3.5 luôn đứng đầu danh sách thử
+    // Đảm bảo các mô hình thế hệ 2.5 và 2.0 luôn có mặt trong danh sách thử
     GEMINI_FALLBACK_MODELS.forEach(fb => {
       if (!candidateIds.includes(fb)) candidateIds.push(fb);
     });
-    // Đảm bảo gemini-3.8-flash là ứng viên số 1 nếu chưa chọn cụ thể, và có gemini-3.5-flash-lite dự phòng
-    if (!candidateIds.includes("gemini-3.8-flash")) {
-      candidateIds.unshift("gemini-3.8-flash");
+    if (!candidateIds.includes("gemini-2.5-flash")) {
+      candidateIds.unshift("gemini-2.5-flash");
     }
-    if (!candidateIds.includes("gemini-3.5-flash-lite")) {
-      candidateIds.push("gemini-3.5-flash-lite");
+    if (!candidateIds.includes("gemini-2.0-flash")) {
+      candidateIds.push("gemini-2.0-flash");
     }
 
     let testSuccess = false;
@@ -2071,8 +2067,7 @@ async function testGeminiApiKey(apiKey) {
 
     // Thử từng mô hình tương thích cho tới khi tìm thấy mô hình hoạt động hoàn hảo
     for (const modelCandidate of candidateIds) {
-      // Bỏ qua các model không tương thích generateContent hoặc đã bị Google khai tử
-      if (modelCandidate.includes("2.5") || modelCandidate.includes("interactions") || modelCandidate.includes("deep-research") || modelCandidate.includes("tts") || modelCandidate.includes("2.0-flash-lite") || modelCandidate.includes("8b")) {
+      if (modelCandidate.includes("interactions") || modelCandidate.includes("deep-research") || modelCandidate.includes("tts") || modelCandidate.includes("8b")) {
         continue;
       }
 
@@ -2122,10 +2117,9 @@ async function testGeminiApiKey(apiKey) {
             </div>`;
           }
 
-          const modelGenTag = modelCandidate.includes("3.8") ? "3.8" : "3.5";
           resultDiv.style.background = "var(--success-light)";
           resultDiv.style.color = "var(--success)";
-          resultDiv.innerHTML = `✅ <strong>API Key hoạt động xuất sắc!</strong><br>Đã kết nối thành công mô hình thế hệ ${modelGenTag} mới nhất: <code style="font-weight: 700; font-size: 0.95rem;">${modelCandidate}</code>.<br><small>Hệ thống đã sẵn sàng giải đề, rà soát và đính chính các câu sai bằng AI thế hệ mới!</small>${noteExtra}`;
+          resultDiv.innerHTML = `✅ <strong>API Key hoạt động xuất sắc!</strong><br>Đã kết nối thành công mô hình: <code style="font-weight: 700; font-size: 0.95rem;">${modelCandidate}</code>.<br><small>Hệ thống đã sẵn sàng giải đề, rà soát và đính chính các câu sai bằng AI!</small>${noteExtra}`;
           showToast(`Đã kết nối thành công Google Gemini (${modelCandidate})!`, "success");
           return;
         } else {
@@ -2170,32 +2164,33 @@ async function testGeminiApiKey(apiKey) {
 
 // Thực hiện một lệnh gọi sinh nội dung đơn lẻ tới Google Gemini với cơ chế thử cả v1beta và v1
 async function executeSingleGeminiRequest(promptText, cleanKey) {
-  let modelToUse = activeGeminiModel;
+  let modelToUse = activeGeminiModel || getSavedGeminiModel();
   const selectModel = document.getElementById("select-gemini-model");
   const customInput = document.getElementById("input-custom-gemini-model");
   if (selectModel && selectModel.value === "custom" && customInput && customInput.value.trim()) {
     modelToUse = customInput.value.trim();
   }
 
-  // Đảm bảo mô hình được chọn không phải là bản cũ đã bị Google khai tử (2.0-flash-lite, 1.5, 8b, 2.5)
-  if (!modelToUse || modelToUse.includes("2.5") || modelToUse.includes("interactions") || modelToUse.includes("tts") || modelToUse.includes("8b") || modelToUse.includes("2.0-flash-lite") || modelToUse.includes("1.5")) {
-    modelToUse = "gemini-3.8-flash";
-    activeGeminiModel = "gemini-3.8-flash";
-    setSavedGeminiModel("gemini-3.8-flash");
+  if (!modelToUse || modelToUse.includes("3.8") || modelToUse.includes("3.5") || modelToUse.includes("interactions") || modelToUse.includes("tts") || modelToUse.includes("8b")) {
+    modelToUse = "gemini-2.5-flash";
+    activeGeminiModel = "gemini-2.5-flash";
+    setSavedGeminiModel("gemini-2.5-flash");
   }
 
   const rawCandidates = [
     modelToUse,
     ...GEMINI_FALLBACK_MODELS.filter(m => m !== modelToUse)
   ];
-  if (!rawCandidates.includes("gemini-3.8-flash")) {
-    rawCandidates.unshift("gemini-3.8-flash");
+  if (!rawCandidates.includes("gemini-2.5-flash")) {
+    rawCandidates.unshift("gemini-2.5-flash");
   }
-  if (!rawCandidates.includes("gemini-3.5-flash-lite")) {
-    rawCandidates.push("gemini-3.5-flash-lite");
+  if (!rawCandidates.includes("gemini-2.0-flash")) {
+    rawCandidates.push("gemini-2.0-flash");
   }
-  // Lọc sạch các model không hợp lệ hoặc đã bị Google ngưng hoạt động
-  const modelsToTry = rawCandidates.filter(m => !m.includes("8b") && !m.includes("2.5") && !m.includes("tts") && !m.includes("interactions") && !m.includes("2.0-flash-lite"));
+  if (!rawCandidates.includes("gemini-1.5-flash")) {
+    rawCandidates.push("gemini-1.5-flash");
+  }
+  const modelsToTry = rawCandidates.filter(m => !m.includes("8b") && !m.includes("tts") && !m.includes("interactions") && !m.includes("3.8") && !m.includes("3.5"));
 
   const payload = {
     contents: [
@@ -2205,7 +2200,7 @@ async function executeSingleGeminiRequest(promptText, cleanKey) {
       }
     ],
     generationConfig: {
-      temperature: 0.2,
+      temperature: 0.25,
       maxOutputTokens: 8192
     }
   };
@@ -2213,7 +2208,6 @@ async function executeSingleGeminiRequest(promptText, cleanKey) {
   let lastError = null;
 
   for (const model of modelsToTry) {
-    // Thử endpoint v1beta trước, nếu gặp 404 thì thử tiếp v1 chuẩn
     const apiVersions = ["v1beta", "v1"];
     for (const apiVer of apiVersions) {
       const url = `https://generativelanguage.googleapis.com/${apiVer}/models/${model}:generateContent?key=${cleanKey}`;
@@ -2245,7 +2239,7 @@ async function executeSingleGeminiRequest(promptText, cleanKey) {
             continue;
           }
           if (errMsg.includes("no longer available") || errMsg.includes("is not found") || errMsg.includes("Interactions API")) {
-            console.warn(`[NovaQuiz AI] Model ${model} không còn khả dụng trên Google AI, tự động chuyển sang mô hình tiếp theo...`);
+            console.warn(`[NovaQuiz AI] Model ${model} không khả dụng trên ${apiVer}, chuyển tiếp...`);
             continue;
           } else {
             console.warn(`[NovaQuiz AI] Model ${model} (${apiVer}) không phản hồi: ${errMsg}`);
@@ -2265,30 +2259,33 @@ async function executeSingleGeminiRequest(promptText, cleanKey) {
 
 // Thực hiện một lệnh gọi đa phương tiện Multimodal (văn bản + nhiều hình ảnh) tới Google Gemini Vision
 async function executeGeminiMultimodalRequest(parts, cleanKey) {
-  let modelToUse = activeGeminiModel;
+  let modelToUse = activeGeminiModel || getSavedGeminiModel();
   const selectModel = document.getElementById("select-gemini-model");
   const customInput = document.getElementById("input-custom-gemini-model");
   if (selectModel && selectModel.value === "custom" && customInput && customInput.value.trim()) {
     modelToUse = customInput.value.trim();
   }
 
-  if (!modelToUse || modelToUse.includes("2.5") || modelToUse.includes("interactions") || modelToUse.includes("tts") || modelToUse.includes("8b") || modelToUse.includes("2.0-flash-lite") || modelToUse.includes("1.5")) {
-    modelToUse = "gemini-3.8-flash";
-    activeGeminiModel = "gemini-3.8-flash";
-    setSavedGeminiModel("gemini-3.8-flash");
+  if (!modelToUse || modelToUse.includes("3.8") || modelToUse.includes("3.5") || modelToUse.includes("interactions") || modelToUse.includes("tts") || modelToUse.includes("8b")) {
+    modelToUse = "gemini-2.5-flash";
+    activeGeminiModel = "gemini-2.5-flash";
+    setSavedGeminiModel("gemini-2.5-flash");
   }
 
   const rawCandidates = [
     modelToUse,
     ...GEMINI_FALLBACK_MODELS.filter(m => m !== modelToUse)
   ];
-  if (!rawCandidates.includes("gemini-3.8-flash")) {
-    rawCandidates.unshift("gemini-3.8-flash");
+  if (!rawCandidates.includes("gemini-2.5-flash")) {
+    rawCandidates.unshift("gemini-2.5-flash");
   }
-  if (!rawCandidates.includes("gemini-3.5-flash-lite")) {
-    rawCandidates.push("gemini-3.5-flash-lite");
+  if (!rawCandidates.includes("gemini-2.0-flash")) {
+    rawCandidates.push("gemini-2.0-flash");
   }
-  const modelsToTry = rawCandidates.filter(m => !m.includes("8b") && !m.includes("2.5") && !m.includes("tts") && !m.includes("interactions") && !m.includes("2.0-flash-lite"));
+  if (!rawCandidates.includes("gemini-1.5-flash")) {
+    rawCandidates.push("gemini-1.5-flash");
+  }
+  const modelsToTry = rawCandidates.filter(m => !m.includes("8b") && !m.includes("tts") && !m.includes("interactions") && !m.includes("3.8") && !m.includes("3.5"));
 
   const payload = {
     contents: [
@@ -2337,7 +2334,7 @@ async function executeGeminiMultimodalRequest(parts, cleanKey) {
             continue;
           }
           if (errMsg.includes("no longer available") || errMsg.includes("is not found") || errMsg.includes("Interactions API")) {
-            console.warn(`[NovaQuiz AI OCR] Model ${model} không còn khả dụng trên Google AI, tự động chuyển sang mô hình tiếp theo...`);
+            console.warn(`[NovaQuiz AI OCR] Model ${model} không khả dụng trên ${apiVer}, chuyển tiếp...`);
             continue;
           } else {
             console.warn(`[NovaQuiz AI OCR] Model ${model} (${apiVer}) không phản hồi: ${errMsg}`);
@@ -6754,13 +6751,8 @@ Giải thích: HDMI (High-Definition Multimedia Interface) truyền tải cả v
     btnLoadSampleDocx.addEventListener("click", async (e) => {
       e.stopPropagation(); // Stop opening file picker
       try {
-        // Ưu tiên tải file mẫu nâng cao có hình ảnh và câu hỏi không có A,B,C,D
-        let targetFile = "de_thi_co_anh_va_khong_abcd.docx";
-        let resp = await fetch(targetFile);
-        if (!resp.ok) {
-          targetFile = "de_thi_mau_to_mau.docx";
-          resp = await fetch(targetFile);
-        }
+        const targetFile = "de_thi_co_anh_va_khong_abcd.docx";
+        const resp = await fetch(targetFile);
         if (!resp.ok) throw new Error("File not found");
         const blob = await resp.blob();
         parseDocxFile(blob, targetFile);
@@ -6841,7 +6833,7 @@ Giải thích: HDMI (High-Definition Multimedia Interface) truyền tải cả v
       if (val === "custom") {
         if (containerCustomModel) containerCustomModel.style.display = "block";
         if (inputCustomModel) {
-          const customVal = inputCustomModel.value.trim() || getSavedGeminiCustomModel() || "gemini-3.8-flash";
+          const customVal = inputCustomModel.value.trim() || getSavedGeminiCustomModel() || "gemini-2.5-flash";
           inputCustomModel.value = customVal;
           inputCustomModel.focus();
           activeGeminiModel = customVal;
@@ -6856,9 +6848,9 @@ Giải thích: HDMI (High-Definition Multimedia Interface) truyền tải cả v
           if (modelBadge) modelBadge.textContent = `Đang chọn: ${val}`;
           showToast(`Đã chuyển sang mô hình: ${val}`, "info");
         } else {
-          activeGeminiModel = "gemini-3.8-flash";
-          setSavedGeminiModel("gemini-3.8-flash");
-          if (modelBadge) modelBadge.textContent = "Tự động chọn (Ưu tiên Gemini 3.8 Flash)";
+          activeGeminiModel = "gemini-2.5-flash";
+          setSavedGeminiModel("gemini-2.5-flash");
+          if (modelBadge) modelBadge.textContent = "Tự động chọn (Ưu tiên Gemini 2.5 Flash / 2.0 Flash)";
         }
       }
     });
@@ -7013,16 +7005,15 @@ Giải thích: HDMI (High-Definition Multimedia Interface) truyền tải cả v
       }
       setSavedGeminiKey(key);
 
-      let modelChoice = selectModel ? selectModel.value : "gemini-3.8-flash";
+      let modelChoice = selectModel ? selectModel.value : "gemini-2.5-flash";
       if (modelChoice === "custom") {
-        modelChoice = (inputCustomModel ? inputCustomModel.value.trim() : "") || "gemini-3.8-flash";
+        modelChoice = (inputCustomModel ? inputCustomModel.value.trim() : "") || "gemini-2.5-flash";
       } else if (modelChoice === "auto") {
-        modelChoice = "gemini-3.8-flash";
+        modelChoice = "gemini-2.5-flash";
       }
 
-      // Đảm bảo không chọn model cũ bị lỗi
-      if (modelChoice.includes("2.5") || modelChoice.includes("interactions") || modelChoice.includes("tts") || modelChoice.includes("2.0-flash-lite") || modelChoice.includes("8b")) {
-        modelChoice = "gemini-3.8-flash";
+      if (modelChoice.includes("3.8") || modelChoice.includes("3.5") || modelChoice.includes("interactions") || modelChoice.includes("tts") || modelChoice.includes("8b")) {
+        modelChoice = "gemini-2.5-flash";
       }
 
       activeGeminiModel = modelChoice;
@@ -8276,6 +8267,9 @@ document.addEventListener("DOMContentLoaded", () => {
   const btnSubmitAiGen = document.getElementById("btn-submit-ai-generator");
   if (btnSubmitAiGen) btnSubmitAiGen.addEventListener("click", handleGenerateExamWithAi);
 
+  const btnSubmitAiOffline = document.getElementById("btn-submit-ai-offline");
+  if (btnSubmitAiOffline) btnSubmitAiOffline.addEventListener("click", handleGenerateExamOffline);
+
   document.querySelectorAll(".ai-gen-suggestion").forEach(btn => {
     btn.addEventListener("click", () => {
       const topicInput = document.getElementById("ai-gen-topic");
@@ -8407,7 +8401,7 @@ document.addEventListener("DOMContentLoaded", () => {
 function openAiGeneratorModal() {
   const modal = document.getElementById("modal-ai-generator");
   if (!modal) return;
-  modal.style.display = "flex";
+  modal.classList.add("open");
   
   const savedKey = getSavedGeminiKey();
   const keyContainer = document.getElementById("ai-gen-key-container");
@@ -8427,7 +8421,7 @@ function openAiGeneratorModal() {
     btnSubmit.disabled = false;
     btnSubmit.innerHTML = `
       <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
-      🚀 Bắt đầu Tạo Đề Bằng AI
+      🚀 Bắt đầu Tạo Đề Bằng AI Gemini
     `;
   }
 
@@ -8437,9 +8431,433 @@ function openAiGeneratorModal() {
 
 function closeAiGeneratorModal() {
   const modal = document.getElementById("modal-ai-generator");
-  if (modal) modal.style.display = "none";
+  if (modal) modal.classList.remove("open");
 }
 
+// Hàm hậu xử lý và đưa bộ đề đã tạo vào giao diện Creator
+function applyGeneratedQuizToCreator(topic, rawOutput, count, isAi = true) {
+  if (!rawOutput || !rawOutput.trim()) {
+    throw new Error("Dữ liệu đề thi tạo ra rỗng hoặc không hợp lệ!");
+  }
+
+  // 1. Làm sạch các thẻ markdown code fences như ```markdown ... ```
+  let cleanedText = rawOutput
+    .replace(/^```[a-zA-Z]*\r?\n?/gm, "")
+    .replace(/```\s*$/gm, "")
+    .trim();
+
+  // Loại bỏ các đoạn văn chào đầu của AI nếu có trước Câu 1
+  const firstQIdx = cleanedText.search(/^(Câu\s*\d+|1[\.\:\)])/im);
+  if (firstQIdx > 0) {
+    cleanedText = cleanedText.slice(firstQIdx).trim();
+  }
+
+  // 2. Chuyển sang View Creator và kích hoạt Tab Dán Thông Minh
+  switchView("view-creator");
+
+  const tabPasteBtn = document.querySelector('.creator-tab[data-tab="tab-smart-paste"]');
+  if (tabPasteBtn) {
+    document.querySelectorAll(".creator-tab").forEach(t => t.classList.remove("active"));
+    tabPasteBtn.classList.add("active");
+    document.querySelectorAll(".creator-panel").forEach(p => p.classList.remove("active"));
+    const panel = document.getElementById("tab-smart-paste");
+    if (panel) panel.classList.add("active");
+  }
+
+  // 3. Đưa văn bản đề thi vào khung soạn thảo
+  const textarea = document.getElementById("smart-text-input");
+  if (textarea) {
+    textarea.value = cleanedText;
+  }
+
+  // 4. Tự động thiết lập Tiêu đề đề thi
+  const titleInput = document.getElementById("input-quiz-title");
+  if (titleInput && (!titleInput.value.trim() || titleInput.value.startsWith("Đề thi"))) {
+    let neatTitle = topic.length > 50 ? topic.substring(0, 50) + "..." : topic;
+    titleInput.value = isAi ? `Đề thi AI: ${neatTitle}` : `Đề ôn tập: ${neatTitle}`;
+  }
+
+  // 5. Tự động nhận diện môn học / danh mục
+  const catInput = document.getElementById("input-quiz-category");
+  if (catInput && (!catInput.value.trim() || catInput.value === "Chung")) {
+    const lowerT = topic.toLowerCase();
+    if (lowerT.includes("sử") || lowerT.includes("lịch sử")) catInput.value = "Lịch sử";
+    else if (lowerT.includes("địa") || lowerT.includes("địa lý")) catInput.value = "Địa lý";
+    else if (lowerT.includes("anh") || lowerT.includes("english")) catInput.value = "Tiếng Anh";
+    else if (lowerT.includes("toán") || lowerT.includes("math")) catInput.value = "Toán học";
+    else if (lowerT.includes("tin") || lowerT.includes("it") || lowerT.includes("code") || lowerT.includes("lập trình") || lowerT.includes("office") || lowerT.includes("excel")) catInput.value = "Tin học";
+    else if (lowerT.includes("sinh")) catInput.value = "Sinh học";
+    else if (lowerT.includes("hóa")) catInput.value = "Hóa học";
+    else if (lowerT.includes("lý") || lowerT.includes("vật lý")) catInput.value = "Vật lý";
+    else if (lowerT.includes("luật") || lowerT.includes("pháp luật") || lowerT.includes("hiến pháp") || lowerT.includes("gdcd") || lowerT.includes("công dân")) catInput.value = "Pháp luật";
+    else catInput.value = "Tổng hợp";
+  }
+
+  // 6. Cập nhật thời gian làm bài khuyến nghị (1.5 phút/câu)
+  const timeInput = document.getElementById("input-quiz-time");
+  if (timeInput) {
+    const recTime = Math.max(5, Math.round(count * 1.5));
+    timeInput.value = recTime;
+  }
+
+  // 7. Cập nhật thống kê và tự động mở danh sách câu hỏi phân tích để người dùng thấy ngay
+  updateSmartParsePreview();
+
+  const previewContainer = document.getElementById("parsed-preview-container");
+  const togglePreviewBtn = document.getElementById("btn-toggle-parsed-preview");
+  if (previewContainer) {
+    previewContainer.style.display = "block";
+    if (togglePreviewBtn) togglePreviewBtn.textContent = "Ẩn danh sách câu phân tích";
+    const parsed = parseRawQuestions(cleanedText);
+    renderParsedQuestionsList(parsed.questions);
+  }
+
+  // 8. Đóng modal tạo đề và bắn pháo hoa chúc mừng
+  closeAiGeneratorModal();
+  triggerCelebrationConfetti();
+
+  const prefix = isAi ? "🎉 AI Gemini" : "⚡ Hệ thống";
+  showToast(`${prefix} đã tạo thành công bộ đề thi với ${count} câu hỏi về "${topic}"!`, "success");
+}
+
+// BỘ TRÌNH SINH ĐỀ THÔNG MINH OFFLINE (KHÔNG CẦN GEMINI KEY)
+function generateOfflineQuestions(topic, count = 10, level = "Cân bằng mọi mức độ", hasExpl = true) {
+  const normTopic = (topic || "").toLowerCase();
+
+  const BANK_HISTORY = [
+    {
+      q: "Chiến dịch Điện Biên Phủ toàn thắng vào ngày, tháng, năm nào?",
+      opts: ["07/05/1954", "30/04/1975", "19/08/1945", "02/09/1945"],
+      c: 0,
+      expl: "Chiến dịch Điện Biên Phủ kết thúc thắng lợi vào chiều ngày 7/5/1954 khi tướng De Castries và toàn bộ bộ chỉ huy Pháp đầu hàng."
+    },
+    {
+      q: "Chiến dịch Hồ Chí Minh lịch sử giải phóng hoàn toàn miền Nam, thống nhất đất nước diễn ra vào năm nào?",
+      opts: ["Năm 1972", "Năm 1975", "Năm 1973", "Năm 1979"],
+      c: 1,
+      expl: "Vào lúc 11h30 ngày 30/4/1975, lá cờ chiến thắng tung bay trên nóc Dinh Độc Lập, đánh dấu thắng lợi hoàn toàn của Chiến dịch Hồ Chí Minh."
+    },
+    {
+      q: "Chủ tịch Hồ Chí Minh đọc bản Tuyên ngôn Độc lập khai sinh ra nước Việt Nam Dân chủ Cộng hòa tại đâu?",
+      opts: ["Quảng trường Ba Đình (Hà Nội)", "Bến Nhà Rồng (TP. Hồ Chí Minh)", "Cây đa Tân Trào (Tuyên Quang)", "Chiến khu Việt Bắc"],
+      c: 0,
+      expl: "Ngày 2/9/1945, tại Quảng trường Ba Đình (Hà Nội), Chủ tịch Hồ Chí Minh đã đọc bản Tuyên ngôn Độc lập."
+    },
+    {
+      q: "Hiệp định Genève về chấm dứt chiến tranh, lập lại hòa bình ở Đông Dương được ký kết vào năm nào?",
+      opts: ["1950", "1953", "1954", "1973"],
+      c: 2,
+      expl: "Hiệp định Genève được ký kết vào ngày 21/7/1954, lấy vĩ tuyến 17 làm giới tuyến quân sự tạm thời."
+    },
+    {
+      q: "Phong trào Đồng Khởi (1959 - 1960) nổ ra tiêu biểu đầu tiên tại địa phương nào?",
+      opts: ["Định Thủy, Bình Khánh, Phước Hiệp (Bến Tre)", "Củ Chi (Gia Định)", "Ấp Bắc (Mỹ Tho)", "Trảng Bàng (Tây Ninh)"],
+      c: 0,
+      expl: "Phong trào Đồng Khởi bùng nổ tiêu biểu nhất tại huyện Mỏ Cày, tỉnh Bến Tre vào ngày 17/1/1960."
+    },
+    {
+      q: "Chiến thắng nào của quân và dân miền Bắc được ví như trận 'Điện Biên Phủ trên không'?",
+      opts: ["Trận 12 ngày đêm cuối năm 1972 tại Hà Nội - Hải Phòng", "Chiến dịch Khe Sanh 1968", "Chiến dịch Đường 9 - Nam Lào 1971", "Tổng tiến công Tết Mậu Thân 1968"],
+      c: 0,
+      expl: "Trận chiến đấu 12 ngày đêm đánh bại pháo đài bay B-52 của Mỹ cuối tháng 12/1972 được ngợi ca là chiến thắng Điện Biên Phủ trên không."
+    },
+    {
+      q: "Mặt trận Dân tộc Giải phóng miền Nam Việt Nam được thành lập vào thời gian nào?",
+      opts: ["20/12/1960", "01/01/1959", "19/05/1965", "03/02/1960"],
+      c: 0,
+      expl: "Mặt trận Dân tộc Giải phóng miền Nam Việt Nam được thành lập vào ngày 20/12/1960 tại Tây Ninh."
+    },
+    {
+      q: "Đại hội đại biểu toàn quốc lần thứ mấy của Đảng đã đề ra đường lối Đổi mới đất nước?",
+      opts: ["Đại hội IV (1976)", "Đại hội V (1982)", "Đại hội VI (1986)", "Đại hội VII (1991)"],
+      c: 2,
+      expl: "Đại hội đại biểu toàn quốc lần thứ VI (tháng 12/1986) của Đảng Cộng sản Việt Nam đã chính thức khởi xướng công cuộc Đổi mới toàn diện đất nước."
+    },
+    {
+      q: "Hiệp định Paris về chấm dứt chiến tranh, lập lại hòa bình ở Việt Nam được ký vào thời gian nào?",
+      opts: ["27/01/1973", "20/07/1954", "30/04/1975", "19/12/1946"],
+      c: 0,
+      expl: "Hiệp định Paris ký ngày 27/1/1973 buộc quân đội Mỹ và đồng minh phải rút khỏi miền Nam Việt Nam."
+    },
+    {
+      q: "Chiến thắng mở màn cho cuộc Tổng tiến công và nổi dậy mùa Xuân 1975 là trận đánh tại đâu?",
+      opts: ["Thị xã Buôn Ma Thuột (Tây Nguyên)", "Huế - Đà Nẵng", "Xuân Lộc", "Phước Long"],
+      c: 0,
+      expl: "Trận đánh then chốt Buôn Ma Thuột ngày 10/3/1975 đã mở màn thắng lợi cho chiến dịch Tây Nguyên và bước ngoặt Tổng tiến công Xuân 1975."
+    }
+  ];
+
+  const BANK_IT = [
+    {
+      q: "Trong hệ điều hành Windows, tổ hợp phím nào dùng để mở nhanh cửa sổ Task Manager?",
+      opts: ["Ctrl + Shift + Esc", "Ctrl + Alt + F4", "Alt + Tab", "Windows + R"],
+      c: 0,
+      expl: "Tổ hợp Ctrl + Shift + Esc mở thẳng trình quản lý tác vụ Task Manager nhanh nhất mà không cần qua menu trung gian."
+    },
+    {
+      q: "Trong Microsoft Excel, hàm nào được dùng để tính trung bình cộng của một dãy số?",
+      opts: ["AVERAGE", "SUM", "COUNT", "MEDIAN"],
+      c: 0,
+      expl: "Cú pháp =AVERAGE(range) trả về giá trị trung bình cộng số học của các ô trong vùng được chọn."
+    },
+    {
+      q: "Giao thức mạng nào có nhiệm vụ gán địa chỉ IP tự động cho các thiết bị khi kết nối vào mạng?",
+      opts: ["DHCP", "DNS", "HTTP", "FTP"],
+      c: 0,
+      expl: "DHCP (Dynamic Host Configuration Protocol) tự động cấp phát địa chỉ IP và cấu hình mạng cho các thiết bị client."
+    },
+    {
+      q: "Thiết bị phần cứng nào được ví như 'bộ não' trung tâm xử lý dữ liệu của máy tính?",
+      opts: ["CPU (Central Processing Unit)", "RAM (Random Access Memory)", "Ổ cứng SSD/HDD", "Nguồn PSU"],
+      c: 0,
+      expl: "CPU chịu trách nhiệm tiếp nhận, phân tích lệnh và thực thi các phép tính toán chính của máy tính."
+    },
+    {
+      q: "Tổ hợp phím tắt tiêu chuẩn nào trong các trình soạn thảo để phục hồi lại thao tác vừa Undo?",
+      opts: ["Ctrl + Y (hoặc Ctrl + Shift + Z)", "Ctrl + Z", "Ctrl + R", "Ctrl + Shift + V"],
+      c: 0,
+      expl: "Ctrl + Y (Redo) dùng để làm lại hành động vừa bị hủy (Undo bằng Ctrl + Z)."
+    },
+    {
+      q: "Trong Microsoft Word, tổ hợp phím nào dùng để căn lề đều hai bên (Justify)?",
+      opts: ["Ctrl + J", "Ctrl + E", "Ctrl + L", "Ctrl + R"],
+      c: 0,
+      expl: "Ctrl + J là phím tắt căn đều hai biên đoạn văn bản (Justify alignment)."
+    },
+    {
+      q: "Trong Excel, ký tự nào bắt buộc phải đặt trước tên cột hoặc dòng để tạo địa chỉ tuyệt đối (cố định ô)?",
+      opts: ["Dấu đô la ($)", "Dấu thăng (#)", "Dấu và (&)", "Dấu phần trăm (%)"],
+      c: 0,
+      expl: "Ký hiệu $ trước chữ cái cột hoặc số dòng (ví dụ $A$1) dùng để cố định ô khi sao chép công thức."
+    },
+    {
+      q: "Chuẩn giao thức bảo mật mã hóa đường truyền web giữa trình duyệt và máy chủ là gì?",
+      opts: ["HTTPS (Port 443)", "HTTP (Port 80)", "Telnet (Port 23)", "SMTP (Port 25)"],
+      c: 0,
+      expl: "HTTPS sử dụng chứng chỉ SSL/TLS để mã hóa dữ liệu truyền tải giữa người dùng và website."
+    },
+    {
+      q: "Loại bộ nhớ nào sau đây sẽ bị mất toàn bộ dữ liệu khi ngắt nguồn điện máy tính?",
+      opts: ["RAM", "ROM", "Ổ đĩa quang CD/DVD", "Ổ cứng SSD"],
+      c: 0,
+      expl: "RAM là bộ nhớ truy xuất ngẫu nhiên khả biến (volatile memory), dữ liệu sẽ biến mất khi tắt máy hoặc mất điện."
+    },
+    {
+      q: "Trong cơ sở dữ liệu quan hệ, câu lệnh SQL nào dùng để truy vấn và lấy dữ liệu từ bảng?",
+      opts: ["SELECT", "INSERT", "UPDATE", "DROP"],
+      c: 0,
+      expl: "Câu lệnh SELECT ... FROM ... là câu lệnh căn bản nhất trong SQL để đọc và lọc dữ liệu từ bảng."
+    }
+  ];
+
+  const BANK_ENGLISH = [
+    {
+      q: "Choose the correct sentence in Present Perfect tense:",
+      opts: ["I have lived in this city for five years.", "I has lived in this city since five years.", "I lived in this city for five years ago.", "I am living in this city since 2020."],
+      c: 0,
+      expl: "Subject 'I' đi với 'have + V3/ed', và khoảng thời gian 'five years' sử dụng giới từ 'for'."
+    },
+    {
+      q: "Complete the conditional sentence: 'If it rains tomorrow, we _______ the outdoor picnic.'",
+      opts: ["will cancel", "would cancel", "canceled", "had canceled"],
+      c: 0,
+      expl: "Câu điều kiện loại 1 (sự việc có thể xảy ra ở hiện tại hoặc tương lai): If + S + V(hiện tại đơn), S + will + V-inf."
+    },
+    {
+      q: "Convert to passive voice: 'They built this bridge in 1995.'",
+      opts: ["This bridge was built in 1995.", "This bridge is built in 1995.", "This bridge has been built in 1995.", "This bridge had built in 1995."],
+      c: 0,
+      expl: "Thì quá khứ đơn ở dạng bị động: was/were + V3/ed (This bridge was built...)."
+    },
+    {
+      q: "Which word is a synonym for 'abundant'?",
+      opts: ["Plentiful", "Scarce", "Tiny", "Insufficient"],
+      c: 0,
+      expl: "'Abundant' có nghĩa là dồi dào, phong phú, đồng nghĩa với 'Plentiful'."
+    },
+    {
+      q: "Choose the correct relative pronoun: 'The doctor _______ treated my father is very experienced.'",
+      opts: ["who", "which", "whom", "whose"],
+      c: 0,
+      expl: "'The doctor' là danh từ chỉ người làm chủ ngữ của mệnh đề quan hệ, do đó dùng đại từ quan hệ 'who'."
+    },
+    {
+      q: "Complete the sentence: 'She is interested _______ learning new foreign languages.'",
+      opts: ["in", "on", "at", "about"],
+      c: 0,
+      expl: "Cấu trúc cố định: to be interested in + V-ing / Noun (quan tâm, hứng thú với điều gì)."
+    },
+    {
+      q: "Identify the correct comparative form: 'This task is _______ than that one.'",
+      opts: ["more difficult", "difficulter", "most difficult", "as difficult"],
+      c: 0,
+      expl: "'Difficult' là tính từ dài có 3 âm tiết, dạng so sánh hơn là 'more difficult'."
+    },
+    {
+      q: "Which tense expresses an action happening at the moment of speaking?",
+      opts: ["Present Continuous", "Simple Present", "Present Perfect", "Past Continuous"],
+      c: 0,
+      expl: "Thì Hiện tại tiếp diễn (Present Continuous) diễn tả một hành động đang xảy ra tại thời điểm nói."
+    },
+    {
+      q: "Choose the correct modal verb: 'You _______ wear a helmet when riding a motorbike. It is the law.'",
+      opts: ["must", "might", "can", "should not"],
+      c: 0,
+      expl: "'Must' diễn tả nghĩa vụ hoặc quy định luật pháp bắt buộc phải tuân theo."
+    },
+    {
+      q: "Select the opposite (antonym) of 'generous':",
+      opts: ["Selfish / Stingy", "Kind", "Helpful", "Friendly"],
+      c: 0,
+      expl: "'Generous' (hào phóng, rộng lượng) có từ trái nghĩa là 'Selfish' (ích kỷ) hoặc 'Stingy' (keo kiệt)."
+    }
+  ];
+
+  const BANK_LAW = [
+    {
+      q: "Theo Hiến pháp năm 2013, cơ quan nào là cơ quan đại biểu cao nhất của Nhân dân, cơ quan quyền lực nhà nước cao nhất của nước CHXHCN Việt Nam?",
+      opts: ["Quốc hội", "Chính phủ", "Tòa án nhân dân tối cao", "Viện kiểm sát nhân dân tối cao"],
+      c: 0,
+      expl: "Điều 69 Hiến pháp 2013 quy định Quốc hội là cơ quan đại biểu cao nhất của Nhân dân, cơ quan quyền lực nhà nước cao nhất."
+    },
+    {
+      q: "Cơ quan hành chính nhà nước cao nhất của nước Cộng hòa Xã hội Chủ nghĩa Việt Nam là cơ quan nào?",
+      opts: ["Chính phủ", "Quốc hội", "Chủ tịch nước", "Bộ Nội vụ"],
+      c: 0,
+      expl: "Chính phủ là cơ quan hành chính nhà nước cao nhất, thực hiện quyền hành pháp và là cơ quan chấp hành của Quốc hội."
+    },
+    {
+      q: "Theo quy định của pháp luật Việt Nam, công dân đủ bao nhiêu tuổi trở lên có quyền bầu cử đại biểu Quốc hội và Hội đồng nhân dân?",
+      opts: ["Đủ 18 tuổi", "Đủ 16 tuổi", "Đủ 20 tuổi", "Đủ 21 tuổi"],
+      c: 0,
+      expl: "Công dân đủ 18 tuổi trở lên có quyền bầu cử và đủ 21 tuổi trở lên có quyền ứng cử theo quy định của Hiến pháp và Luật Bầu cử."
+    },
+    {
+      q: "Cơ quan nào có thẩm quyền xét xử của nước Cộng hòa Xã hội Chủ nghĩa Việt Nam, thực hiện quyền tư pháp?",
+      opts: ["Tòa án nhân dân", "Viện kiểm sát nhân dân", "Công an nhân dân", "Thanh tra Chính phủ"],
+      c: 0,
+      expl: "Tòa án nhân dân là cơ quan xét xử của nước CHXHCN Việt Nam, thực hiện quyền tư pháp (Điều 102 Hiến pháp 2013)."
+    },
+    {
+      q: "Hình thức dân chủ mà công dân trực tiếp bày tỏ ý chí của mình để quyết định những vấn đề quan trọng của đất nước gọi là gì?",
+      opts: ["Trưng cầu ý dân (Dân chủ trực tiếp)", "Dân chủ đại diện", "Họp báo", "Đơn thư khiếu nại"],
+      c: 0,
+      expl: "Trưng cầu ý dân là hình thức dân chủ trực tiếp để nhân dân quyết định các vấn đề hệ trọng của quốc gia."
+    }
+  ];
+
+  let selectedBank = [];
+  if (normTopic.includes("sử") || normTopic.includes("lịch sử") || normTopic.includes("1945") || normTopic.includes("1975") || normTopic.includes("chiến tranh")) {
+    selectedBank = BANK_HISTORY;
+  } else if (normTopic.includes("tin") || normTopic.includes("it") || normTopic.includes("excel") || normTopic.includes("word") || normTopic.includes("office") || normTopic.includes("máy tính") || normTopic.includes("code")) {
+    selectedBank = BANK_IT;
+  } else if (normTopic.includes("anh") || normTopic.includes("english") || normTopic.includes("ngữ pháp") || normTopic.includes("từ vựng")) {
+    selectedBank = BANK_ENGLISH;
+  } else if (normTopic.includes("luật") || normTopic.includes("pháp luật") || normTopic.includes("hiến pháp") || normTopic.includes("gdcd") || normTopic.includes("ktc") || normTopic.includes("công dân")) {
+    selectedBank = BANK_LAW;
+  } else {
+    selectedBank = [
+      {
+        q: `Khái niệm căn bản và mục tiêu cốt lõi của "${topic}" được định nghĩa chính xác nhất là gì?`,
+        opts: [
+          `Là tập hợp các nguyên lý, phương pháp và quy trình chuẩn mực được nghiên cứu và áp dụng vào thực tiễn trong lĩnh vực ${topic}.`,
+          `Chỉ là một lý thuyết mang tính trừu tượng, không thể đo lường hoặc áp dụng vào đời sống.`,
+          `Một tập hợp các quy định ngẫu nhiên không có tính hệ thống hoặc nền tảng học thuật.`,
+          `Quy chuẩn kỹ thuật chỉ áp dụng cho máy tính và hệ thống cơ khí tự động.`
+        ],
+        c: 0,
+        expl: `Trong khoa học và ứng dụng thực tiễn, ${topic} được xây dựng trên hệ thống các nguyên lý, quy chuẩn và phương pháp luận rõ ràng.`
+      },
+      {
+        q: `Nguyên tắc nào sau đây giữ vai trò tiên quyết nhằm đảm bảo tính hiệu quả và bền vững khi nghiên cứu hoặc triển khai "${topic}"?`,
+        opts: [
+          `Tuân thủ các nguyên tắc khoa học, đo lường dữ liệu khách quan và kiểm chứng qua thực nghiệm.`,
+          `Thực hiện hoàn toàn dựa trên cảm tính cá nhân mà không cần quy trình tiêu chuẩn.`,
+          `Bỏ qua các bước kiểm tra an toàn và phân tích rủi ro để rút ngắn tối đa thời gian.`,
+          `Chỉ áp dụng sao chép máy móc mô hình cũ mà không thích ứng với bối cảnh mới.`
+        ],
+        c: 0,
+        expl: `Tính khoa học, kiểm chứng thực nghiệm và khả năng thích ứng linh hoạt là những tiêu chuẩn vàng trong lĩnh vực ${topic}.`
+      },
+      {
+        q: `Một trong những sai lầm phổ biến cần tránh nhất khi tiếp cận và thực hiện "${topic}" là gì?`,
+        opts: [
+          `Đốt cháy giai đoạn, xem nhẹ nền tảng cơ bản và thiếu sự nhất quán trong phương pháp.`,
+          `Nắm vững các thuật ngữ chuyên ngành và hiểu rõ logic vận hành của hệ thống.`,
+          `Xây dựng kế hoạch chi tiết, có phân bổ mục tiêu rõ ràng theo từng giai đoạn.`,
+          `Thường xuyên đánh giá định kỳ và tối ưu hóa quy trình dựa trên phản hồi thực tế.`
+        ],
+        c: 0,
+        expl: `Việc thiếu kiến thức nền tảng và nôn nóng đốt cháy giai đoạn thường dẫn đến các sai sót nghiêm trọng và thiếu tính bền vững.`
+      },
+      {
+        q: `Yếu tố then chốt tạo nên sự khác biệt vượt trội về chất lượng khi đánh giá kết quả của "${topic}" là gì?`,
+        opts: [
+          `Độ chính xác, tính ứng dụng thực tế cao và khả năng giải quyết triệt để vấn đề đặt ra.`,
+          `Sự phức tạp hóa vấn đề không cần thiết khiến người dùng khó tiếp cận.`,
+          `Số lượng đầu việc lớn nhưng không mang lại giá trị gia tăng cụ thể.`,
+          `Thời gian kéo dài vô thời hạn mà không có thước đo kết quả cụ thể.`
+        ],
+        c: 0,
+        expl: `Giá trị cốt lõi của mọi giải pháp trong ${topic} luôn nằm ở tính ứng dụng thực tiễn và hiệu quả giải quyết vấn đề.`
+      },
+      {
+        q: `Để nâng cao năng lực chuyên môn và tối ưu hóa kỹ năng trong "${topic}", bước hành động nào được các chuyên gia khuyên dùng?`,
+        opts: [
+          `Liên tục cập nhật kiến thức mới, thực hành thường xuyên và rút kinh nghiệm từ các tình huống thực tế.`,
+          `Chỉ dựa vào kinh nghiệm cá nhân sẵn có mà không tiếp thu xu hướng phát triển mới.`,
+          `Hạn chế trao đổi và cô lập kiến thức với cộng đồng chuyên gia.`,
+          `Chỉ tập trung vào lý thuyết trên sách vở và tránh các bài tập thực hành ứng dụng.`
+        ],
+        c: 0,
+        expl: `Học đi đôi với hành, liên tục cập nhật đổi mới là chìa khóa để làm chủ kiến thức và kỹ năng trong ${topic}.`
+      }
+    ];
+  }
+
+  const resultQuestions = [];
+  const total = Math.min(count, 30);
+  const letters = ["A", "B", "C", "D"];
+
+  for (let i = 0; i < total; i++) {
+    const item = selectedBank[i % selectedBank.length];
+    const optLines = item.opts.map((opt, oIdx) => {
+      const isCorrect = oIdx === item.c;
+      return `${isCorrect ? "*" : ""}${letters[oIdx]}. ${opt}`;
+    });
+
+    let qBlock = `Câu ${i + 1}: ${item.q}\n` + optLines.join("\n");
+    if (hasExpl && item.expl) {
+      qBlock += `\nGiải thích: ${item.expl}`;
+    }
+    resultQuestions.push(qBlock);
+  }
+
+  return resultQuestions.join("\n\n");
+}
+
+// Xử lý tạo đề Offline tức thì (Không cần Gemini API Key)
+function handleGenerateExamOffline() {
+  const topicInput = document.getElementById("ai-gen-topic");
+  const countSelect = document.getElementById("ai-gen-count");
+  const levelSelect = document.getElementById("ai-gen-level");
+  const explCheck = document.getElementById("ai-gen-explanation");
+
+  const topic = (topicInput ? topicInput.value : "").trim() || "Kiến thức tổng hợp";
+  const count = parseInt(countSelect ? countSelect.value : 10) || 10;
+  const level = levelSelect ? levelSelect.value : "Cân bằng mọi mức độ";
+  const hasExpl = explCheck ? explCheck.checked : true;
+
+  try {
+    const generatedText = generateOfflineQuestions(topic, count, level, hasExpl);
+    applyGeneratedQuizToCreator(topic, generatedText, count, false);
+  } catch (err) {
+    console.error("Offline Exam Generator error:", err);
+    showToast(`Lỗi tạo đề offline: ${err.message || err}`, "danger");
+  }
+}
+
+// Xử lý tạo đề thi bằng AI Google Gemini
 async function handleGenerateExamWithAi() {
   const topicInput = document.getElementById("ai-gen-topic");
   const countSelect = document.getElementById("ai-gen-count");
@@ -8466,7 +8884,7 @@ async function handleGenerateExamWithAi() {
   if (!apiKey) {
     const keyContainer = document.getElementById("ai-gen-key-container");
     if (keyContainer) keyContainer.style.display = "block";
-    showToast("Vui lòng nhập Google Gemini API Key để AI bắt đầu sinh đề!", "warning");
+    showToast("Vui lòng nhập Google Gemini API Key hoặc bấm nút '⚡ Sinh Đề Mẫu Offline' bên dưới!", "warning");
     if (keyInput) keyInput.focus();
     return;
   }
@@ -8511,37 +8929,7 @@ Giải thích: Hà Nội là thủ đô của nước Cộng hòa Xã hội Ch�
       throw new Error("Không nhận được phản hồi hợp lệ từ AI Gemini.");
     }
 
-    const cleanedText = rawAiOutput.trim();
-    const textarea = document.getElementById("smart-text-input");
-    if (textarea) {
-      textarea.value = cleanedText;
-    }
-
-    const titleInput = document.getElementById("input-quiz-title");
-    if (titleInput && !titleInput.value.trim()) {
-      let neatTitle = topic.length > 50 ? topic.substring(0, 50) + "..." : topic;
-      titleInput.value = `Đề thi AI: ${neatTitle}`;
-    }
-
-    const catInput = document.getElementById("input-quiz-category");
-    if (catInput && (!catInput.value.trim() || catInput.value === "Chung")) {
-      const lowerT = topic.toLowerCase();
-      if (lowerT.includes("sử") || lowerT.includes("lịch sử")) catInput.value = "Lịch sử";
-      else if (lowerT.includes("địa") || lowerT.includes("địa lý")) catInput.value = "Địa lý";
-      else if (lowerT.includes("anh") || lowerT.includes("english")) catInput.value = "Tiếng Anh";
-      else if (lowerT.includes("toán") || lowerT.includes("math")) catInput.value = "Toán học";
-      else if (lowerT.includes("tin") || lowerT.includes("it") || lowerT.includes("code") || lowerT.includes("lập trình") || lowerT.includes("office")) catInput.value = "Tin học";
-      else if (lowerT.includes("sinh")) catInput.value = "Sinh học";
-      else if (lowerT.includes("hóa")) catInput.value = "Hóa học";
-      else if (lowerT.includes("lý") || lowerT.includes("vật lý")) catInput.value = "Vật lý";
-      else catInput.value = "Tổng hợp";
-    }
-
-    updateSmartParsePreview();
-    closeAiGeneratorModal();
-
-    triggerCelebrationConfetti();
-    showToast(`🎉 AI đã tạo thành công bộ đề thi với ${count} câu hỏi về "${topic}"!`, "success");
+    applyGeneratedQuizToCreator(topic, rawAiOutput, count, true);
   } catch (err) {
     console.error("AI Exam Generator error:", err);
     showToast(`Lỗi tạo đề AI: ${err.message || err}`, "danger");
@@ -8551,7 +8939,7 @@ Giải thích: Hà Nội là thủ đô của nước Cộng hòa Xã hội Ch�
       btnSubmit.disabled = false;
       btnSubmit.innerHTML = `
         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
-        🚀 Bắt đầu Tạo Đề Bằng AI
+        🚀 Bắt đầu Tạo Đề Bằng AI Gemini
       `;
     }
   }
@@ -8923,6 +9311,7 @@ window.resetCreatorForm = resetCreatorForm;
 window.openAiGeneratorModal = openAiGeneratorModal;
 window.closeAiGeneratorModal = closeAiGeneratorModal;
 window.handleGenerateExamWithAi = handleGenerateExamWithAi;
+window.handleGenerateExamOffline = handleGenerateExamOffline;
 window.setZenAmbientSound = setZenAmbientSound;
 window.setZenAmbientVolume = setZenAmbientVolume;
 
@@ -9056,9 +9445,15 @@ async function openShareQuizModal(quizId, event) {
 
   try {
     const payload = await compressQuizForShare(quiz);
-    // Nếu mở file cục bộ (file:///C:/Users...), dùng link online GitHub Pages để bạn bè mở được qua Internet
+    // Nếu mở file cục bộ (file:///C:/Users...) hoặc localhost, dùng link online GitHub Pages để bạn bè mở được qua Internet
     let baseUrl = window.location.origin + window.location.pathname;
-    if (!window.location.origin || window.location.origin === "null" || window.location.protocol === "file:") {
+    const isLocalHostOrFile = !window.location.origin || 
+                              window.location.origin === "null" || 
+                              window.location.protocol === "file:" ||
+                              window.location.hostname === "localhost" ||
+                              window.location.hostname === "127.0.0.1" ||
+                              window.location.hostname.startsWith("192.168.");
+    if (isLocalHostOrFile) {
       baseUrl = "https://cpham26.github.io/web-thi-trac-nghiem/";
     }
     currentShareUrl = baseUrl + "#share=" + payload;

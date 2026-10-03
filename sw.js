@@ -1,5 +1,5 @@
-// NovaQuiz v4.0.0 - Service Worker (Network-First for Fresh Updates & Offline PWA)
-const CACHE_NAME = "novaquiz-cache-v4.0.0";
+// NovaQuiz v4.1.0 - Service Worker (Network-First for Fresh Updates & Offline PWA)
+const CACHE_NAME = "novaquiz-cache-v4.1.0";
 const ASSETS_TO_CACHE = [
   "./",
   "./index.html",
@@ -9,7 +9,8 @@ const ASSETS_TO_CACHE = [
   "./jszip.min.js",
   "./pdf.min.js",
   "./pdf.worker.min.js",
-  "./sample-data.js"
+  "./sample-data.js",
+  "./de_thi_co_anh_va_khong_abcd.docx"
 ];
 
 // Install: Cache critical assets and skip waiting immediately
@@ -55,8 +56,8 @@ self.addEventListener("fetch", (event) => {
         return networkResponse;
       })
       .catch(() => {
-        // When offline, fall back to cache
-        return caches.match(event.request);
+        // When offline, fall back to cache (ignore search parameters like ?v=4.1.0)
+        return caches.match(event.request, { ignoreSearch: true });
       })
   );
 });
