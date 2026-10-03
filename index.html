@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>NovaQuiz v3.6 - Nền Tảng Ôn Thi &amp; Thi Thử Trắc Nghiệm Thông Minh</title>
-  <meta name="description" content="Nền tảng tạo đề thi, ôn tập trắc nghiệm thông minh, trộn nhiều mã đề Word/PDF, chế độ Sinh Tồn, ghi chú cá nhân và ngoại tuyến PWA.">
+  <title>NovaQuiz v3.7 - Nền Tảng Ôn Thi &amp; Thi Thử Trắc Nghiệm Thông Minh</title>
+  <meta name="description" content="Nền tảng tạo đề thi, ôn tập trắc nghiệm thông minh, trộn nhiều mã đề Word/PDF, quét ảnh AI, chế độ Sinh Tồn, ghi chú cá nhân và ngoại tuyến PWA.">
   <meta name="theme-color" content="#4f46e5">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -20,7 +20,7 @@
   <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"></script>
 
-  <link rel="stylesheet" href="style.css?v=3.6.0">
+  <link rel="stylesheet" href="style.css?v=3.7.0">
 </head>
 <body>
 
@@ -45,7 +45,7 @@
         </div>
         <div class="brand-name">
           NovaQuiz
-          <span class="brand-badge brand-badge-v3">v3.6</span>
+          <span class="brand-badge brand-badge-v3">v3.7</span>
         </div>
       </div>
 
@@ -60,7 +60,7 @@
             <line x1="12" y1="5" x2="12" y2="19"></line>
             <line x1="5" y1="12" x2="19" y2="12"></line>
           </svg>
-          <span>Tạo / Tải đề lên</span>
+          <span class="btn-create-text">Tạo / Tải đề lên</span>
         </button>
 
         <button class="btn-icon-only" id="btn-sound-toggle" title="Bật / Tắt âm thanh hiệu ứng (Phím S)" style="font-size: 1.1rem;">
@@ -108,7 +108,7 @@
             </svg>
             Tải Đề Lên Ngay
           </button>
-          <div style="display: flex; gap: 0.5rem;">
+          <div class="hero-sub-actions" style="display: flex; gap: 0.5rem;">
             <button class="btn btn-secondary btn-sm" id="btn-export-all" title="Sao lưu tất cả đề thi thành file JSON">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
               Sao lưu dữ liệu
@@ -185,7 +185,11 @@
             </button>
             <button class="creator-tab" data-tab="tab-upload-file">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
-              Tải file lên
+              Tải file Word / PDF
+            </button>
+            <button class="creator-tab" data-tab="tab-ai-ocr" id="tab-btn-ai-ocr">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
+              📸 AI Nhận diện từ Ảnh
             </button>
             <button class="creator-tab" data-tab="tab-manual-builder">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
@@ -248,6 +252,10 @@ Giải thích: Số 2 là số nguyên tố chẵn duy nhất trong tập hợp 
                 <span>Công Cụ AI & Chuẩn Hóa:</span>
               </div>
               <div class="ai-toolbar-actions">
+                <button type="button" class="btn btn-ai btn-sm" id="btn-quick-ocr-upload" title="Tải ảnh đề thi để AI nhận diện và trích xuất thành câu hỏi trắc nghiệm (Hỗ trợ nhiều ảnh)">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
+                  📸 Quét ảnh AI
+                </button>
                 <button type="button" class="btn btn-spellcheck btn-sm" id="btn-quick-fix-spelling" title="Tự động sửa toàn bộ lỗi chính tả, dãn chữ tiếng Việt, nối âm tiết, gỡ watermark rác nhưng TUYỆT ĐỐI GIỮ NGUYÊN ĐÁP ÁN ĐÚNG BAN ĐẦU">
                   <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
                   ✍️ Sửa chính tả (Giữ đáp án)
@@ -421,7 +429,108 @@ Giải thích: Số 2 là số nguyên tố chẵn duy nhất trong tập hợp 
             </div>
           </div>
 
-          <!-- TAB 3: MANUAL BUILDER -->
+          <!-- TAB: AI IMAGE OCR (MULTI-IMAGE) -->
+          <div class="tab-pane" id="tab-ai-ocr" style="display: none;">
+            <div class="format-guide" style="border-left-color: #ec4899; background: linear-gradient(135deg, rgba(236, 72, 153, 0.08), rgba(139, 92, 246, 0.06));">
+              <div style="display: flex; align-items: flex-start; gap: 0.75rem;">
+                <div style="width: 40px; height: 40px; border-radius: var(--radius-btn); background: linear-gradient(135deg, #ec4899, #8b5cf6); color: white; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; flex-shrink: 0;" title="AI OCR Multimodal">
+                  📸
+                </div>
+                <div style="flex: 1;">
+                  <h4 style="font-weight: 800; font-size: 1.05rem; margin-bottom: 0.35rem; color: #db2777; display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+                    Quét Đề Thi Bằng AI Từ Hình Ảnh
+                    <span class="badge badge-primary" style="background: linear-gradient(135deg, #ec4899, #8b5cf6); color: white; border: none;">Gemini Vision Pro</span>
+                    <span class="badge badge-success">Hỗ trợ nhiều ảnh</span>
+                  </h4>
+                  <p style="font-size: 0.85rem; color: var(--text-muted); line-height: 1.5; margin: 0;">
+                    Chụp hoặc tải ảnh các trang đề thi (sách, tài liệu in, đề thi viết tay, ảnh chụp màn hình). AI Gemini sẽ đọc văn bản tiếng Việt cực chuẩn, nhận diện khoanh tròn đáp án và tự động xuất ra bộ câu hỏi đầy đủ!
+                  </p>
+                </div>
+              </div>
+
+              <!-- AI Options -->
+              <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 0.75rem; margin-top: 1rem; padding-top: 1rem; border-top: 1px dashed rgba(236, 72, 153, 0.3); font-size: 0.85rem;">
+                <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                  <input type="checkbox" id="ocr-opt-detect-marked" checked style="accent-color: #ec4899; width: 16px; height: 16px;">
+                  <span>🎯 Nhận diện đáp án đã được <strong>khoanh tròn / tô đậm</strong></span>
+                </label>
+                <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                  <input type="checkbox" id="ocr-opt-auto-solve" checked style="accent-color: #ec4899; width: 16px; height: 16px;">
+                  <span>🧠 Nếu đề chưa có đáp án, nhờ <strong>AI giải & chọn đáp án đúng</strong></span>
+                </label>
+                <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                  <input type="checkbox" id="ocr-opt-fix-spelling" checked style="accent-color: #ec4899; width: 16px; height: 16px;">
+                  <span>✍️ Tự động <strong>sửa lỗi chính tả & chuẩn hóa công thức</strong></span>
+                </label>
+              </div>
+            </div>
+
+            <!-- Image Dropzone / Picker -->
+            <div class="ocr-dropzone" id="ocr-dropzone">
+              <input type="file" id="input-ai-ocr-files" accept="image/png,image/jpeg,image/jpg,image/webp,image/bmp" multiple style="display: none;">
+              <div class="upload-icon" style="background: linear-gradient(135deg, rgba(236, 72, 153, 0.15), rgba(139, 92, 246, 0.15)); color: #ec4899;">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                  <circle cx="12" cy="13" r="4"></circle>
+                </svg>
+              </div>
+              <h3 style="font-size: 1.15rem; font-weight: 700; margin-bottom: 0.4rem;">Kéo thả nhiều ảnh đề thi vào đây hoặc bấm để chọn</h3>
+              <p style="color: var(--text-muted); font-size: 0.875rem; margin-bottom: 1.25rem;">Hỗ trợ tải <strong>nhiều ảnh cùng lúc</strong> (Trang 1, Trang 2, Trang 3...). Định dạng: PNG, JPG, JPEG, WEBP.</p>
+
+              <div style="display: flex; gap: 0.75rem; justify-content: center; flex-wrap: wrap;">
+                <button type="button" class="btn btn-primary" id="btn-trigger-ocr-file-select" style="background: linear-gradient(135deg, #ec4899, #8b5cf6);">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
+                  📸 Chọn ảnh / Chụp đề thi (Nhiều ảnh)
+                </button>
+                <button type="button" class="btn btn-secondary" id="btn-ocr-config-key">
+                  🔑 Cài đặt Gemini API Key
+                </button>
+              </div>
+            </div>
+
+            <!-- Image Previews Container -->
+            <div id="ocr-selected-images-container" style="display: none; margin-top: 1.5rem;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; flex-wrap: wrap; gap: 0.5rem;">
+                <span style="font-weight: 700; font-size: 0.95rem;">
+                  Đã chọn <span id="ocr-selected-count" style="color: #ec4899; font-weight: 800;">0</span> ảnh đề thi:
+                </span>
+                <div style="display: flex; gap: 0.5rem;">
+                  <button type="button" class="btn btn-secondary btn-sm" id="btn-ocr-add-more">
+                    + Thêm ảnh khác
+                  </button>
+                  <button type="button" class="btn btn-outline-danger btn-sm" id="btn-ocr-clear-all">
+                    Xóa tất cả ảnh
+                  </button>
+                </div>
+              </div>
+
+              <!-- Thumbnails Grid -->
+              <div id="ocr-thumbnails-grid" class="ocr-thumbnails-grid">
+                <!-- Dynamically populated thumbnails -->
+              </div>
+
+              <!-- Action button -->
+              <div style="margin-top: 1.5rem; text-align: center;">
+                <button type="button" class="btn btn-ai btn-lg" id="btn-run-ai-ocr" style="width: 100%; max-width: 480px; font-size: 1.05rem; padding: 0.9rem 1.5rem;">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                  ⚡ Nhận Diện & Trích Xuất Bộ Đề Ngay
+                </button>
+              </div>
+            </div>
+
+            <!-- OCR Progress State -->
+            <div id="ocr-processing-container" style="display: none; margin-top: 1.5rem; text-align: center; padding: 2rem 1.5rem; background: var(--glass-bg); border-radius: var(--radius-xl); border: 1px solid var(--border-subtle);">
+              <div class="spinner" style="width: 44px; height: 44px; border-width: 4px; border-top-color: #ec4899; margin: 0 auto 1.25rem auto;"></div>
+              <h4 id="ocr-progress-title" style="font-size: 1.15rem; font-weight: 800; color: #ec4899; margin-bottom: 0.4rem;">
+                Đang xử lý hình ảnh...
+              </h4>
+              <p id="ocr-progress-sub" style="font-size: 0.88rem; color: var(--text-muted); margin: 0;">
+                AI Gemini đang phân tích nội dung, chữ viết và các đáp án được khoanh...
+              </p>
+            </div>
+          </div>
+
+          <!-- TAB 4: MANUAL BUILDER -->
           <div class="tab-pane" id="tab-manual-builder" style="display: none;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.5rem;">
               <h4 style="font-weight: 700;">Danh sách câu hỏi soạn thảo:</h4>
@@ -442,7 +551,7 @@ Giải thích: Số 2 là số nguyên tố chẵn duy nhất trong tập hợp 
           </div>
 
           <!-- Actions -->
-          <div style="display: flex; justify-content: flex-end; gap: 1rem; margin-top: 2rem; border-top: 1px solid var(--border-subtle); padding-top: 1.5rem; flex-wrap: wrap;">
+          <div class="creator-actions" style="display: flex; justify-content: flex-end; gap: 1rem; margin-top: 2rem; border-top: 1px solid var(--border-subtle); padding-top: 1.5rem; flex-wrap: wrap;">
             <button class="btn btn-secondary" id="btn-cancel-creator">Hủy bỏ</button>
             <button class="btn btn-secondary btn-lg" id="btn-save-quiz">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -473,7 +582,7 @@ Giải thích: Số 2 là số nguyên tố chẵn duy nhất trong tập hợp 
           <h2 id="runner-quiz-title">Tên Đề Thi</h2>
         </div>
 
-        <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
+        <div class="quiz-runner-controls" style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
           <div class="quiz-timer-box" id="quiz-timer-container">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <circle cx="12" cy="12" r="10"></circle>
@@ -603,14 +712,6 @@ Giải thích: Số 2 là số nguyên tố chẵn duy nhất trong tập hợp 
                 Chế độ Flashcard
               </button>
 
-              <button class="btn-icon-only btn-sm" id="btn-runner-sound-toggle" title="Bật/Tắt âm thanh hiệu ứng (Phím S)" style="font-size: 1rem;">
-                <span id="runner-sound-icon">🔊</span>
-              </button>
-
-              <button class="btn-icon-only btn-sm" id="btn-open-shortcuts-runner" title="Xem danh sách phím tắt (Phím ?)" style="font-size: 1rem;">
-                ⌨️
-              </button>
-
               <button class="btn-note" id="btn-toggle-note" title="Mở sổ tay ghi chú cá nhân cho câu hỏi này">
                 <span>📝 Ghi chú</span>
               </button>
@@ -713,7 +814,12 @@ Giải thích: Số 2 là số nguyên tố chẵn duy nhất trong tập hợp 
               Câu trước
             </button>
 
-            <div style="font-size: 0.85rem; color: var(--text-muted); display: flex; align-items: center; gap: 0.5rem;">
+            <button class="btn btn-secondary btn-mobile-palette" id="btn-mobile-palette" type="button" title="Xem danh sách câu hỏi">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect width="7" height="7" x="3" y="3" rx="1"></rect><rect width="7" height="7" x="14" y="3" rx="1"></rect><rect width="7" height="7" x="14" y="14" rx="1"></rect><rect width="7" height="7" x="3" y="14" rx="1"></rect></svg>
+              <span>Câu <strong id="mobile-nav-current-q">1</strong>/<span id="mobile-nav-total-q">10</span></span>
+            </button>
+
+            <div class="runner-shortcut-hint" style="font-size: 0.85rem; color: var(--text-muted); display: flex; align-items: center; gap: 0.5rem;">
               <span>Phím tắt: <strong>A, B, C, D</strong> hoặc <strong>1, 2, 3, 4</strong> để chọn</span>
             </div>
 
@@ -794,7 +900,7 @@ Giải thích: Số 2 là số nguyên tố chẵn duy nhất trong tập hợp 
         </div>
 
         <!-- Action Buttons -->
-        <div style="display: flex; justify-content: center; gap: 1rem; margin-top: 2rem; flex-wrap: wrap;">
+        <div class="result-actions-group" style="display: flex; justify-content: center; gap: 1rem; margin-top: 2rem; flex-wrap: wrap;">
           <button class="btn btn-primary btn-lg" id="btn-retry-all">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"></polyline><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path></svg>
             Làm lại toàn bộ đề
@@ -912,6 +1018,18 @@ Giải thích: Số 2 là số nguyên tố chẵn duy nhất trong tập hợp 
               </div>
               <label class="switch">
                 <input type="checkbox" id="toggle-shuffle-options" checked>
+                <span class="slider"></span>
+              </label>
+            </div>
+
+            <!-- Switch 3: Bàn phím Pro -->
+            <div class="setting-switch-item">
+              <div class="setting-switch-info">
+                <h5>⚡ Bàn phím Pro (Phím tắt A, B, C, D...)</h5>
+                <p>Cho phép bấm nhanh phím chữ/số để chọn đáp án trên bàn phím máy tính</p>
+              </div>
+              <label class="switch">
+                <input type="checkbox" id="toggle-setup-shortcuts" checked>
                 <span class="slider"></span>
               </label>
             </div>
@@ -1391,6 +1509,18 @@ Giải thích: Số 2 là số nguyên tố chẵn duy nhất trong tập hợp 
       </div>
 
       <div class="modal-body" style="padding: 1.25rem 1.75rem;">
+        <!-- Bật / Tắt Bàn Phím Pro Toggle Switch -->
+        <div class="setting-switch-item" style="margin-bottom: 1.25rem; background: var(--primary-light); border: 1.5px solid rgba(79, 70, 229, 0.3); border-radius: var(--radius-btn); padding: 0.85rem 1rem;">
+          <div class="setting-switch-info">
+            <h5 style="color: var(--primary); font-size: 0.95rem; font-weight: 800; margin: 0 0 0.2rem 0;">⚡ Chức Năng Bàn Phím Pro</h5>
+            <p style="font-size: 0.8rem; color: var(--text-muted); margin: 0;">Bật / Tắt toàn bộ phím tắt chọn đáp án (A, B, C, D, 1, 2, 3, 4, F, Space...)</p>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="toggle-shortcuts-enabled" checked>
+            <span class="slider"></span>
+          </label>
+        </div>
+
         <div class="shortcuts-grid">
           <div class="shortcut-item">
             <div class="shortcut-keys"><kbd>A</kbd> <kbd>B</kbd> <kbd>C</kbd> <kbd>D</kbd> hoặc <kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd> <kbd>4</kbd></div>
@@ -1556,6 +1686,6 @@ Giải thích: Số 2 là số nguyên tố chẵn duy nhất trong tập hợp 
   <script src="jszip.min.js"></script>
   <script src="pdf.min.js"></script>
   <script src="sample-data.js"></script>
-  <script src="app.js?v=3.6.0"></script>
+  <script src="app.js?v=3.7.0"></script>
 </body>
 </html>

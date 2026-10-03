@@ -1,5 +1,5 @@
 /**
- * NOVAQUIZ PRO - MAIN APPLICATION ENGINE v3.6
+ * NOVAQUIZ PRO - MAIN APPLICATION ENGINE v3.7
  * Modern Exam & Practice Web App
  */
 
@@ -15,6 +15,7 @@ const STORAGE_KEYS = {
   MISTAKE_VAULT: "novaquiz_mistake_vault_v3",
   HISTORY: "novaquiz_history_v1",
   SOUND: "novaquiz_sound_enabled",
+  SHORTCUTS: "novaquiz_shortcuts_enabled",
   SURVIVAL_HIGHSCORES: "novaquiz_survival_highscores",
   QUESTION_NOTES: "novaquiz_question_notes",
   AUTO_ADVANCE: "novaquiz_auto_advance",
@@ -73,6 +74,8 @@ const AppState = {
   activeFilter: "ALL",
   searchQuery: "",
   autoAdvance: "1.5",
+  shortcutsEnabled: localStorage.getItem("novaquiz_shortcuts_enabled") !== "false",
+  ocrImages: [],
   
   // Current active runner session
   session: {
@@ -125,6 +128,19 @@ function toggleSoundSetting() {
   localStorage.setItem(STORAGE_KEYS.SOUND, String(newState));
   updateSoundUI();
   showToast(newState ? "🔊 Đã bật âm thanh hiệu ứng" : "🔇 Đã tắt âm thanh hiệu ứng", "info");
+}
+
+function isShortcutsEnabled() {
+  return AppState.shortcutsEnabled !== false;
+}
+
+function setShortcutsEnabled(enabled) {
+  AppState.shortcutsEnabled = !!enabled;
+  localStorage.setItem(STORAGE_KEYS.SHORTCUTS, String(enabled));
+  const t1 = document.getElementById("toggle-shortcuts-enabled");
+  if (t1) t1.checked = !!enabled;
+  const t2 = document.getElementById("toggle-setup-shortcuts");
+  if (t2) t2.checked = !!enabled;
 }
 
 function playSound(type) {
@@ -2148,6 +2164,440 @@ async function executeSingleGeminiRequest(promptText, cleanKey) {
   throw lastError || new Error("Không thể kết nối đến Google Gemini AI. Vui lòng kiểm tra lại API Key hoặc sử dụng bộ lọc AI Offline!");
 }
 
+// Thực hiện một lệnh gọi đa phương tiện Multimodal (văn bản + nhiều hình ảnh) tới Google Gemini Vision
+async function executeGeminiMultimodalRequest(parts, cleanKey) {
+  let modelToUse = activeGeminiModel;
+  const selectModel = document.getElementById("select-gemini-model");
+  const customInput = document.getElementById("input-custom-gemini-model");
+  if (selectModel && selectModel.value === "custom" && customInput && customInput.value.trim()) {
+    modelToUse = customInput.value.trim();
+  }
+
+  if (!modelToUse || modelToUse.includes("2.5") || modelToUse.includes("interactions") || modelToUse.includes("tts") || modelToUse.includes("8b") || modelToUse.includes("2.0-flash-lite") || modelToUse.includes("1.5")) {
+    modelToUse = "gemini-3.8-flash";
+    activeGeminiModel = "gemini-3.8-flash";
+    setSavedGeminiModel("gemini-3.8-flash");
+  }
+
+  const rawCandidates = [
+    modelToUse,
+    ...GEMINI_FALLBACK_MODELS.filter(m => m !== modelToUse)
+  ];
+  if (!rawCandidates.includes("gemini-3.8-flash")) {
+    rawCandidates.unshift("gemini-3.8-flash");
+  }
+  if (!rawCandidates.includes("gemini-3.5-flash-lite")) {
+    rawCandidates.push("gemini-3.5-flash-lite");
+  }
+  const modelsToTry = rawCandidates.filter(m => !m.includes("8b") && !m.includes("2.5") && !m.includes("tts") && !m.includes("interactions") && !m.includes("2.0-flash-lite"));
+
+  const payload = {
+    contents: [
+      {
+        role: "user",
+        parts: parts
+      }
+    ],
+    generationConfig: {
+      temperature: 0.1,
+      maxOutputTokens: 8192
+    }
+  };
+
+  let lastError = null;
+
+  for (const model of modelsToTry) {
+    const apiVersions = ["v1beta", "v1"];
+    for (const apiVer of apiVersions) {
+      const url = `https://generativelanguage.googleapis.com/${apiVer}/models/${model}:generateContent?key=${cleanKey}`;
+      try {
+        const resp = await fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+
+        if (resp.ok) {
+          const data = await resp.json();
+          const textOutput = data.candidates?.[0]?.content?.parts?.[0]?.text;
+          if (textOutput) {
+            activeGeminiModel = model;
+            setSavedGeminiModel(model);
+            return textOutput;
+          }
+        } else {
+          const errJson = await resp.json().catch(() => ({}));
+          const errMsg = errJson.error?.message || `HTTP ${resp.status}`;
+          lastError = new Error(errMsg);
+
+          if (resp.status === 400 && errMsg.toLowerCase().includes("api key not valid")) {
+            throw new Error("Mã API Key không hợp lệ! Vui lòng bấm nút 'Cài đặt Gemini API Key' để kiểm tra lại.");
+          }
+          if (resp.status === 429) {
+            console.warn(`[NovaQuiz AI OCR] Model ${model} đạt giới hạn tốc độ (Rate Limit / Quota), tự động thử mô hình tiếp theo...`);
+            continue;
+          }
+          if (errMsg.includes("no longer available") || errMsg.includes("is not found") || errMsg.includes("Interactions API")) {
+            console.warn(`[NovaQuiz AI OCR] Model ${model} không còn khả dụng trên Google AI, tự động chuyển sang mô hình tiếp theo...`);
+            continue;
+          } else {
+            console.warn(`[NovaQuiz AI OCR] Model ${model} (${apiVer}) không phản hồi: ${errMsg}`);
+          }
+        }
+      } catch (e) {
+        if (e.message && (e.message.includes("API Key") || e.message.includes("hạn mức"))) {
+          throw e;
+        }
+        lastError = e;
+      }
+    }
+  }
+
+  throw lastError || new Error("Không thể kết nối đến Google Gemini Vision. Vui lòng kiểm tra lại API Key hoặc chất lượng ảnh!");
+}
+
+// Nén và tối ưu kích thước ảnh trước khi gửi sang AI (Đảm bảo chạy mượt và siêu nhẹ trên cả điện thoại 4G)
+function resizeImageIfNeeded(file, maxDimension = 2000, quality = 0.85) {
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        let width = img.width;
+        let height = img.height;
+        if (width <= maxDimension && height <= maxDimension && file.size < 2.5 * 1024 * 1024) {
+          const base64Data = e.target.result.split(",")[1];
+          resolve({
+            mimeType: file.type || "image/jpeg",
+            base64: base64Data,
+            dataUrl: e.target.result
+          });
+          return;
+        }
+
+        if (width > maxDimension || height > maxDimension) {
+          if (width > height) {
+            height = Math.round((height * maxDimension) / width);
+            width = maxDimension;
+          } else {
+            width = Math.round((width * maxDimension) / height);
+            height = maxDimension;
+          }
+        }
+
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0, width, height);
+
+        const dataUrl = canvas.toDataURL("image/jpeg", quality);
+        const base64Data = dataUrl.split(",")[1];
+        resolve({
+          mimeType: "image/jpeg",
+          base64: base64Data,
+          dataUrl: dataUrl
+        });
+      };
+      img.onerror = () => {
+        const base64Data = e.target.result.split(",")[1];
+        resolve({
+          mimeType: file.type || "image/jpeg",
+          base64: base64Data,
+          dataUrl: e.target.result
+        });
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+function formatBytes(bytes) {
+  if (!bytes || bytes === 0) return "0 B";
+  const k = 1024;
+  const sizes = ["B", "KB", "MB", "GB"];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + " " + sizes[i];
+}
+
+function openGeminiKeyModal() {
+  const modal = document.getElementById("modal-ai-gemini");
+  const input = document.getElementById("input-gemini-api-key");
+  if (input) input.value = getSavedGeminiKey();
+  if (modal) modal.classList.add("open");
+}
+
+// =============================================================================
+// 8B. MULTI-IMAGE AI OCR ENGINE (NHẬN DIỆN ĐỀ THI NHIỀU ẢNH QUA GEMINI VISION)
+// =============================================================================
+
+function setupAiImageOcr() {
+  const fileInput = document.getElementById("input-ai-ocr-files");
+  const dropzone = document.getElementById("ocr-dropzone");
+  const btnTrigger = document.getElementById("btn-trigger-ocr-file-select");
+  const btnAddMore = document.getElementById("btn-ocr-add-more");
+  const btnClearAll = document.getElementById("btn-ocr-clear-all");
+  const btnKey = document.getElementById("btn-ocr-config-key");
+  const btnRun = document.getElementById("btn-run-ai-ocr");
+  const btnQuickOcr = document.getElementById("btn-quick-ocr-upload");
+
+  if (btnQuickOcr) {
+    btnQuickOcr.addEventListener("click", () => {
+      const tabOcr = document.getElementById("tab-btn-ai-ocr");
+      if (tabOcr) tabOcr.click();
+      if (fileInput) fileInput.click();
+    });
+  }
+
+  if (btnTrigger && fileInput) {
+    btnTrigger.addEventListener("click", () => fileInput.click());
+  }
+  if (btnAddMore && fileInput) {
+    btnAddMore.addEventListener("click", () => fileInput.click());
+  }
+
+  if (btnKey) {
+    btnKey.addEventListener("click", openGeminiKeyModal);
+  }
+
+  if (btnClearAll) {
+    btnClearAll.addEventListener("click", () => {
+      AppState.ocrImages = [];
+      renderOcrThumbnails();
+      if (fileInput) fileInput.value = "";
+      showToast("Đã xóa danh sách ảnh đã chọn", "info");
+    });
+  }
+
+  if (btnRun) {
+    btnRun.addEventListener("click", runAiImageOcr);
+  }
+
+  async function handleOcrFiles(files) {
+    if (!files || files.length === 0) return;
+    const validFiles = Array.from(files).filter(f => f.type.startsWith("image/") || /\.(png|jpe?g|webp|bmp)$/i.test(f.name));
+    if (validFiles.length === 0) {
+      showToast("Vui lòng chọn tệp hình ảnh hợp lệ (PNG, JPG, WEBP)!", "warning");
+      return;
+    }
+
+    showToast(`⏳ Đang xử lý và tối ưu ${validFiles.length} ảnh đề thi...`, "info");
+
+    for (const f of validFiles) {
+      try {
+        const item = await resizeImageIfNeeded(f, 2048, 0.85);
+        item.name = f.name;
+        item.size = f.size;
+        AppState.ocrImages.push(item);
+      } catch (err) {
+        console.error("Error loading image file", f.name, err);
+      }
+    }
+
+    renderOcrThumbnails();
+    showToast(`📸 Đã nạp thành công ảnh (Tổng cộng: ${AppState.ocrImages.length} ảnh)`, "success");
+    if (fileInput) fileInput.value = "";
+  }
+
+  if (fileInput) {
+    fileInput.addEventListener("change", (e) => {
+      handleOcrFiles(e.target.files);
+    });
+  }
+
+  if (dropzone) {
+    ["dragenter", "dragover"].forEach(ev => {
+      dropzone.addEventListener(ev, (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        dropzone.classList.add("dragover");
+      });
+    });
+
+    ["dragleave", "drop"].forEach(ev => {
+      dropzone.addEventListener(ev, (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        dropzone.classList.remove("dragover");
+      });
+    });
+
+    dropzone.addEventListener("drop", (e) => {
+      if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+        handleOcrFiles(e.dataTransfer.files);
+      }
+    });
+
+    dropzone.addEventListener("click", (e) => {
+      if (e.target.closest("button") || e.target.closest("a") || e.target.closest("input")) return;
+      if (fileInput) fileInput.click();
+    });
+  }
+}
+
+function renderOcrThumbnails() {
+  const container = document.getElementById("ocr-selected-images-container");
+  const grid = document.getElementById("ocr-thumbnails-grid");
+  const countSpan = document.getElementById("ocr-selected-count");
+
+  if (!container || !grid) return;
+
+  const count = AppState.ocrImages ? AppState.ocrImages.length : 0;
+  if (countSpan) countSpan.textContent = count;
+
+  if (count === 0) {
+    container.style.display = "none";
+    grid.innerHTML = "";
+    return;
+  }
+
+  container.style.display = "block";
+  grid.innerHTML = AppState.ocrImages.map((img, idx) => `
+    <div class="ocr-thumb-card" data-index="${idx}">
+      <div class="ocr-thumb-img-wrapper">
+        <img src="${img.dataUrl}" alt="Trang ${idx + 1}" />
+        <span class="ocr-thumb-badge">Trang ${idx + 1}</span>
+        <button type="button" class="ocr-thumb-btn-remove" onclick="removeOcrImage(${idx})" title="Xóa ảnh này">×</button>
+      </div>
+      <div class="ocr-thumb-meta">
+        <span class="ocr-thumb-name" title="${escapeHtml(img.name || `Trang ${idx + 1}`)}">${escapeHtml(img.name || `Trang ${idx + 1}`)}</span>
+        <span class="ocr-thumb-size">${formatBytes(img.size || 0)}</span>
+      </div>
+    </div>
+  `).join("");
+}
+
+function removeOcrImage(index) {
+  if (AppState.ocrImages && AppState.ocrImages[index]) {
+    AppState.ocrImages.splice(index, 1);
+    renderOcrThumbnails();
+  }
+}
+
+async function runAiImageOcr() {
+  const apiKey = getSavedGeminiKey();
+  if (!apiKey) {
+    showToast("Vui lòng nhập Google Gemini API Key để sử dụng tính năng nhận diện ảnh!", "warning");
+    openGeminiKeyModal();
+    return;
+  }
+
+  if (!AppState.ocrImages || AppState.ocrImages.length === 0) {
+    showToast("Vui lòng chọn hoặc kéo thả ít nhất 1 ảnh đề thi!", "warning");
+    return;
+  }
+
+  const btnRun = document.getElementById("btn-run-ai-ocr");
+  const origBtnHtml = btnRun ? btnRun.innerHTML : "";
+  if (btnRun) {
+    btnRun.disabled = true;
+    btnRun.innerHTML = `<span class="spinner" style="display:inline-block; width:18px; height:18px; border:2px solid #fff; border-top-color:transparent; border-radius:50%; animation:spin 0.8s linear infinite; margin-right:8px; vertical-align:middle;"></span> AI đang đọc & xử lý ${AppState.ocrImages.length} ảnh đề thi...`;
+  }
+
+  const detectMarked = document.getElementById("ocr-opt-detect-marked") ? document.getElementById("ocr-opt-detect-marked").checked : true;
+  const autoSolve = document.getElementById("ocr-opt-auto-solve") ? document.getElementById("ocr-opt-auto-solve").checked : true;
+  const fixSpelling = document.getElementById("ocr-opt-fix-spelling") ? document.getElementById("ocr-opt-fix-spelling").checked : true;
+
+  try {
+    const parts = [];
+
+    let promptInstruction = `Bạn là chuyên gia số hóa đề thi và thị giác máy tính hàng đầu cho tiếng Việt (Multimodal OCR & Exam Parser).
+Dưới đây là ${AppState.ocrImages.length} hình ảnh chứa các trang đề thi trắc nghiệm tiếng Việt (sắp xếp theo thứ tự Trang 1, Trang 2...).
+Nhiệm vụ của bạn là: Đọc kỹ từng trang ảnh và trích xuất TOÀN BỘ các câu hỏi trắc nghiệm có trong TẤT CẢ các ảnh, ghép lại thành một bộ đề thi hoàn chỉnh.
+
+QUY TẮC ĐỊNH DẠNG ĐẦU RA BẮT BUỘC:
+Xuất ra văn bản theo cấu trúc chuẩn sau cho từng câu hỏi:
+Câu 1: [Nội dung câu hỏi đầy đủ]
+*A. [Nội dung phương án đúng - Đặt dấu * ngay trước chữ cái của phương án đúng]
+B. [Nội dung phương án B]
+C. [Nội dung phương án C]
+D. [Nội dung phương án D]
+Lời giải: [Giải thích ngắn gọn lý do vì sao đáp án đúng]
+
+QUY TẮC XỬ LÝ NÂNG CAO:`;
+
+    if (detectMarked) {
+      promptInstruction += `\n1. NHẬN DIỆN ĐÁP ÁN ĐÃ KHOANH: Nếu trên hình ảnh câu hỏi có phương án được khoanh tròn bằng bút chì/bút bi, gạch chân hoặc in đậm, hãy nhận diện đó là đáp án đúng và đặt dấu * ngay trước chữ cái đó (ví dụ: *A. hoặc *B.).`;
+    }
+
+    if (autoSolve) {
+      promptInstruction += `\n2. TỰ ĐỘNG GIẢI ĐỀ: Với những câu hỏi mà người làm chưa khoanh hoặc chưa đánh dấu đáp án trên ảnh, bạn hãy tự suy luận, phân tích và chọn đáp án chính xác nhất bằng cách đặt dấu * trước phương án đó, kèm lời giải ngắn gọn.`;
+    } else {
+      promptInstruction += `\n2. Với câu chưa có đáp án, giữ nguyên trạng thái không đặt dấu *.`;
+    }
+
+    if (fixSpelling) {
+      promptInstruction += `\n3. SỬA CHÍNH TẢ & CHUẨN HÓA: Tự động sửa các lỗi nhòe chữ, dãn chữ do ảnh chụp (vd: 'dư ới đây' -> 'dưới đây', 'đáp á n' -> 'đáp án'). Giữ nguyên các ký hiệu toán học hoặc công thức.`;
+    }
+
+    promptInstruction += `\n4. BẢO TOÀN THỨ TỰ: Đánh số câu tăng dần liên tục từ Câu 1, Câu 2... theo thứ tự xuất hiện từ trang ảnh đầu tiên đến trang ảnh cuối cùng. Tuyệt đối không bỏ sót câu hỏi nào.
+5. CHỈ TRẢ VỀ NỘI DUNG ĐỀ THI theo đúng cấu trúc trên. Không thêm lời chào, không thêm markdown code block \`\`\`.`;
+
+    parts.push({ text: promptInstruction });
+
+    for (let i = 0; i < AppState.ocrImages.length; i++) {
+      const imgItem = AppState.ocrImages[i];
+      parts.push({
+        text: `\n\n--- [HÌNH ẢNH TRANG ĐỀ THI SỐ ${i + 1} TRÊN TỔNG SỐ ${AppState.ocrImages.length} TRANG] ---`
+      });
+      parts.push({
+        inlineData: {
+          mimeType: imgItem.mimeType || "image/jpeg",
+          data: imgItem.base64
+        }
+      });
+    }
+
+    const extractedText = await executeGeminiMultimodalRequest(parts, apiKey.trim());
+    if (!extractedText || !extractedText.trim()) {
+      throw new Error("AI không nhận diện được nội dung từ các ảnh đã tải. Vui lòng kiểm tra lại độ rõ nét của ảnh!");
+    }
+
+    let cleanText = extractedText.trim();
+    if (cleanText.startsWith("```")) {
+      cleanText = cleanText.replace(/^```[a-z]*\s*\n/i, "").replace(/\n```$/g, "").trim();
+    }
+
+    const smartTextarea = document.getElementById("smart-text-input");
+    if (smartTextarea) {
+      smartTextarea.value = cleanText;
+    }
+
+    const titleInput = document.getElementById("input-quiz-title");
+    if (titleInput && (!titleInput.value || titleInput.value.trim() === "Đề thi mới" || titleInput.value.includes("Đề thi quét"))) {
+      titleInput.value = `Đề thi quét ảnh AI (${AppState.ocrImages.length} trang) - ${new Date().toLocaleDateString("vi-VN")}`;
+    }
+
+    if (typeof updateSmartParsePreview === "function") {
+      updateSmartParsePreview();
+    }
+
+    const tabPasteBtn = document.querySelector('.creator-tab[data-tab="tab-smart-paste"]');
+    if (tabPasteBtn) {
+      tabPasteBtn.click();
+    } else {
+      document.querySelectorAll(".creator-tab").forEach(t => t.classList.remove("active"));
+      document.querySelectorAll(".tab-pane").forEach(p => p.style.display = "none");
+      const pastePane = document.getElementById("tab-smart-paste");
+      if (pastePane) pastePane.style.display = "block";
+    }
+
+    const parsed = parseRawQuestions(cleanText);
+    const count = parsed && parsed.questions ? parsed.questions.length : 0;
+    showToast(`🎉 Nhận diện thành công ${count} câu hỏi từ ${AppState.ocrImages.length} ảnh đề thi!`, "success");
+
+  } catch (err) {
+    console.error("[NovaQuiz AI OCR Error]", err);
+    showToast(`❌ Lỗi nhận diện ảnh: ${err.message}`, "danger");
+  } finally {
+    if (btnRun) {
+      btnRun.disabled = false;
+      btnRun.innerHTML = origBtnHtml;
+    }
+  }
+}
+
 // Hàm xử lý văn bản đề thi với Google Gemini, hỗ trợ soát lỗi, giải đề, và xử lý chia đợt thông minh cho đề dài
 async function callGeminiAiEnhancer(rawText, apiKey, taskType = "audit-correct") {
   if (!apiKey || !apiKey.trim()) {
@@ -3738,7 +4188,7 @@ function saveCurrentQuiz(autoStart = false) {
   const activeTab = document.querySelector(".creator-tab.active").getAttribute("data-tab");
   let finalQuestions = [];
 
-  if (activeTab === "tab-smart-paste" || activeTab === "tab-upload-file") {
+  if (activeTab === "tab-smart-paste" || activeTab === "tab-upload-file" || activeTab === "tab-ai-ocr") {
     const rawText = (document.getElementById("smart-text-input").value || "").trim();
     const parsed = parseRawQuestions(rawText);
     if (parsed.questions.length === 0) {
@@ -3821,6 +4271,10 @@ function openSetupModal(quizId, defaultMode = "PRACTICE") {
 
   // Update mode selection UI
   updateModeSelectionCards(defaultMode);
+
+  // Sync Bàn phím Pro setting
+  const shortcutsEl = document.getElementById("toggle-setup-shortcuts");
+  if (shortcutsEl) shortcutsEl.checked = isShortcutsEnabled();
 
   modal.classList.add("open");
 }
@@ -3957,6 +4411,11 @@ function startQuizSession() {
   const limitVal = document.getElementById("select-question-limit") ? document.getElementById("select-question-limit").value : "ALL";
   const customTime = parseInt(document.getElementById("input-custom-duration")?.value) || currentQuiz.timeLimit || 15;
   const diffFilter = document.getElementById("select-difficulty-filter") ? document.getElementById("select-difficulty-filter").value : "ALL";
+
+  const shortcutsEl = document.getElementById("toggle-setup-shortcuts");
+  if (shortcutsEl) {
+    setShortcutsEnabled(shortcutsEl.checked);
+  }
 
   const limitCount = limitVal === "ALL" ? 0 : parseInt(limitVal);
 
@@ -4185,6 +4644,10 @@ function loadQuestion(index) {
   const totalCountEl = document.getElementById("total-questions-count");
   if (curIdxEl) curIdxEl.textContent = index + 1;
   if (totalCountEl) totalCountEl.textContent = questions.length;
+  const mCurIdx = document.getElementById("mobile-nav-current-q");
+  const mTotal = document.getElementById("mobile-nav-total-q");
+  if (mCurIdx) mCurIdx.textContent = index + 1;
+  if (mTotal) mTotal.textContent = questions.length;
 
   // Difficulty badge
   const diffBadgeEl = document.getElementById("question-difficulty-badge");
@@ -5955,6 +6418,8 @@ function closeAnalyticsModal() {
 
 function openShortcutsModal() {
   const modal = document.getElementById("modal-shortcuts");
+  const toggle = document.getElementById("toggle-shortcuts-enabled");
+  if (toggle) toggle.checked = isShortcutsEnabled();
   if (modal) modal.classList.add("open");
 }
 
@@ -6028,6 +6493,7 @@ document.addEventListener("DOMContentLoaded", () => {
   initLiquidGlassInteractions();
   loadQuizzes();
   renderDashboard();
+  setupAiImageOcr();
 
   // 2. Navigation & Theme
   document.getElementById("btn-nav-home").addEventListener("click", () => switchView("view-dashboard"));
@@ -6714,6 +7180,16 @@ Giải thích: HDMI (High-Definition Multimedia Interface) truyền tải cả v
     }
   });
 
+  const mobilePaletteBtn = document.getElementById("btn-mobile-palette");
+  if (mobilePaletteBtn) {
+    mobilePaletteBtn.addEventListener("click", () => {
+      const paletteEl = document.querySelector(".palette-sidebar");
+      if (paletteEl) {
+        paletteEl.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      }
+    });
+  }
+
   document.getElementById("btn-flag-question").addEventListener("click", toggleFlagCurrentQuestion);
   document.getElementById("btn-toggle-flashcard-mode").addEventListener("click", toggleFlashcardMode);
 
@@ -6766,6 +7242,22 @@ Giải thích: HDMI (High-Definition Multimedia Interface) truyền tải cả v
 
   const btnCloseShortcutsFooter = document.getElementById("btn-close-shortcuts-footer");
   if (btnCloseShortcutsFooter) btnCloseShortcutsFooter.addEventListener("click", closeShortcutsModal);
+
+  const toggleShortcutsModal = document.getElementById("toggle-shortcuts-enabled");
+  if (toggleShortcutsModal) {
+    toggleShortcutsModal.checked = isShortcutsEnabled();
+    toggleShortcutsModal.addEventListener("change", (e) => {
+      setShortcutsEnabled(e.target.checked);
+      showToast(e.target.checked ? "⚡ Đã bật Bàn phím Pro" : "⚪ Đã tắt Bàn phím Pro", "info");
+    });
+  }
+
+  const toggleSetupShortcuts = document.getElementById("toggle-setup-shortcuts");
+  if (toggleSetupShortcuts) {
+    toggleSetupShortcuts.addEventListener("change", (e) => {
+      setShortcutsEnabled(e.target.checked);
+    });
+  }
 
   // Result Exports (Word .docx)
   const btnExportDocxRes = document.getElementById("btn-export-docx-result");
@@ -6855,11 +7347,16 @@ Giải thích: HDMI (High-Definition Multimedia Interface) truyền tải cả v
       return;
     }
 
-    // Global: S or s toggles sound
+    // Global: S or s toggles sound (when shortcuts enabled)
     if (e.key === "s" || e.key === "S") {
-      toggleSoundSetting();
+      if (isShortcutsEnabled()) {
+        toggleSoundSetting();
+      }
       return;
     }
+
+    // Check if "Bàn phím Pro" shortcuts are enabled
+    if (!isShortcutsEnabled()) return;
 
     // Only active in runner view for the rest
     const runnerView = document.getElementById("view-runner");
@@ -7701,6 +8198,10 @@ window.setAutoAdvanceSetting = setAutoAdvanceSetting;
 window.cancelAutoAdvance = cancelAutoAdvance;
 window.autoDetectAndLinkAnswers = autoDetectAndLinkAnswers;
 
-
-
-
+// Expose v3.7 functions to window
+window.isShortcutsEnabled = isShortcutsEnabled;
+window.setShortcutsEnabled = setShortcutsEnabled;
+window.openGeminiKeyModal = openGeminiKeyModal;
+window.removeOcrImage = removeOcrImage;
+window.runAiImageOcr = runAiImageOcr;
+window.setupAiImageOcr = setupAiImageOcr;
