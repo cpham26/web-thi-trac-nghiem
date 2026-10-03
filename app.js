@@ -1,5 +1,5 @@
 /**
- * NOVAQUIZ PRO - MAIN APPLICATION ENGINE v3.7
+ * NOVAQUIZ PRO - MAIN APPLICATION ENGINE v3.7.1
  * Modern Exam & Practice Web App
  */
 
@@ -584,6 +584,18 @@ function fixTwoColumnWrappingInBlocks(rawText) {
     let bLines = block.split('\n').map(l => l.trim()).filter(l => l.length > 0);
     const optRegex = /^(\*|\+)?\s*([A-Da-d])[\.\)\:\/]\s*(.*)$/;
 
+    // Hàm nhận diện các dòng đáp án, giải thích, hình ảnh để TUYỆT ĐỐI KHÔNG gộp vào phương án lựa chọn
+    const isNotOrphanLine = (l) => {
+      const t = l.trim();
+      if (!t) return false;
+      if (optRegex.test(t)) return true;
+      if (questionStartRegex.test(t)) return true;
+      if (/^\[HINHANH:[^\]]+\]/i.test(t)) return true;
+      if (/^[\*\#\-\–\—\>\s💡✍️⚡]*(?:(?:Đáp\s*án|Dap\s*an)(?:\s*(?:đúng|dung))?(?:\s*là)?|Đ\/?A|D\/?A|Key|Ans(?:wer)?|Câu\s*đúng|Chọn|Phương\s*án|Giải\s*thích(?:\s*chi\s*tiết)?|Lời\s*giải(?:\s*chi\s*tiết)?|Hướng\s*dẫn(?:\s*giải)?|Explanation|HD|HDG)[\s\:\-\.\*]/i.test(t)) return true;
+      if (/^[\*\#\-\–\—\>\s💡✍️⚡]*(?:Lời\s*giải|Giải\s*thích|Hướng\s*dẫn|Explanation)\b/i.test(t)) return true;
+      return false;
+    };
+
     let idxA = -1, idxB = -1, idxC = -1, idxD = -1;
     bLines.forEach((l, idx) => {
       const m = l.match(optRegex);
@@ -598,7 +610,7 @@ function fixTwoColumnWrappingInBlocks(rawText) {
 
     // Các dòng giữa A và B
     if (idxA !== -1 && idxB !== -1 && idxB > idxA + 1) {
-      const orphanLines = bLines.slice(idxA + 1, idxB).filter(l => !optRegex.test(l) && !questionStartRegex.test(l));
+      const orphanLines = bLines.slice(idxA + 1, idxB).filter(l => !isNotOrphanLine(l));
       if (orphanLines.length > 0) {
         bLines[idxA] += ' ' + orphanLines.join(' ');
         bLines.splice(idxA + 1, orphanLines.length);
@@ -610,7 +622,7 @@ function fixTwoColumnWrappingInBlocks(rawText) {
 
     // Các dòng giữa B và C
     if (idxB !== -1 && idxC !== -1 && idxC > idxB + 1) {
-      const orphanLines = bLines.slice(idxB + 1, idxC).filter(l => !optRegex.test(l) && !questionStartRegex.test(l));
+      const orphanLines = bLines.slice(idxB + 1, idxC).filter(l => !isNotOrphanLine(l));
       if (orphanLines.length > 0) {
         const textA = bLines[idxA].replace(optRegex, '$3').trim();
         const textB = bLines[idxB].replace(optRegex, '$3').trim();
@@ -627,7 +639,7 @@ function fixTwoColumnWrappingInBlocks(rawText) {
 
     // Các dòng giữa C và D
     if (idxC !== -1 && idxD !== -1 && idxD > idxC + 1) {
-      const orphanLines = bLines.slice(idxC + 1, idxD).filter(l => !optRegex.test(l) && !questionStartRegex.test(l));
+      const orphanLines = bLines.slice(idxC + 1, idxD).filter(l => !isNotOrphanLine(l));
       if (orphanLines.length > 0) {
         bLines[idxC] += ' ' + orphanLines.join(' ');
         bLines.splice(idxC + 1, orphanLines.length);
@@ -637,7 +649,7 @@ function fixTwoColumnWrappingInBlocks(rawText) {
 
     // Các dòng sau D (nhưng trước khi gặp câu hỏi mới hoặc giải thích/đáp án)
     if (idxD !== -1 && bLines.length > idxD + 1) {
-      const orphanLines = bLines.slice(idxD + 1).filter(l => !optRegex.test(l) && !questionStartRegex.test(l) && !/^(?:(?:Đáp\s*án|Dap\s*an)|Đ\/?A|D\/?A|Key|Ans|Giải\s*thích)/i.test(l));
+      const orphanLines = bLines.slice(idxD + 1).filter(l => !isNotOrphanLine(l));
       if (orphanLines.length > 0) {
         const textC = idxC !== -1 ? bLines[idxC].replace(optRegex, '$3').trim() : '';
         const textD = bLines[idxD].replace(optRegex, '$3').trim();
@@ -1001,7 +1013,8 @@ function smartPreprocessExamText(rawText) {
     }
 
     // Nếu là câu hỏi trần đầu tiên không có tiền tố "Câu 1:" nhưng kết thúc bằng '?' hoặc có từ khóa câu hỏi và theo sau là các lựa chọn A, B, C, D
-    if (i === 0 && (line.endsWith("?") || line.endsWith(":?") || /^(?:Chọn|Hãy\s+chọn|Tìm|Cho|Biết|Xét|Đâu\s+là|Trong\s+các)\b/i.test(line))) {
+    const isExplicitQPrefixAtStart = /^(?:Câu|Bài|Question|Part)\s*\d+[\.\:\/\s]/i.test(line);
+    if (i === 0 && !isExplicitQPrefixAtStart && !line.startsWith("Câu:") && (line.endsWith("?") || line.endsWith(":?") || /^(?:Chọn|Hãy\s+chọn|Tìm|Cho|Biết|Xét|Đâu\s+là|Trong\s+các)\b/i.test(line))) {
       const nextFew = lines.slice(1, 6);
       if (nextFew.some(l => /^(\*|\+)?\s*[A-Fa-f][\.\)\:\/]/.test(l.trim()))) {
         currentOptionsCount = 0;
@@ -1267,8 +1280,8 @@ function parseRawQuestions(rawText) {
 
     // Regex nhận diện các lựa chọn: A. / A) / A: / [A] / *A. / **A. / +A. (cho phép \s*)
     const optionRegex = /^(\*+|\[x\]|\(x\)|\+)?\s*([A-Fa-f])[\.\)\:\/]\s*(.*)$/;
-    // Regex nhận diện giải thích: "Giải thích: ...", "Lời giải: ...", "Hướng dẫn: ..."
-    const explanationRegex = /^(?:Giải\s*thích|Lời\s*giải|Hướng\s*dẫn|Explanation)[\s\:\-]+(.*)$/i;
+    // Regex nhận diện giải thích (hỗ trợ cả markdown **Lời giải:**, Lời giải chi tiết:, Hướng dẫn giải:...)
+    const explanationRegex = /^[\*\#\-\–\—\>\s💡✍️⚡]*(?:Giải\s*thích(?:\s*chi\s*tiết)?|Lời\s*giải(?:\s*chi\s*tiết)?|Hướng\s*dẫn(?:\s*giải)?|Explanation)[\s\:\-\.\*]+(.*)$/i;
 
     let readingQuestion = true;
     let readingExplanation = false;
@@ -1312,12 +1325,21 @@ function parseRawQuestions(rawText) {
         readingQuestion = false;
         const isStar = !!optMatch[1];
         const letter = optMatch[2].toUpperCase();
-        const text = optMatch[3].trim();
+        let text = optMatch[3].trim();
         const optionIdx = options.length;
 
         // Nếu có dấu * hoặc (x), đánh dấu là đáp án đúng
         if (isStar || text.endsWith("(đúng)") || text.endsWith("*")) {
           correctIndex = optionIdx;
+        }
+
+        // Tách Lời giải / Giải thích nếu nó bị dính cùng dòng với phương án lựa chọn
+        const inlineExplMatch = text.match(/(?:[\.\;\-\–\—\s]+|\s*[\(\[\{]\s*)(?:Lời\s*giải|Giải\s*thích|Hướng\s*dẫn|Explanation)[\s\:\-\.]+([^\)\]\}]+)[\)\]\}]?$/i);
+        if (inlineExplMatch) {
+          if (!explanation) {
+            explanation = inlineExplMatch[1].trim();
+          }
+          text = text.slice(0, inlineExplMatch.index).trim();
         }
 
         // Làm sạch đuôi (đúng) hoặc * nếu có trong nội dung
@@ -2509,30 +2531,33 @@ Nhiệm vụ của bạn là: Đọc kỹ từng trang ảnh và trích xuất T
 QUY TẮC ĐỊNH DẠNG ĐẦU RA BẮT BUỘC:
 Xuất ra văn bản theo cấu trúc chuẩn sau cho từng câu hỏi:
 Câu 1: [Nội dung câu hỏi đầy đủ]
-*A. [Nội dung phương án đúng - Đặt dấu * ngay trước chữ cái của phương án đúng]
-B. [Nội dung phương án B]
+A. [Nội dung phương án A]
+*B. [Nội dung phương án đúng - Đặt dấu * ngay trước chữ cái của phương án đúng (nếu A đúng ghi *A., nếu B đúng ghi *B., nếu C đúng ghi *C., nếu D đúng ghi *D.)]
 C. [Nội dung phương án C]
 D. [Nội dung phương án D]
 Lời giải: [Giải thích ngắn gọn lý do vì sao đáp án đúng]
 
-QUY TẮC XỬ LÝ NÂNG CAO:`;
+QUY TẮC PHƯƠNG ÁN & LỜI GIẢI (CỰC KỲ QUAN TRỌNG):
+1. Dòng 'Lời giải: ...' BẮT BUỘC NẰM Ở MỘT DÒNG RIÊNG BIỆT ĐỘC LẬP sau phương án cuối cùng.
+2. TUYỆT ĐỐI KHÔNG ĐƯỢC viết lời giải lồng vào bên trong nội dung câu trả lời A, B, C, D (ví dụ CẤM viết 'A. Hà Nội (Lời giải: ...)' hay 'D. Cần Thơ Lời giải: ...'). Nội dung mỗi phương án A, B, C, D chỉ chứa câu trả lời thuần túy!
+3. Dấu * đặt trước phương án đúng nhất (ví dụ: *A. hoặc *B. hoặc *C. hoặc *D.).`;
 
     if (detectMarked) {
-      promptInstruction += `\n1. NHẬN DIỆN ĐÁP ÁN ĐÃ KHOANH: Nếu trên hình ảnh câu hỏi có phương án được khoanh tròn bằng bút chì/bút bi, gạch chân hoặc in đậm, hãy nhận diện đó là đáp án đúng và đặt dấu * ngay trước chữ cái đó (ví dụ: *A. hoặc *B.).`;
+      promptInstruction += `\n4. NHẬN DIỆN ĐÁP ÁN ĐÃ KHOANH: Nếu trên hình ảnh câu hỏi có phương án được khoanh tròn bằng bút chì/bút bi, gạch chân hoặc in đậm, hãy nhận diện đó là đáp án đúng và đặt dấu * ngay trước chữ cái đó (ví dụ: *A. hoặc *B.).`;
     }
 
     if (autoSolve) {
-      promptInstruction += `\n2. TỰ ĐỘNG GIẢI ĐỀ: Với những câu hỏi mà người làm chưa khoanh hoặc chưa đánh dấu đáp án trên ảnh, bạn hãy tự suy luận, phân tích và chọn đáp án chính xác nhất bằng cách đặt dấu * trước phương án đó, kèm lời giải ngắn gọn.`;
+      promptInstruction += `\n5. TỰ ĐỘNG GIẢI ĐỀ: Với những câu hỏi mà người làm chưa khoanh hoặc chưa đánh dấu đáp án trên ảnh, bạn hãy tự suy luận, phân tích và chọn đáp án chính xác nhất bằng cách đặt dấu * trước phương án đó, kèm lời giải ngắn gọn ở dòng 'Lời giải:'.`;
     } else {
-      promptInstruction += `\n2. Với câu chưa có đáp án, giữ nguyên trạng thái không đặt dấu *.`;
+      promptInstruction += `\n5. Với câu chưa có đáp án, giữ nguyên trạng thái không đặt dấu *.`;
     }
 
     if (fixSpelling) {
-      promptInstruction += `\n3. SỬA CHÍNH TẢ & CHUẨN HÓA: Tự động sửa các lỗi nhòe chữ, dãn chữ do ảnh chụp (vd: 'dư ới đây' -> 'dưới đây', 'đáp á n' -> 'đáp án'). Giữ nguyên các ký hiệu toán học hoặc công thức.`;
+      promptInstruction += `\n6. SỬA CHÍNH TẢ & CHUẨN HÓA: Tự động sửa các lỗi nhòe chữ, dãn chữ do ảnh chụp (vd: 'dư ới đây' -> 'dưới đây', 'đáp á n' -> 'đáp án'). Giữ nguyên các ký hiệu toán học hoặc công thức.`;
     }
 
-    promptInstruction += `\n4. BẢO TOÀN THỨ TỰ: Đánh số câu tăng dần liên tục từ Câu 1, Câu 2... theo thứ tự xuất hiện từ trang ảnh đầu tiên đến trang ảnh cuối cùng. Tuyệt đối không bỏ sót câu hỏi nào.
-5. CHỈ TRẢ VỀ NỘI DUNG ĐỀ THI theo đúng cấu trúc trên. Không thêm lời chào, không thêm markdown code block \`\`\`.`;
+    promptInstruction += `\n7. BẢO TOÀN THỨ TỰ: Đánh số câu tăng dần liên tục từ Câu 1, Câu 2... theo thứ tự xuất hiện từ trang ảnh đầu tiên đến trang ảnh cuối cùng. Tuyệt đối không bỏ sót câu hỏi nào.
+8. CHỈ TRẢ VỀ NỘI DUNG ĐỀ THI theo đúng cấu trúc trên. Không thêm lời chào, không thêm markdown code block \`\`\`.`;
 
     parts.push({ text: promptInstruction });
 
