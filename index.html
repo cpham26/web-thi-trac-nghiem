@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>NovaQuiz v3.7.1 - Nền Tảng Ôn Thi &amp; Thi Thử Trắc Nghiệm Thông Minh</title>
-  <meta name="description" content="Nền tảng tạo đề thi, ôn tập trắc nghiệm thông minh, trộn nhiều mã đề Word/PDF, quét ảnh AI, chế độ Sinh Tồn, ghi chú cá nhân và ngoại tuyến PWA.">
-  <meta name="theme-color" content="#4f46e5">
+  <title>NovaQuiz v4.0.0 - Nền Tảng Ôn Thi &amp; Thi Thử Trắc Nghiệm Thông Minh</title>
+  <meta name="description" content="Nền tảng tạo đề thi, ôn tập trắc nghiệm thông minh, AI sinh đề theo yêu cầu, thẻ Flashcard vuốt cảm ứng, âm thanh tập trung Zen Mode 2.0 và ngoại tuyến PWA.">
+  <meta name="theme-color" content="#d97706">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <link rel="manifest" href="manifest.json">
@@ -20,9 +20,17 @@
   <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"></script>
 
-  <link rel="stylesheet" href="style.css?v=3.7.1">
+  <link rel="stylesheet" href="style.css?v=4.0.0">
 </head>
 <body>
+
+  <!-- Liquid Ambient Glass Backing Orbs (Mệnh Thổ: Hoàng Thổ & Hỏa Tương Sinh) -->
+  <div class="liquid-ambient-container" aria-hidden="true">
+    <div class="liquid-ambient-orb orb-amber"></div>
+    <div class="liquid-ambient-orb orb-terracotta"></div>
+    <div class="liquid-ambient-orb orb-gold"></div>
+    <div class="liquid-ambient-orb orb-ember"></div>
+  </div>
 
   <!-- Celebration Neon Confetti Canvas -->
   <canvas id="celebration-canvas" style="position: fixed; inset: 0; pointer-events: none; z-index: 9999; display: none;"></canvas>
@@ -45,7 +53,7 @@
         </div>
         <div class="brand-name">
           NovaQuiz
-          <span class="brand-badge brand-badge-v3">v3.7.1</span>
+          <span class="brand-badge brand-badge-v3">v4.0.0</span>
         </div>
       </div>
 
@@ -139,15 +147,10 @@
         </div>
 
         <div class="filter-group" id="category-filters">
-          <button class="filter-chip active" data-category="ALL">Tất cả đề</button>
-          <button class="filter-chip" data-category="Tin học">Tin học</button>
-          <button class="filter-chip" data-category="Tiếng Anh">Tiếng Anh</button>
-          <button class="filter-chip" data-category="Kiến thức chung">Kiến thức chung</button>
-          <button class="filter-chip" data-category="Tự tạo">Đề tự tạo</button>
-          <button class="filter-chip" id="btn-open-mistake-vault">
+          <button class="filter-chip btn-vault-chip" id="btn-open-mistake-vault" title="Xem lại các câu hỏi làm sai để ôn tập">
             📚 Sổ tay câu sai (<span id="mistake-vault-count">0</span>)
           </button>
-          <button class="filter-chip" id="btn-open-analytics">
+          <button class="filter-chip btn-analytics-chip" id="btn-open-analytics" title="Xem biểu đồ tiến độ & thống kê kết quả thi">
             📊 Tiến độ & Thống kê
           </button>
         </div>
@@ -245,28 +248,20 @@ D. 4
 Giải thích: Số 2 là số nguyên tố chẵn duy nhất trong tập hợp số tự nhiên.</div>
             </div>
 
-            <!-- AI Smart Filter & Enhancement Toolbar -->
+            <!-- AI Smart Toolbar -->
             <div class="ai-toolbar">
               <div class="ai-toolbar-left">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v4"></path><path d="M12 18v4"></path><path d="M4.93 4.93l2.83 2.83"></path><path d="M16.24 16.24l2.83 2.83"></path><path d="M2 12h4"></path><path d="M18 12h4"></path><path d="M4.93 19.07l2.83-2.83"></path><path d="M16.24 7.76l2.83-2.83"></path></svg>
-                <span>Công Cụ AI & Chuẩn Hóa:</span>
+                <span>Công Cụ AI Thông Minh:</span>
               </div>
               <div class="ai-toolbar-actions">
                 <button type="button" class="btn btn-ai btn-sm" id="btn-quick-ocr-upload" title="Tải ảnh đề thi để AI nhận diện và trích xuất thành câu hỏi trắc nghiệm (Hỗ trợ nhiều ảnh)">
                   <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
                   📸 Quét ảnh AI
                 </button>
-                <button type="button" class="btn btn-spellcheck btn-sm" id="btn-quick-fix-spelling" title="Tự động sửa toàn bộ lỗi chính tả, dãn chữ tiếng Việt, nối âm tiết, gỡ watermark rác nhưng TUYỆT ĐỐI GIỮ NGUYÊN ĐÁP ÁN ĐÚNG BAN ĐẦU">
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
-                  ✍️ Sửa chính tả (Giữ đáp án)
-                </button>
-                <button type="button" class="btn btn-detect-answers btn-sm" id="btn-auto-detect-answers" title="Tự động chuẩn hóa câu hỏi, lọc sạch rác, bổ sung tiền tố A-D và khớp đáp án từ DA:, Key: hoặc bảng đáp án riêng">
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                  ⚡ Chuẩn hóa & Khớp đáp án
-                </button>
-                <button type="button" class="btn btn-secondary btn-sm" id="btn-open-separate-answers" title="Ghép bảng đáp án riêng (1.A 2.B 3.C... hoặc dán từ tệp khác) cho đề không tô đậm">
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect><path d="m9 14 2 2 4-4"></path></svg>
-                  📋 Ghép đáp án riêng
+                <button type="button" class="btn btn-ai-generator btn-sm" id="btn-open-ai-generator" title="Nhập chủ đề hoặc yêu cầu để AI tự động soạn trọn vẹn đề trắc nghiệm">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 2a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2 2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z"></path><rect x="4" y="8" width="16" height="12" rx="4"></rect><path d="M9 13v2"></path><path d="M15 13v2"></path></svg>
+                  🤖 AI Sinh đề tự động
                 </button>
                 <button type="button" class="btn btn-ai btn-sm" id="btn-open-gemini-modal" title="Trung tâm Trợ Lý AI: Soát lỗi đề thi, Sửa chính tả chuyên sâu với AI, Giải đề & Viết lời giải chi tiết">
                   <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
@@ -420,10 +415,6 @@ Giải thích: Số 2 là số nguyên tố chẵn duy nhất trong tập hợp 
                 <button type="button" class="btn btn-secondary" id="btn-load-sample-docx">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polygon points="10 8 16 12 10 16 10 8"></polygon></svg>
                   Nạp thử file Word mẫu
-                </button>
-                <button type="button" class="btn btn-outline" id="btn-open-separate-answers-tab2" title="Nếu đề thi có bảng đáp án riêng ở file khác">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect><path d="m9 14 2 2 4-4"></path></svg>
-                  📋 Ghép Tệp / Bảng Đáp Án Riêng
                 </button>
               </div>
             </div>
@@ -706,6 +697,31 @@ Giải thích: Số 2 là số nguyên tố chẵn duy nhất trong tập hợp 
             </div>
 
             <div class="question-actions-top">
+              <!-- Zen Mode 2.0 Focus Ambient Audio Dropdown -->
+              <div class="zen-ambient-wrapper" style="position: relative;">
+                <button type="button" class="btn btn-secondary btn-sm" id="btn-zen-ambient" title="Bật âm thanh tập trung Zen Mode 2.0 (Mưa, Sóng biển, Sóng não 40Hz) 100% Offline">
+                  <span id="zen-ambient-icon">🎧</span>
+                  <span id="zen-ambient-label">Zen Âm Thanh</span>
+                </button>
+                <div class="zen-ambient-popover" id="zen-ambient-popover" style="display: none;">
+                  <div class="zen-popover-header">
+                    <strong>🎧 Âm Thanh Tập Trung (Offline)</strong>
+                    <button type="button" class="btn-close-zen-popover" id="btn-close-zen-popover">✕</button>
+                  </div>
+                  <div class="zen-sound-options">
+                    <button type="button" class="zen-opt-btn active" data-sound="off">🔇 Tắt âm thanh</button>
+                    <button type="button" class="zen-opt-btn" data-sound="rain">🌧️ Mưa rơi êm đềm</button>
+                    <button type="button" class="zen-opt-btn" data-sound="waves">🌊 Sóng biển dạt dào</button>
+                    <button type="button" class="zen-opt-btn" data-sound="alpha">🧠 Sóng não Alpha 40Hz</button>
+                    <button type="button" class="zen-opt-btn" data-sound="whitenoise">☕ Tiếng ồn trắng tĩnh lặng</button>
+                  </div>
+                  <div class="zen-volume-control">
+                    <span style="font-size: 0.8rem; color: var(--text-muted);">Âm lượng:</span>
+                    <input type="range" id="zen-volume-slider" min="0" max="1" step="0.05" value="0.5">
+                  </div>
+                </div>
+              </div>
+
               <!-- Practice Mode only: Flashcard Flip Toggle -->
               <button class="btn btn-secondary btn-sm" id="btn-toggle-flashcard-mode" style="display: none;">
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>
@@ -767,9 +783,21 @@ Giải thích: Số 2 là số nguyên tố chẵn duy nhất trong tập hợp 
 
           </div>
 
-          <!-- FLASHCARD VIEW (Interactive Flip Card) -->
+          <!-- FLASHCARD VIEW (Interactive Flip & Tinder Swipe Card) -->
           <div id="flashcard-view" style="display: none;">
-            <div class="flashcard-container" id="flashcard-element">
+            <div class="flashcard-swipe-guide">
+              <span>👈 Vuốt trái: <strong>Ôn lại</strong></span>
+              <span>&bull;</span>
+              <span>Chạm / Space: <strong>Lật 3D</strong></span>
+              <span>&bull;</span>
+              <span>Vuốt phải: <strong>Đã thuộc</strong> 👉</span>
+            </div>
+
+            <div class="flashcard-container" id="flashcard-element" title="Chạm để lật 3D hoặc kéo vuốt sang trái/phải như Tinder">
+              <!-- Swipe Stamps -->
+              <div class="flashcard-stamp stamp-like" id="flashcard-stamp-right">ĐÃ THUỘC ✓</div>
+              <div class="flashcard-stamp stamp-nope" id="flashcard-stamp-left">ÔN LẠI ✕</div>
+
               <div class="flashcard-inner">
                 <div class="flashcard-front">
                   <div style="display: flex; justify-content: flex-start; align-items: center; width: 100%; margin-bottom: 1.25rem;">
@@ -795,13 +823,13 @@ Giải thích: Số 2 là số nguyên tố chẵn duy nhất trong tập hợp 
 
             <!-- Flashcard Review Action Buttons -->
             <div class="flashcard-action-bar">
-              <button type="button" class="btn btn-outline-danger" id="btn-flashcard-need-review" title="Phím tắt: 1">
+              <button type="button" class="btn btn-outline-danger" id="btn-flashcard-need-review" title="Phím tắt: 1 hoặc vuốt sang trái">
                 ❌ Cần ôn lại (Phím 1)
               </button>
-              <button type="button" class="btn btn-secondary" id="btn-flashcard-flip-btn" title="Phím tắt: Space">
+              <button type="button" class="btn btn-secondary" id="btn-flashcard-flip-btn" title="Phím tắt: Space hoặc chạm vào thẻ">
                 🔄 Lật thẻ (Space)
               </button>
-              <button type="button" class="btn btn-success" id="btn-flashcard-mastered" title="Phím tắt: 2">
+              <button type="button" class="btn btn-success" id="btn-flashcard-mastered" title="Phím tắt: 2 hoặc vuốt sang phải">
                 ✅ Đã thuộc (Phím 2)
               </button>
             </div>
@@ -1305,6 +1333,99 @@ Giải thích: Số 2 là số nguyên tố chẵn duy nhất trong tập hợp 
     </div>
   </div>
 
+  <!-- ==================== MODAL: AI EXAM GENERATOR (TẠO ĐỀ THEO CHỦ ĐỀ) ==================== -->
+  <div class="modal-backdrop" id="modal-ai-generator" style="display: none;">
+    <div class="modal-dialog modal-lg" style="max-width: 620px; max-height: 92vh; display: flex; flex-direction: column;">
+      <div class="modal-header" style="padding: 1.25rem 1.75rem;">
+        <div style="display: flex; align-items: center; gap: 0.75rem;">
+          <div style="width: 40px; height: 40px; border-radius: var(--radius-md); background: linear-gradient(135deg, #d97706, #ea580c); color: white; display: flex; align-items: center; justify-content: center; font-size: 1.35rem; box-shadow: 0 4px 12px rgba(217, 119, 6, 0.35);">
+            🤖
+          </div>
+          <div>
+            <h3 class="modal-title" style="font-size: 1.2rem; font-weight: 800;">AI Sinh Đề Thi Trắc Nghiệm Thông Minh</h3>
+            <p style="font-size: 0.8rem; color: var(--text-muted); margin: 0.15rem 0 0 0;">Nhập chủ đề hoặc nội dung cần ôn, Gemini AI sẽ tự động tạo đề thi chuẩn</p>
+          </div>
+        </div>
+        <button class="btn-ghost btn-sm" id="btn-close-ai-generator" style="padding: 0.4rem; border-radius: 50%;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+      </div>
+
+      <div class="modal-body" style="padding: 1.25rem 1.75rem; overflow-y: auto; flex: 1; display: flex; flex-direction: column; gap: 1.15rem;">
+        <!-- Prompt/Topic Input -->
+        <div class="form-group">
+          <label class="form-label" for="ai-gen-topic" style="font-weight: 700;">
+            Chủ đề / Yêu cầu bộ đề thi <span style="color: var(--danger);">*</span>
+          </label>
+          <textarea class="form-textarea" id="ai-gen-topic" rows="3" placeholder="VD: Lịch sử Việt Nam giai đoạn 1945 - 1975, hoặc: Ngữ pháp tiếng Anh thì quá khứ hoàn thành, hoặc: Tin học văn phòng Excel nâng cao..."></textarea>
+          <div style="display: flex; gap: 0.4rem; flex-wrap: wrap; margin-top: 0.45rem;">
+            <button type="button" class="btn btn-ghost btn-xs ai-gen-suggestion" data-topic="Lịch sử Việt Nam giai đoạn 1945 - 1975">💡 Lịch sử 1945-1975</button>
+            <button type="button" class="btn btn-ghost btn-xs ai-gen-suggestion" data-topic="Tin học căn bản: Hệ điều hành Windows & Phím tắt Office">💡 Tin học & Office</button>
+            <button type="button" class="btn btn-ghost btn-xs ai-gen-suggestion" data-topic="Ngữ pháp Tiếng Anh: Câu bị động và Câu điều kiện">💡 Tiếng Anh THPT</button>
+            <button type="button" class="btn btn-ghost btn-xs ai-gen-suggestion" data-topic="Kiến thức chung: Hiến pháp và Pháp luật Nhà nước">💡 Pháp luật & KTC</button>
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+          <!-- Question count -->
+          <div class="form-group">
+            <label class="form-label" for="ai-gen-count" style="font-weight: 700;">Số lượng câu hỏi:</label>
+            <select class="form-input" id="ai-gen-count">
+              <option value="5">5 câu (Nhanh - ~10s)</option>
+              <option value="10" selected>10 câu (Chuẩn - ~15s)</option>
+              <option value="15">15 câu (Đầy đủ - ~25s)</option>
+              <option value="20">20 câu (Toàn diện - ~35s)</option>
+              <option value="30">30 câu (Đề thi thử lớn)</option>
+            </select>
+          </div>
+
+          <!-- Difficulty -->
+          <div class="form-group">
+            <label class="form-label" for="ai-gen-level" style="font-weight: 700;">Mức độ phân hóa:</label>
+            <select class="form-input" id="ai-gen-level">
+              <option value="Hỗn hợp cân bằng (Nhận biết 40%, Thông hiểu 30%, Vận dụng 30%)" selected>Cân bằng mọi mức độ</option>
+              <option value="Nhận biết và Thông hiểu (Cơ bản)">Cơ bản (Dễ)</option>
+              <option value="Vận dụng và Vận dụng cao (Nâng cao)">Nâng cao (Khó)</option>
+              <option value="Chuyên sâu / Đề thi học sinh giỏi">Chuyên sâu / Học sinh giỏi</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Options -->
+        <div style="background: var(--bg-muted); padding: 0.85rem 1rem; border-radius: var(--radius-md); border: 1px solid var(--border-subtle);">
+          <label style="display: flex; align-items: center; gap: 0.6rem; cursor: pointer; font-size: 0.88rem; font-weight: 600;">
+            <input type="checkbox" id="ai-gen-explanation" checked style="width: 17px; height: 17px; accent-color: var(--primary);">
+            <span>Yêu cầu AI viết kèm lời giải thích chi tiết cho từng câu hỏi</span>
+          </label>
+        </div>
+
+        <!-- API Key Field (if not saved) -->
+        <div id="ai-gen-key-container" style="display: none; background: rgba(217, 119, 6, 0.08); padding: 0.85rem 1rem; border-radius: var(--radius-md); border: 1px solid rgba(217, 119, 6, 0.25);">
+          <label class="form-label" for="ai-gen-key-input" style="color: var(--primary); font-weight: 700; margin-bottom: 0.35rem;">
+            🔑 Nhập Google Gemini API Key để tạo đề:
+          </label>
+          <input type="password" class="form-input" id="ai-gen-key-input" placeholder="Dán API Key (AIzaSy...) tại đây...">
+          <small style="color: var(--text-muted); font-size: 0.78rem; display: block; margin-top: 0.35rem;">Khóa API được lưu an toàn trong trình duyệt của bạn (miễn phí tại Google AI Studio).</small>
+        </div>
+
+        <!-- Progress Indicator -->
+        <div id="ai-gen-progress-box" style="display: none; text-align: center; padding: 1.25rem 0;">
+          <div class="spinner-pulse" style="margin: 0 auto 0.75rem; width: 40px; height: 40px; border-width: 3.5px; border-color: var(--primary); border-top-color: transparent;"></div>
+          <div style="font-weight: 700; font-size: 1rem; color: var(--primary);" id="ai-gen-status-text">AI đang tư duy và soạn các câu hỏi trắc nghiệm...</div>
+          <div style="font-size: 0.825rem; color: var(--text-muted); margin-top: 0.25rem;">Quá trình mất khoảng 10 - 25 giây tùy theo số câu hỏi</div>
+        </div>
+      </div>
+
+      <div class="modal-footer" style="padding: 1rem 1.75rem; display: flex; justify-content: flex-end; gap: 0.75rem;">
+        <button type="button" class="btn btn-secondary" id="btn-cancel-ai-generator">Hủy bỏ</button>
+        <button type="button" class="btn btn-primary" id="btn-submit-ai-generator" style="background: linear-gradient(135deg, #d97706, #ea580c); border: none; font-weight: 700;">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+          🚀 Bắt đầu Tạo Đề Bằng AI
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- ==================== SEPARATE ANSWERS MODAL ==================== -->
   <div class="modal-backdrop" id="modal-separate-answers">
     <div class="modal-dialog" style="max-width: 620px; max-height: 92vh; display: flex; flex-direction: column;">
@@ -1686,6 +1807,6 @@ Giải thích: Số 2 là số nguyên tố chẵn duy nhất trong tập hợp 
   <script src="jszip.min.js"></script>
   <script src="pdf.min.js"></script>
   <script src="sample-data.js"></script>
-  <script src="app.js?v=3.7.0"></script>
+  <script src="app.js?v=4.0.0"></script>
 </body>
 </html>

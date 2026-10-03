@@ -1,23 +1,26 @@
 /* ==========================================================================
-   NOVAQUIZ - CRYSTAL LIQUID GLASS & 3D OPTICS v3.7.1
+   NOVAQUIZ - CRYSTAL LIQUID GLASS & 3D OPTICS v4.0.0
+   Phong Thủy Mệnh Thổ: Hoàng Thổ (Hổ Phách) & Hỏa Tương Sinh (Sa Thạch & Lửa Ấm)
    ========================================================================== */
 
 :root {
   --font-main: 'Be Vietnam Pro', 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
   
-  /* Primary & Accent Colors */
-  --primary: #4f46e5;
-  --primary-hover: #4338ca;
-  --primary-light: rgba(79, 70, 229, 0.12);
-  --primary-glow: rgba(79, 70, 229, 0.25);
-  --primary-gradient: linear-gradient(135deg, #4f46e5 0%, #7c3aed 50%, #06b6d4 100%);
+  /* Primary & Accent Colors - Phong Thủy Mệnh Thổ (Thịnh Vượng & Bình An) */
+  --primary: #d97706; /* Hoàng Thổ / Amber Gold */
+  --primary-hover: #b45309;
+  --primary-light: rgba(217, 119, 6, 0.12);
+  --primary-glow: rgba(217, 119, 6, 0.3);
+  --primary-gradient: linear-gradient(135deg, #d97706 0%, #ea580c 50%, #f59e0b 100%);
   
-  --secondary: #8b5cf6;
-  --secondary-hover: #7c3aed;
-  --secondary-glow: rgba(139, 92, 246, 0.25);
+  --secondary: #ea580c; /* Nâu đất nung / Hỏa tương sinh */
+  --secondary-hover: #c2410c;
+  --secondary-glow: rgba(234, 88, 12, 0.28);
   
-  --cyan: #06b6d4;
-  --cyan-glow: rgba(6, 182, 212, 0.25);
+  --amber: #f59e0b; /* Kim Hoàng Cát */
+  --amber-glow: rgba(245, 158, 11, 0.28);
+  --cyan: #f59e0b; /* Map cyan accents to warm amber */
+  --cyan-glow: rgba(245, 158, 11, 0.25);
   
   --success: #10b981;
   --success-light: rgba(16, 185, 129, 0.12);
@@ -34,40 +37,40 @@
   --info: #0284c7;
   --info-light: rgba(2, 132, 199, 0.12);
 
-  /* Light Theme Crystal Glass Tokens */
-  --bg-app: #f8fafc;
-  --bg-surface: rgba(255, 255, 255, 0.82);
-  --bg-surface-elevated: rgba(255, 255, 255, 0.94);
-  --bg-muted: rgba(241, 245, 249, 0.8);
-  --bg-accent: rgba(248, 250, 252, 0.85);
+  /* Light Theme - Sa Thạch Hoàng Gia & Cát Vàng Mịn */
+  --bg-app: #faf6f0;
+  --bg-surface: rgba(255, 255, 255, 0.76);
+  --bg-surface-elevated: rgba(255, 255, 255, 0.92);
+  --bg-muted: rgba(247, 240, 230, 0.85);
+  --bg-accent: rgba(254, 250, 243, 0.9);
   
-  --border-subtle: rgba(226, 232, 240, 0.85);
-  --border-strong: rgba(203, 213, 225, 0.95);
+  --border-subtle: rgba(217, 119, 6, 0.14);
+  --border-strong: rgba(217, 119, 6, 0.3);
   
-  --text-main: #0f172a;
-  --text-muted: #64748b;
+  --text-main: #24160c;
+  --text-muted: #786555;
   --text-inverse: #ffffff;
   
-  /* Crystal Liquid Glass 3.2 Tokens */
+  /* Crystal Liquid Frosted Glass 4.0 Tokens */
   --glass-bg: rgba(255, 255, 255, 0.72);
-  --glass-bg-hover: rgba(255, 255, 255, 0.9);
-  --glass-card: rgba(255, 255, 255, 0.82);
-  --glass-card-hover: rgba(255, 255, 255, 0.95);
+  --glass-bg-hover: rgba(255, 255, 255, 0.88);
+  --glass-card: rgba(255, 255, 255, 0.78);
+  --glass-card-hover: rgba(255, 255, 255, 0.94);
   --glass-border: rgba(255, 255, 255, 0.65);
   --glass-border-highlight: rgba(255, 255, 255, 0.95);
-  --glass-blur: blur(16px) saturate(180%);
-  --glass-specular: inset 0 1px 1px 0 rgba(255, 255, 255, 0.9);
+  --glass-blur: blur(24px) saturate(190%) contrast(92%);
+  --glass-specular: inset 0 1px 1.5px 0 rgba(255, 255, 255, 0.95), inset 0 -1px 1px 0 rgba(217, 119, 6, 0.08);
   
-  /* Layered 3D Optical Shadows */
-  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02);
-  --shadow-md: 0 4px 14px -2px rgba(79, 70, 229, 0.08), 0 2px 6px -1px rgba(0, 0, 0, 0.04);
-  --shadow-lg: 0 10px 24px -4px rgba(79, 70, 229, 0.1), 0 4px 10px -2px rgba(0, 0, 0, 0.04);
-  --shadow-xl: 0 20px 40px -8px rgba(79, 70, 229, 0.12), 0 8px 16px -4px rgba(0, 0, 0, 0.04);
+  /* Layered 3D Optical Shadows - Mệnh Thổ Warm Ambient */
+  --shadow-sm: 0 1px 3px rgba(36, 22, 12, 0.04), 0 1px 2px rgba(36, 22, 12, 0.02);
+  --shadow-md: 0 6px 18px -3px rgba(217, 119, 6, 0.12), 0 2px 6px -1px rgba(36, 22, 12, 0.04);
+  --shadow-lg: 0 12px 28px -4px rgba(217, 119, 6, 0.16), 0 4px 10px -2px rgba(36, 22, 12, 0.04);
+  --shadow-xl: 0 22px 48px -8px rgba(217, 119, 6, 0.2), 0 8px 18px -4px rgba(36, 22, 12, 0.06);
   
-  --shadow-3d-card: 0 4px 20px -2px rgba(79, 70, 229, 0.06), 0 1px 3px rgba(0, 0, 0, 0.03), inset 0 1px 0 rgba(255, 255, 255, 0.9);
-  --shadow-3d-card-hover: 0 16px 36px -4px rgba(79, 70, 229, 0.14), 0 0 0 1px rgba(99, 102, 241, 0.2), inset 0 1px 0 #ffffff;
-  --shadow-3d-btn: 0 3px 12px rgba(79, 70, 229, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.35);
-  --shadow-3d-btn-active: 0 1px 3px rgba(0, 0, 0, 0.2);
+  --shadow-3d-card: 0 8px 28px -4px rgba(217, 119, 6, 0.1), 0 2px 6px rgba(0, 0, 0, 0.03), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  --shadow-3d-card-hover: 0 18px 40px -4px rgba(217, 119, 6, 0.2), 0 0 0 1px rgba(217, 119, 6, 0.25), inset 0 1px 0 #ffffff;
+  --shadow-3d-btn: 0 4px 16px rgba(217, 119, 6, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.45);
+  --shadow-3d-btn-active: 0 1px 4px rgba(0, 0, 0, 0.2);
 
   --radius-sm: 8px;
   --radius-md: 12px;
@@ -89,46 +92,48 @@
 }
 
 [data-theme="dark"] {
-  --bg-app: #080c15;
-  --bg-surface: rgba(15, 23, 42, 0.7);
-  --bg-surface-elevated: rgba(30, 41, 59, 0.75);
-  --bg-muted: rgba(30, 41, 59, 0.55);
-  --bg-accent: rgba(21, 29, 48, 0.85);
+  /* Hắc Thạch Hoàng Thổ (Obsidian & Deep Amber Earth) */
+  --bg-app: #14100c;
+  --bg-surface: rgba(28, 20, 14, 0.68);
+  --bg-surface-elevated: rgba(40, 28, 20, 0.76);
+  --bg-muted: rgba(35, 24, 17, 0.58);
+  --bg-accent: rgba(30, 22, 16, 0.85);
   
-  --border-subtle: rgba(255, 255, 255, 0.08);
-  --border-strong: rgba(255, 255, 255, 0.18);
+  --border-subtle: rgba(245, 158, 11, 0.12);
+  --border-strong: rgba(245, 158, 11, 0.28);
   
-  --text-main: #f8fafc;
-  --text-muted: #94a3b8;
-  --text-inverse: #0f172a;
+  --text-main: #fef7ee;
+  --text-muted: #bda897;
+  --text-inverse: #14100c;
   
-  --primary-light: rgba(99, 102, 241, 0.15);
-  --primary-glow: rgba(99, 102, 241, 0.25);
-  --success-light: rgba(16, 185, 129, 0.15);
-  --danger-light: rgba(239, 68, 68, 0.15);
-  --warning-light: rgba(245, 158, 11, 0.15);
-  --info-light: rgba(2, 132, 199, 0.15);
+  --primary-light: rgba(217, 119, 6, 0.2);
+  --primary-glow: rgba(217, 119, 6, 0.38);
+  --secondary-glow: rgba(234, 88, 12, 0.35);
+  --success-light: rgba(16, 185, 129, 0.18);
+  --danger-light: rgba(239, 68, 68, 0.18);
+  --warning-light: rgba(245, 158, 11, 0.18);
+  --info-light: rgba(2, 132, 199, 0.18);
 
-  /* Crystal Liquid Glass 3.2 Dark Tokens */
-  --glass-bg: rgba(15, 23, 42, 0.72);
-  --glass-bg-hover: rgba(30, 41, 59, 0.85);
-  --glass-card: rgba(15, 23, 42, 0.68);
-  --glass-card-hover: rgba(30, 41, 59, 0.82);
-  --glass-border: rgba(255, 255, 255, 0.08);
-  --glass-border-highlight: rgba(255, 255, 255, 0.18);
-  --glass-blur: blur(16px) saturate(180%);
-  --glass-specular: inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  /* Crystal Liquid Frosted Glass 4.0 Dark Tokens */
+  --glass-bg: rgba(24, 18, 13, 0.7);
+  --glass-bg-hover: rgba(38, 28, 20, 0.82);
+  --glass-card: rgba(26, 19, 14, 0.68);
+  --glass-card-hover: rgba(42, 30, 21, 0.82);
+  --glass-border: rgba(245, 158, 11, 0.14);
+  --glass-border-highlight: rgba(255, 215, 150, 0.24);
+  --glass-blur: blur(24px) saturate(190%) contrast(95%);
+  --glass-specular: inset 0 1px 1px 0 rgba(255, 215, 150, 0.2), inset 0 -1px 1px 0 rgba(0, 0, 0, 0.4);
 
   /* 3D Optical Glass Elevation Shadows */
-  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.06);
-  --shadow-md: 0 4px 14px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.08);
-  --shadow-lg: 0 8px 28px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.1);
-  --shadow-xl: 0 16px 40px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  --shadow-md: 0 6px 18px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 215, 150, 0.08);
+  --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 215, 150, 0.12);
+  --shadow-xl: 0 20px 48px rgba(0, 0, 0, 0.65), inset 0 1px 0 rgba(255, 215, 150, 0.15);
 
-  --shadow-3d-card: 0 4px 20px -2px rgba(0, 0, 0, 0.4), 0 1px 2px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.08);
-  --shadow-3d-card-hover: 0 16px 36px -4px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(99, 102, 241, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  --shadow-3d-card: 0 8px 30px -4px rgba(0, 0, 0, 0.6), 0 2px 6px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 215, 150, 0.12);
+  --shadow-3d-card-hover: 0 18px 44px -4px rgba(0, 0, 0, 0.75), 0 0 0 1px rgba(245, 158, 11, 0.35), inset 0 1px 0 rgba(255, 215, 150, 0.25);
 
-  --shadow-3d-btn: 0 3px 12px rgba(79, 70, 229, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  --shadow-3d-btn: 0 4px 18px rgba(217, 119, 6, 0.4), inset 0 1px 0 rgba(255, 230, 180, 0.25);
   --shadow-3d-btn-active: 0 1px 4px rgba(0, 0, 0, 0.4), inset 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
@@ -4730,5 +4735,300 @@ kbd {
   text-overflow: ellipsis;
   text-align: center;
 }
+
+/* =============================================================================
+   15. V4.0 LIQUID AMBIENT FROSTED GLASS & MỆNH THỔ BACKDROP
+   ============================================================================= */
+
+.liquid-ambient-container {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.7;
+  filter: blur(80px);
+  transform: translateZ(0);
+}
+
+[data-theme="dark"] .liquid-ambient-container {
+  opacity: 0.52;
+}
+
+.liquid-ambient-orb {
+  position: absolute;
+  border-radius: 50%;
+  will-change: transform;
+}
+
+.orb-amber {
+  width: 580px;
+  height: 580px;
+  background: radial-gradient(circle, rgba(217, 119, 6, 0.45) 0%, rgba(217, 119, 6, 0.04) 70%, transparent 100%);
+  top: -120px;
+  left: -100px;
+  animation: liquidMorph1 24s infinite alternate ease-in-out;
+}
+
+.orb-terracotta {
+  width: 620px;
+  height: 620px;
+  background: radial-gradient(circle, rgba(234, 88, 12, 0.4) 0%, rgba(234, 88, 12, 0.05) 70%, transparent 100%);
+  top: 35%;
+  right: -160px;
+  animation: liquidMorph2 28s infinite alternate ease-in-out;
+}
+
+.orb-gold {
+  width: 520px;
+  height: 520px;
+  background: radial-gradient(circle, rgba(245, 158, 11, 0.42) 0%, rgba(245, 158, 11, 0.04) 70%, transparent 100%);
+  bottom: -90px;
+  left: 20%;
+  animation: liquidMorph3 26s infinite alternate ease-in-out;
+}
+
+.orb-ember {
+  width: 440px;
+  height: 440px;
+  background: radial-gradient(circle, rgba(180, 83, 9, 0.36) 0%, rgba(180, 83, 9, 0.03) 70%, transparent 100%);
+  top: 15%;
+  left: 45%;
+  animation: liquidMorph4 30s infinite alternate ease-in-out;
+}
+
+@keyframes liquidMorph1 {
+  0% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(140px, 90px) scale(1.15); }
+  100% { transform: translate(-70px, 150px) scale(0.95); }
+}
+
+@keyframes liquidMorph2 {
+  0% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(-120px, -80px) scale(1.18); }
+  100% { transform: translate(90px, 100px) scale(0.92); }
+}
+
+@keyframes liquidMorph3 {
+  0% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(100px, -120px) scale(1.14); }
+  100% { transform: translate(-120px, 50px) scale(1.05); }
+}
+
+@keyframes liquidMorph4 {
+  0% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(-90px, 130px) scale(1.2); }
+  100% { transform: translate(110px, -70px) scale(0.88); }
+}
+
+/* =============================================================================
+   16. BUTTON AI GENERATOR & PROMINENT AI TOOLBAR V4.0
+   ============================================================================= */
+
+.btn-ai-generator {
+  background: linear-gradient(135deg, #d97706 0%, #ea580c 50%, #f59e0b 100%);
+  color: #ffffff !important;
+  font-weight: 700;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  box-shadow: 0 4px 16px rgba(217, 119, 6, 0.38), inset 0 1px 0 rgba(255, 255, 255, 0.45);
+  transition: all var(--transition-fast);
+}
+
+.btn-ai-generator:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(217, 119, 6, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  filter: brightness(1.08);
+}
+
+.btn-ai-generator:active {
+  transform: translateY(0);
+}
+
+/* =============================================================================
+   17. TINDER-STYLE FLASHCARD SWIPE 3D
+   ============================================================================= */
+
+.flashcard-swipe-guide {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin-bottom: 0.75rem;
+  text-align: center;
+  user-select: none;
+}
+
+.flashcard-container {
+  touch-action: pan-y;
+  user-select: none;
+  -webkit-user-select: none;
+  cursor: grab;
+  position: relative;
+  will-change: transform;
+}
+
+.flashcard-container:active {
+  cursor: grabbing;
+}
+
+.flashcard-stamp {
+  position: absolute;
+  top: 1.5rem;
+  padding: 0.4rem 1.2rem;
+  border-radius: var(--radius-md);
+  font-size: 1.35rem;
+  font-weight: 900;
+  letter-spacing: 2px;
+  pointer-events: none;
+  opacity: 0;
+  z-index: 50;
+  text-transform: uppercase;
+  transition: opacity 0.1s ease, transform 0.1s ease;
+  backdrop-filter: blur(8px);
+}
+
+.stamp-like {
+  right: 1.5rem;
+  border: 3px solid #10b981;
+  color: #10b981;
+  background: rgba(16, 185, 129, 0.18);
+  box-shadow: 0 0 24px rgba(16, 185, 129, 0.45);
+  transform: rotate(14deg) scale(0.95);
+}
+
+.stamp-nope {
+  left: 1.5rem;
+  border: 3px solid #ef4444;
+  color: #ef4444;
+  background: rgba(239, 68, 68, 0.18);
+  box-shadow: 0 0 24px rgba(239, 68, 68, 0.45);
+  transform: rotate(-14deg) scale(0.95);
+}
+
+.flashcard-swiping-right {
+  transition: transform 0.38s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.32s ease !important;
+  transform: translate3d(140%, 20px, 0) rotate(28deg) !important;
+  opacity: 0 !important;
+}
+
+.flashcard-swiping-left {
+  transition: transform 0.38s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.32s ease !important;
+  transform: translate3d(-140%, 20px, 0) rotate(-28deg) !important;
+  opacity: 0 !important;
+}
+
+.flashcard-reset-pos {
+  transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+}
+
+/* =============================================================================
+   18. ZEN MODE 2.0 AMBIENT AUDIO CONTROLS (OFFLINE WEB AUDIO)
+   ============================================================================= */
+
+.zen-ambient-wrapper {
+  position: relative;
+  display: inline-block;
+}
+
+.zen-ambient-popover {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  width: 280px;
+  background: var(--bg-surface-elevated);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-xl);
+  padding: 1rem;
+  z-index: 1000;
+  animation: fadeInDown 0.2s ease;
+}
+
+@keyframes fadeInDown {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.zen-popover-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.85rem;
+  font-weight: 700;
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--border-subtle);
+  color: var(--primary);
+}
+
+.btn-close-zen-popover {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 0.9rem;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.btn-close-zen-popover:hover {
+  background: var(--bg-muted);
+  color: var(--text-main);
+}
+
+.zen-sound-options {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin-bottom: 0.85rem;
+}
+
+.zen-opt-btn {
+  text-align: left;
+  padding: 0.5rem 0.75rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-surface);
+  color: var(--text-main);
+  font-size: 0.825rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.zen-opt-btn:hover {
+  border-color: var(--primary);
+  background: var(--primary-light);
+  transform: translateX(2px);
+}
+
+.zen-opt-btn.active {
+  background: var(--primary-gradient);
+  color: #ffffff;
+  border-color: transparent;
+  box-shadow: 0 2px 8px rgba(217, 119, 6, 0.3);
+}
+
+.zen-volume-control {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.zen-volume-control input[type="range"] {
+  flex: 1;
+  accent-color: var(--primary);
+  cursor: pointer;
+}
+
 
 

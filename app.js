@@ -1,6 +1,6 @@
 /**
- * NOVAQUIZ PRO - MAIN APPLICATION ENGINE v3.7.1
- * Modern Exam & Practice Web App
+ * NOVAQUIZ PRO - MAIN APPLICATION ENGINE v4.0.0
+ * Modern Exam & Practice Web App (AI Exam Generator, Tinder Flashcard, Zen Mode 2.0, Mệnh Thổ Amber)
  */
 
 // =============================================================================
@@ -513,16 +513,19 @@ function deleteAllQuizzes() {
   }
 }
 
-// Xóa trắng khung soạn thảo đề
+// Xóa trắng khung soạn thảo đề & đặt lại mọi trạng thái
 function clearSmartTextInput() {
   const textarea = document.getElementById("smart-text-input");
-  if (!textarea) return;
-  if (textarea.value.trim() && !confirm("Bạn có chắc muốn xóa trắng nội dung câu hỏi trong khung văn bản không?")) {
+  if (textarea && textarea.value.trim() && !confirm("Bạn có chắc muốn xóa trắng toàn bộ nội dung câu hỏi trong khung văn bản không?")) {
     return;
   }
-  textarea.value = "";
-  updateSmartParsePreview();
-  showToast("Đã xóa trắng khung soạn thảo văn bản!", "info");
+  if (typeof resetCreatorForm === "function") {
+    resetCreatorForm();
+  } else {
+    if (textarea) textarea.value = "";
+    updateSmartParsePreview();
+  }
+  showToast("Đã làm sạch và xóa trắng khung soạn thảo!", "info");
 }
 
 // =============================================================================
@@ -1516,31 +1519,102 @@ function renderParsedQuestionsList(questions) {
 
 let manualQuestionsList = [];
 
-function openCreator(editQuiz = null) {
-  switchView("view-creator");
-  manualQuestionsList = [];
-
+// Đặt lại toàn bộ dữ liệu Creator về trạng thái ban đầu sạch sẽ như lúc vừa tải trang
+function resetCreatorForm() {
   const titleInput = document.getElementById("input-quiz-title");
   const catInput = document.getElementById("input-quiz-category");
   const timeInput = document.getElementById("input-quiz-time");
   const descInput = document.getElementById("input-quiz-desc");
   const textarea = document.getElementById("smart-text-input");
 
+  if (titleInput) titleInput.value = "";
+  if (catInput) catInput.value = "Chung";
+  if (timeInput) timeInput.value = 15;
+  if (descInput) descInput.value = "";
+  if (textarea) textarea.value = "";
+
+  // Reset file uploader nếu có
+  const fileUploader = document.getElementById("file-uploader");
+  if (fileUploader) fileUploader.value = "";
+  const uploadPreviewArea = document.getElementById("file-upload-preview");
+  if (uploadPreviewArea) uploadPreviewArea.innerHTML = "";
+
+  // Reset OCR images
+  const ocrInput = document.getElementById("ocr-multi-file-input");
+  if (ocrInput) ocrInput.value = "";
+  const ocrGallery = document.getElementById("ocr-gallery-container");
+  if (ocrGallery) ocrGallery.innerHTML = "";
+  const ocrPreviewArea = document.getElementById("ocr-preview-area");
+  if (ocrPreviewArea) ocrPreviewArea.style.display = "none";
+  if (window.uploadedOcrImages) window.uploadedOcrImages = [];
+
+  // Reset toàn bộ thông báo và panel "AI vừa sửa đáp án"
+  currentAiAuditChanges = [];
+  lastAuditSnapshot = null;
+  const statAuditedContainer = document.getElementById("parse-stat-audited-container");
+  if (statAuditedContainer) statAuditedContainer.style.display = "none";
+  const statAuditedCount = document.getElementById("parse-stat-audited-count");
+  if (statAuditedCount) statAuditedCount.textContent = "0";
+
+  const btnToggleAudited = document.getElementById("btn-toggle-audited-panel");
+  if (btnToggleAudited) btnToggleAudited.style.display = "none";
+  const btnToggleAuditedCount = document.getElementById("btn-toggle-audited-count");
+  if (btnToggleAuditedCount) btnToggleAuditedCount.textContent = "0";
+
+  const diffPanel = document.getElementById("ai-audit-diff-panel");
+  if (diffPanel) diffPanel.style.display = "none";
+  const diffItems = document.getElementById("ai-audit-diff-items-container");
+  if (diffItems) diffItems.innerHTML = "";
+  const diffBadge = document.getElementById("ai-audit-diff-badge");
+  if (diffBadge) diffBadge.textContent = "0 câu đã sửa";
+
+  // Reset thống kê số câu đã nhận diện
+  const totalEl = document.getElementById("parse-stat-total");
+  const validEl = document.getElementById("parse-stat-valid");
+  const invalidEl = document.getElementById("parse-stat-invalid");
+  const invalidContainer = document.getElementById("parse-stat-invalid-container");
+  if (totalEl) totalEl.textContent = "0";
+  if (validEl) validEl.textContent = "0";
+  if (invalidEl) invalidEl.textContent = "0";
+  if (invalidContainer) invalidContainer.style.display = "none";
+
+  const parsedPreview = document.getElementById("parsed-preview-container");
+  if (parsedPreview) {
+    parsedPreview.style.display = "none";
+    parsedPreview.innerHTML = "";
+  }
+  const btnToggleParsed = document.getElementById("btn-toggle-parsed-preview");
+  if (btnToggleParsed) btnToggleParsed.textContent = "Xem chi tiết các câu đã phân tích";
+
+  // Reset câu hỏi soạn thủ công
+  manualQuestionsList = [];
+  renderManualQuestions();
+
+  // Reset tab về tab-smart-paste
+  document.querySelectorAll(".creator-tab").forEach(t => t.classList.remove("active"));
+  const firstTab = document.querySelector('.creator-tab[data-tab="tab-smart-paste"]');
+  if (firstTab) firstTab.classList.add("active");
+  document.querySelectorAll(".tab-pane").forEach(p => p.style.display = "none");
+  const firstPane = document.getElementById("tab-smart-paste");
+  if (firstPane) firstPane.style.display = "block";
+}
+
+function openCreator(editQuiz = null) {
+  switchView("view-creator");
+  resetCreatorForm();
+
   if (editQuiz) {
+    const titleInput = document.getElementById("input-quiz-title");
+    const catInput = document.getElementById("input-quiz-category");
+    const timeInput = document.getElementById("input-quiz-time");
+    const descInput = document.getElementById("input-quiz-desc");
     if (titleInput) titleInput.value = editQuiz.title || "";
     if (catInput) catInput.value = editQuiz.category || "";
     if (timeInput) timeInput.value = editQuiz.timeLimit || 15;
     if (descInput) descInput.value = editQuiz.description || "";
-  } else {
-    if (titleInput) titleInput.value = "";
-    if (catInput) catInput.value = "Chung";
-    if (timeInput) timeInput.value = 15;
-    if (descInput) descInput.value = "";
-    if (textarea) textarea.value = "";
   }
 
   updateSmartParsePreview();
-  renderManualQuestions();
 }
 
 function renderManualQuestions() {
@@ -4244,6 +4318,9 @@ function saveCurrentQuiz(autoStart = false) {
   saveQuizzes();
   showToast(`Đã lưu đề thi "${title}" (${finalQuestions.length} câu) thành công!`, "success");
 
+  // Đặt lại sạch sẽ form tạo đề như lúc reload trang web
+  resetCreatorForm();
+
   renderDashboard();
 
   if (autoStart) {
@@ -6209,7 +6286,7 @@ function initPwaInstall() {
 
   if ("serviceWorker" in navigator) {
     window.addEventListener("load", () => {
-      navigator.serviceWorker.register("./sw.js?v=3.6.0")
+      navigator.serviceWorker.register("./sw.js?v=4.0.0")
         .then(reg => console.log("Service Worker đăng ký thành công:", reg.scope))
         .catch(err => console.log("Lỗi đăng ký Service Worker:", err));
     });
@@ -6543,6 +6620,9 @@ document.addEventListener("DOMContentLoaded", () => {
     categoryFilters.addEventListener("click", (e) => {
       const chip = e.target.closest(".filter-chip");
       if (!chip) return;
+      if (chip.id === "btn-open-mistake-vault" || chip.id === "btn-open-analytics") {
+        return;
+      }
       categoryFilters.querySelectorAll(".filter-chip").forEach(c => c.classList.remove("active"));
       chip.classList.add("active");
       AppState.activeFilter = chip.getAttribute("data-category") || "ALL";
@@ -8177,9 +8257,543 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
+  // --- V4.0.0 FEATURES: AI EXAM GENERATOR, TINDER FLASHCARD, ZEN MODE 2.0 ---
+  initFlashcardTinderSwipe();
+
+  // AI Exam Generator Modal Setup
+  const btnOpenAiGen = document.getElementById("btn-open-ai-generator");
+  if (btnOpenAiGen) btnOpenAiGen.addEventListener("click", openAiGeneratorModal);
+
+  const btnCloseAiGen = document.getElementById("btn-close-ai-generator");
+  if (btnCloseAiGen) btnCloseAiGen.addEventListener("click", closeAiGeneratorModal);
+
+  const btnCancelAiGen = document.getElementById("btn-cancel-ai-generator");
+  if (btnCancelAiGen) btnCancelAiGen.addEventListener("click", closeAiGeneratorModal);
+
+  const btnSubmitAiGen = document.getElementById("btn-submit-ai-generator");
+  if (btnSubmitAiGen) btnSubmitAiGen.addEventListener("click", handleGenerateExamWithAi);
+
+  document.querySelectorAll(".ai-gen-suggestion").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const topicInput = document.getElementById("ai-gen-topic");
+      const topic = btn.getAttribute("data-topic");
+      if (topicInput && topic) {
+        topicInput.value = topic;
+        topicInput.focus();
+      }
+    });
+  });
+
+  const modalAiGen = document.getElementById("modal-ai-generator");
+  if (modalAiGen) {
+    modalAiGen.addEventListener("click", (e) => {
+      if (e.target === modalAiGen) closeAiGeneratorModal();
+    });
+  }
+
+  // Zen Ambient Audio Dropdown Setup
+  const btnZenAmbient = document.getElementById("btn-zen-ambient");
+  const zenPopover = document.getElementById("zen-ambient-popover");
+  const btnCloseZenPopover = document.getElementById("btn-close-zen-popover");
+  if (btnZenAmbient && zenPopover) {
+    btnZenAmbient.addEventListener("click", (e) => {
+      e.stopPropagation();
+      zenPopover.style.display = zenPopover.style.display === "none" ? "block" : "none";
+    });
+  }
+  if (btnCloseZenPopover && zenPopover) {
+    btnCloseZenPopover.addEventListener("click", () => {
+      zenPopover.style.display = "none";
+    });
+  }
+  document.querySelectorAll(".zen-opt-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const soundType = btn.getAttribute("data-sound");
+      setZenAmbientSound(soundType);
+    });
+  });
+  const zenVolSlider = document.getElementById("zen-volume-slider");
+  if (zenVolSlider) {
+    zenVolSlider.addEventListener("input", (e) => {
+      setZenAmbientVolume(e.target.value);
+    });
+  }
+  window.addEventListener("click", (e) => {
+    if (zenPopover && zenPopover.style.display !== "none" && !e.target.closest(".zen-ambient-wrapper")) {
+      zenPopover.style.display = "none";
+    }
+  });
+
   // Khởi động PWA Service Worker & Install prompt
   initPwaInstall();
 });
+
+// =============================================================================
+// AI EXAM GENERATOR FROM PROMPT / TOPIC (TẠO ĐỀ THEO CHỦ ĐỀ)
+// =============================================================================
+function openAiGeneratorModal() {
+  const modal = document.getElementById("modal-ai-generator");
+  if (!modal) return;
+  modal.style.display = "flex";
+  
+  const savedKey = getSavedGeminiKey();
+  const keyContainer = document.getElementById("ai-gen-key-container");
+  const keyInput = document.getElementById("ai-gen-key-input");
+  if (!savedKey) {
+    if (keyContainer) keyContainer.style.display = "block";
+  } else {
+    if (keyContainer) keyContainer.style.display = "none";
+    if (keyInput) keyInput.value = savedKey;
+  }
+
+  const progressBox = document.getElementById("ai-gen-progress-box");
+  if (progressBox) progressBox.style.display = "none";
+
+  const btnSubmit = document.getElementById("btn-submit-ai-generator");
+  if (btnSubmit) {
+    btnSubmit.disabled = false;
+    btnSubmit.innerHTML = `
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+      🚀 Bắt đầu Tạo Đề Bằng AI
+    `;
+  }
+
+  const topicInput = document.getElementById("ai-gen-topic");
+  if (topicInput) setTimeout(() => topicInput.focus(), 150);
+}
+
+function closeAiGeneratorModal() {
+  const modal = document.getElementById("modal-ai-generator");
+  if (modal) modal.style.display = "none";
+}
+
+async function handleGenerateExamWithAi() {
+  const topicInput = document.getElementById("ai-gen-topic");
+  const countSelect = document.getElementById("ai-gen-count");
+  const levelSelect = document.getElementById("ai-gen-level");
+  const explCheck = document.getElementById("ai-gen-explanation");
+  const keyInput = document.getElementById("ai-gen-key-input");
+  const progressBox = document.getElementById("ai-gen-progress-box");
+  const btnSubmit = document.getElementById("btn-submit-ai-generator");
+  const statusText = document.getElementById("ai-gen-status-text");
+
+  const topic = (topicInput ? topicInput.value : "").trim();
+  if (!topic) {
+    showToast("Vui lòng nhập chủ đề hoặc yêu cầu đề thi cần tạo!", "warning");
+    if (topicInput) topicInput.focus();
+    return;
+  }
+
+  let apiKey = getSavedGeminiKey();
+  if (!apiKey && keyInput && keyInput.value.trim()) {
+    apiKey = keyInput.value.trim();
+    setSavedGeminiKey(apiKey);
+  }
+
+  if (!apiKey) {
+    const keyContainer = document.getElementById("ai-gen-key-container");
+    if (keyContainer) keyContainer.style.display = "block";
+    showToast("Vui lòng nhập Google Gemini API Key để AI bắt đầu sinh đề!", "warning");
+    if (keyInput) keyInput.focus();
+    return;
+  }
+
+  const count = parseInt(countSelect ? countSelect.value : 10) || 10;
+  const level = levelSelect ? levelSelect.value : "Cân bằng mọi mức độ";
+  const hasExpl = explCheck ? explCheck.checked : true;
+
+  if (progressBox) progressBox.style.display = "block";
+  if (btnSubmit) {
+    btnSubmit.disabled = true;
+    btnSubmit.innerHTML = `<span>⏳ Đang sinh đề thi...</span>`;
+  }
+  if (statusText) statusText.textContent = `Gemini AI đang tư duy và soạn ${count} câu hỏi trắc nghiệm...`;
+
+  const promptText = `Bạn là một chuyên gia sư phạm và chuyên gia biên soạn đề thi trắc nghiệm học đường & kỳ thi chuẩn hóa.
+Nhiệm vụ của bạn là: TẠO BỘ ĐỀ THI TRẮC NGHIỆM GỒM ĐÚNG ${count} CÂU HỎI CHẤT LƯỢNG CAO về chủ đề: "${topic}".
+Mức độ phân hóa: ${level}.
+${hasExpl ? "Yêu cầu: Có kèm theo phần giải thích chi tiết cho từng câu hỏi." : ""}
+
+QUY TẮC ĐỊNH DẠNG BẮT BUỘC ĐỂ HỆ THỐNG TỰ ĐỘNG PARSE:
+1. Mỗi câu hỏi bắt đầu bằng "Câu [Số]: [Nội dung câu hỏi]".
+2. Mỗi câu hỏi BẮT BUỘC có đúng 4 lựa chọn: A. ..., B. ..., C. ..., D. ... nằm trên các dòng riêng biệt.
+3. BẮT BUỘC đặt duy nhất một dấu sao (*) ngay sát trước chữ cái đáp án ĐÚNG (ví dụ: *A. [Nội dung] hoặc *B. [Nội dung] hoặc *C. [Nội dung] hoặc *D. [Nội dung]).
+4. 3 phương án còn lại KHÔNG có dấu * (ví dụ: B. [Nội dung], C. [Nội dung], D. [Nội dung]).
+5. ${hasExpl ? "Dưới 4 phương án là dòng 'Giải thích: [Lời giải chi tiết, rõ ràng, dễ hiểu]'" : ""}
+6. Giữa các câu hỏi cách nhau bởi một dòng trống.
+
+Ví dụ mẫu chuẩn:
+Câu 1: Thủ đô của Việt Nam là thành phố nào?
+*A. Hà Nội
+B. Đà Nẵng
+C. TP. Hồ Chí Minh
+D. Cần Thơ
+Giải thích: Hà Nội là thủ đô của nước Cộng hòa Xã hội Chủ nghĩa Việt Nam.
+
+(TUYỆT ĐỐI CHỈ XUẤT NỘI DUNG ĐỀ THI THEO CẤU TRÚC TRÊN. Không xuất bất kỳ lời chào, lời mở đầu, kết luận hay chú thích nào khác).`;
+
+  try {
+    const rawAiOutput = await executeSingleGeminiRequest(promptText, apiKey);
+    if (!rawAiOutput || !rawAiOutput.trim()) {
+      throw new Error("Không nhận được phản hồi hợp lệ từ AI Gemini.");
+    }
+
+    const cleanedText = rawAiOutput.trim();
+    const textarea = document.getElementById("smart-text-input");
+    if (textarea) {
+      textarea.value = cleanedText;
+    }
+
+    const titleInput = document.getElementById("input-quiz-title");
+    if (titleInput && !titleInput.value.trim()) {
+      let neatTitle = topic.length > 50 ? topic.substring(0, 50) + "..." : topic;
+      titleInput.value = `Đề thi AI: ${neatTitle}`;
+    }
+
+    const catInput = document.getElementById("input-quiz-category");
+    if (catInput && (!catInput.value.trim() || catInput.value === "Chung")) {
+      const lowerT = topic.toLowerCase();
+      if (lowerT.includes("sử") || lowerT.includes("lịch sử")) catInput.value = "Lịch sử";
+      else if (lowerT.includes("địa") || lowerT.includes("địa lý")) catInput.value = "Địa lý";
+      else if (lowerT.includes("anh") || lowerT.includes("english")) catInput.value = "Tiếng Anh";
+      else if (lowerT.includes("toán") || lowerT.includes("math")) catInput.value = "Toán học";
+      else if (lowerT.includes("tin") || lowerT.includes("it") || lowerT.includes("code") || lowerT.includes("lập trình") || lowerT.includes("office")) catInput.value = "Tin học";
+      else if (lowerT.includes("sinh")) catInput.value = "Sinh học";
+      else if (lowerT.includes("hóa")) catInput.value = "Hóa học";
+      else if (lowerT.includes("lý") || lowerT.includes("vật lý")) catInput.value = "Vật lý";
+      else catInput.value = "Tổng hợp";
+    }
+
+    updateSmartParsePreview();
+    closeAiGeneratorModal();
+
+    triggerCelebrationConfetti();
+    showToast(`🎉 AI đã tạo thành công bộ đề thi với ${count} câu hỏi về "${topic}"!`, "success");
+  } catch (err) {
+    console.error("AI Exam Generator error:", err);
+    showToast(`Lỗi tạo đề AI: ${err.message || err}`, "danger");
+  } finally {
+    if (progressBox) progressBox.style.display = "none";
+    if (btnSubmit) {
+      btnSubmit.disabled = false;
+      btnSubmit.innerHTML = `
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+        🚀 Bắt đầu Tạo Đề Bằng AI
+      `;
+    }
+  }
+}
+
+// =============================================================================
+// TINDER-STYLE FLASHCARD TOUCH / MOUSE SWIPE ENGINE
+// =============================================================================
+let flashcardSwipeState = {
+  isDragging: false,
+  startX: 0,
+  startY: 0,
+  currentX: 0,
+  currentY: 0,
+  draggedDistance: 0
+};
+
+function initFlashcardTinderSwipe() {
+  const card = document.getElementById("flashcard-element");
+  if (!card) return;
+
+  const stampRight = document.getElementById("flashcard-stamp-right");
+  const stampLeft = document.getElementById("flashcard-stamp-left");
+
+  function onPointerDown(e) {
+    if (e.target.closest("button") || e.target.closest(".flashcard-action-bar")) return;
+    flashcardSwipeState.isDragging = true;
+    flashcardSwipeState.startX = e.clientX || (e.touches && e.touches[0].clientX) || 0;
+    flashcardSwipeState.startY = e.clientY || (e.touches && e.touches[0].clientY) || 0;
+    flashcardSwipeState.currentX = flashcardSwipeState.startX;
+    flashcardSwipeState.currentY = flashcardSwipeState.startY;
+    flashcardSwipeState.draggedDistance = 0;
+
+    card.classList.remove("flashcard-reset-pos", "flashcard-swiping-right", "flashcard-swiping-left");
+  }
+
+  function onPointerMove(e) {
+    if (!flashcardSwipeState.isDragging) return;
+    const clientX = e.clientX || (e.touches && e.touches[0].clientX) || 0;
+    const clientY = e.clientY || (e.touches && e.touches[0].clientY) || 0;
+    const dx = clientX - flashcardSwipeState.startX;
+    const dy = clientY - flashcardSwipeState.startY;
+    flashcardSwipeState.draggedDistance = Math.hypot(dx, dy);
+
+    if (flashcardSwipeState.draggedDistance > 10 && e.cancelable && e.type.startsWith("touch")) {
+      e.preventDefault();
+    }
+
+    const rotation = dx * 0.08;
+    card.style.transform = `translate3d(${dx}px, ${dy * 0.25}px, 0) rotate(${rotation}deg)`;
+
+    if (dx > 20) {
+      const opacity = Math.min(1, (dx - 20) / 90);
+      if (stampRight) stampRight.style.opacity = opacity;
+      if (stampLeft) stampLeft.style.opacity = 0;
+    } else if (dx < -20) {
+      const opacity = Math.min(1, (-dx - 20) / 90);
+      if (stampLeft) stampLeft.style.opacity = opacity;
+      if (stampRight) stampRight.style.opacity = 0;
+    } else {
+      if (stampRight) stampRight.style.opacity = 0;
+      if (stampLeft) stampLeft.style.opacity = 0;
+    }
+  }
+
+  function onPointerUp(e) {
+    if (!flashcardSwipeState.isDragging) return;
+    flashcardSwipeState.isDragging = false;
+    const dx = (e.clientX || (e.changedTouches && e.changedTouches[0].clientX) || flashcardSwipeState.currentX) - flashcardSwipeState.startX;
+
+    if (stampRight) stampRight.style.opacity = 0;
+    if (stampLeft) stampLeft.style.opacity = 0;
+
+    const SWIPE_THRESHOLD = 95;
+    if (dx > SWIPE_THRESHOLD) {
+      card.classList.add("flashcard-swiping-right");
+      playSfx("correct");
+      setTimeout(() => {
+        card.style.transform = "";
+        card.classList.remove("flashcard-swiping-right");
+        markFlashcardMastered();
+      }, 320);
+    } else if (dx < -SWIPE_THRESHOLD) {
+      card.classList.add("flashcard-swiping-left");
+      playSfx("wrong");
+      setTimeout(() => {
+        card.style.transform = "";
+        card.classList.remove("flashcard-swiping-left");
+        markFlashcardNeedReview();
+      }, 320);
+    } else {
+      card.classList.add("flashcard-reset-pos");
+      card.style.transform = "";
+
+      if (flashcardSwipeState.draggedDistance < 10) {
+        flipFlashcard();
+      }
+    }
+  }
+
+  card.addEventListener("mousedown", onPointerDown);
+  window.addEventListener("mousemove", onPointerMove);
+  window.addEventListener("mouseup", onPointerUp);
+
+  card.addEventListener("touchstart", onPointerDown, { passive: false });
+  window.addEventListener("touchmove", onPointerMove, { passive: false });
+  window.addEventListener("touchend", onPointerUp);
+}
+
+// =============================================================================
+// ZEN MODE 2.0 OFFLINE AMBIENT SOUND SYNTHESIZER (WEB AUDIO API)
+// =============================================================================
+let zenAudioCtx = null;
+let zenMasterGain = null;
+let currentZenSoundType = "off";
+let activeZenAudioNodes = [];
+
+function initZenAudioContext() {
+  if (!zenAudioCtx) {
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContextClass) return null;
+    zenAudioCtx = new AudioContextClass();
+    zenMasterGain = zenAudioCtx.createGain();
+    zenMasterGain.gain.setValueAtTime(0.5, zenAudioCtx.currentTime);
+    zenMasterGain.connect(zenAudioCtx.destination);
+  }
+  if (zenAudioCtx.state === "suspended") {
+    zenAudioCtx.resume();
+  }
+  return zenAudioCtx;
+}
+
+function stopCurrentZenSound() {
+  if (activeZenAudioNodes && activeZenAudioNodes.length > 0) {
+    activeZenAudioNodes.forEach(node => {
+      try {
+        if (node.stop) node.stop();
+        if (node.disconnect) node.disconnect();
+      } catch (e) {}
+    });
+    activeZenAudioNodes = [];
+  }
+  currentZenSoundType = "off";
+  updateZenUi("off");
+}
+
+function setZenAmbientSound(type) {
+  const ctx = initZenAudioContext();
+  if (!ctx) return;
+
+  stopCurrentZenSound();
+
+  if (type === "off") {
+    return;
+  }
+
+  currentZenSoundType = type;
+
+  if (type === "rain") {
+    const bufferSize = ctx.sampleRate * 4;
+    const noiseBuffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+    const output = noiseBuffer.getChannelData(0);
+    let b0 = 0, b1 = 0, b2 = 0, b3 = 0, b4 = 0, b5 = 0, b6 = 0;
+    for (let i = 0; i < bufferSize; i++) {
+      const white = Math.random() * 2 - 1;
+      b0 = 0.99886 * b0 + white * 0.0555179;
+      b1 = 0.99332 * b1 + white * 0.0750759;
+      b2 = 0.96900 * b2 + white * 0.1538520;
+      b3 = 0.86650 * b3 + white * 0.3104856;
+      b4 = 0.55000 * b4 + white * 0.5329522;
+      b5 = -0.7616 * b5 - white * 0.0168980;
+      output[i] = (b0 + b1 + b2 + b3 + b4 + b5 + b6 + white * 0.5362) * 0.04;
+      b6 = white * 0.115926;
+    }
+
+    const whiteNoise = ctx.createBufferSource();
+    whiteNoise.buffer = noiseBuffer;
+    whiteNoise.loop = true;
+
+    const filter = ctx.createBiquadFilter();
+    filter.type = "lowpass";
+    filter.frequency.setValueAtTime(900, ctx.currentTime);
+
+    whiteNoise.connect(filter);
+    filter.connect(zenMasterGain);
+    whiteNoise.start(0);
+
+    activeZenAudioNodes.push(whiteNoise, filter);
+  } else if (type === "waves") {
+    const bufferSize = ctx.sampleRate * 5;
+    const noiseBuffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+    const output = noiseBuffer.getChannelData(0);
+    let lastOut = 0.0;
+    for (let i = 0; i < bufferSize; i++) {
+      const white = Math.random() * 2 - 1;
+      output[i] = (lastOut + (0.02 * white)) / 1.02;
+      lastOut = output[i];
+      output[i] *= 1.4;
+    }
+
+    const brownNoise = ctx.createBufferSource();
+    brownNoise.buffer = noiseBuffer;
+    brownNoise.loop = true;
+
+    const waveFilter = ctx.createBiquadFilter();
+    waveFilter.type = "lowpass";
+    waveFilter.frequency.setValueAtTime(380, ctx.currentTime);
+
+    const waveGain = ctx.createGain();
+    waveGain.gain.setValueAtTime(0.4, ctx.currentTime);
+
+    const lfo = ctx.createOscillator();
+    lfo.frequency.setValueAtTime(0.13, ctx.currentTime);
+    const lfoGain = ctx.createGain();
+    lfoGain.gain.setValueAtTime(0.35, ctx.currentTime);
+
+    lfo.connect(lfoGain);
+    lfoGain.connect(waveGain.gain);
+
+    brownNoise.connect(waveFilter);
+    waveFilter.connect(waveGain);
+    waveGain.connect(zenMasterGain);
+
+    brownNoise.start(0);
+    lfo.start(0);
+
+    activeZenAudioNodes.push(brownNoise, waveFilter, waveGain, lfo, lfoGain);
+  } else if (type === "alpha") {
+    const osc1 = ctx.createOscillator();
+    osc1.type = "sine";
+    osc1.frequency.setValueAtTime(432, ctx.currentTime);
+
+    const osc2 = ctx.createOscillator();
+    osc2.type = "sine";
+    osc2.frequency.setValueAtTime(472, ctx.currentTime);
+
+    const alphaGain = ctx.createGain();
+    alphaGain.gain.setValueAtTime(0.12, ctx.currentTime);
+
+    osc1.connect(alphaGain);
+    osc2.connect(alphaGain);
+    alphaGain.connect(zenMasterGain);
+
+    osc1.start(0);
+    osc2.start(0);
+
+    activeZenAudioNodes.push(osc1, osc2, alphaGain);
+  } else if (type === "whitenoise") {
+    const bufferSize = ctx.sampleRate * 2;
+    const noiseBuffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+    const output = noiseBuffer.getChannelData(0);
+    for (let i = 0; i < bufferSize; i++) {
+      output[i] = (Math.random() * 2 - 1) * 0.08;
+    }
+
+    const whiteNoise = ctx.createBufferSource();
+    whiteNoise.buffer = noiseBuffer;
+    whiteNoise.loop = true;
+
+    const filter = ctx.createBiquadFilter();
+    filter.type = "lowpass";
+    filter.frequency.setValueAtTime(1400, ctx.currentTime);
+
+    whiteNoise.connect(filter);
+    filter.connect(zenMasterGain);
+    whiteNoise.start(0);
+
+    activeZenAudioNodes.push(whiteNoise, filter);
+  }
+
+  updateZenUi(type);
+  showToast(`🎧 Đang phát âm thanh Zen Mode: ${getZenSoundTitle(type)}`, "info");
+}
+
+function getZenSoundTitle(type) {
+  switch (type) {
+    case "rain": return "Mưa rơi êm đềm";
+    case "waves": return "Sóng biển dạt dào";
+    case "alpha": return "Sóng não Alpha 40Hz";
+    case "whitenoise": return "Tiếng ồn trắng tĩnh lặng";
+    default: return "Tắt âm";
+  }
+}
+
+function updateZenUi(type) {
+  const label = document.getElementById("zen-ambient-label");
+  const icon = document.getElementById("zen-ambient-icon");
+  const btnAmbient = document.getElementById("btn-zen-ambient");
+
+  if (type === "off") {
+    if (label) label.textContent = "Zen Âm Thanh";
+    if (icon) icon.textContent = "🎧";
+    if (btnAmbient) btnAmbient.classList.remove("active");
+  } else {
+    if (label) label.textContent = getZenSoundTitle(type);
+    if (icon) {
+      if (type === "rain") icon.textContent = "🌧️";
+      else if (type === "waves") icon.textContent = "🌊";
+      else if (type === "alpha") icon.textContent = "🧠";
+      else icon.textContent = "☕";
+    }
+    if (btnAmbient) btnAmbient.classList.add("active");
+  }
+
+  document.querySelectorAll(".zen-opt-btn").forEach(btn => {
+    btn.classList.toggle("active", btn.getAttribute("data-sound") === type);
+  });
+}
+
+function setZenAmbientVolume(volume) {
+  if (zenMasterGain && zenAudioCtx) {
+    const val = Math.max(0, Math.min(1, parseFloat(volume) || 0.5));
+    zenMasterGain.gain.setValueAtTime(val, zenAudioCtx.currentTime);
+  }
+}
 
 // Expose v3.1 functions to window
 window.printQuizById = printQuizById;
@@ -8230,3 +8844,12 @@ window.openGeminiKeyModal = openGeminiKeyModal;
 window.removeOcrImage = removeOcrImage;
 window.runAiImageOcr = runAiImageOcr;
 window.setupAiImageOcr = setupAiImageOcr;
+
+// Expose v4.0 functions to window
+window.resetCreatorForm = resetCreatorForm;
+window.openAiGeneratorModal = openAiGeneratorModal;
+window.closeAiGeneratorModal = closeAiGeneratorModal;
+window.handleGenerateExamWithAi = handleGenerateExamWithAi;
+window.setZenAmbientSound = setZenAmbientSound;
+window.setZenAmbientVolume = setZenAmbientVolume;
+
