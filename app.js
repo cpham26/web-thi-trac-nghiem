@@ -387,6 +387,9 @@ function renderDashboard() {
         <div class="quiz-card-header">
           <span class="badge badge-primary">${escapeHtml(catLabel)}</span>
           <div class="card-header-actions">
+            <button class="card-tool-btn btn-tool-share" onclick="openShareQuizModal('${quiz.id}', event)" title="Chia sẻ bộ đề thi qua đường link trực tiếp (Gửi bạn bè, Zalo, Messenger)">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
+            </button>
             <button class="card-tool-btn btn-tool-multicode" onclick="openMultiCodeModal('${quiz.id}')" title="Trộn thành nhiều mã đề (101, 102...) & Xuất Word kèm ma trận đáp án">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 3 21 3 21 8"></polyline><line x1="4" y1="20" x2="21" y2="3"></line><polyline points="21 16 21 21 16 21"></polyline><line x1="15" y1="15" x2="21" y2="21"></line><line x1="4" y1="4" x2="9" y2="9"></line></svg>
             </button>
@@ -8324,6 +8327,76 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
+  // --- 9. EVENT LISTENERS: CHIA SẺ ĐỀ THI QUA LINK TRỰC TIẾP (FEATURE #4) ---
+  const btnCloseShare = document.getElementById("btn-close-share-quiz");
+  const btnCloseShareFooter = document.getElementById("btn-close-share-quiz-footer");
+  const modalShare = document.getElementById("modal-share-quiz");
+  if (btnCloseShare) btnCloseShare.addEventListener("click", closeShareQuizModal);
+  if (btnCloseShareFooter) btnCloseShareFooter.addEventListener("click", closeShareQuizModal);
+  if (modalShare) {
+    modalShare.addEventListener("click", (e) => {
+      if (e.target === modalShare) closeShareQuizModal();
+    });
+  }
+
+  const btnCopyShareUrl = document.getElementById("btn-copy-share-quiz-url");
+  if (btnCopyShareUrl) btnCopyShareUrl.addEventListener("click", copyShareUrlToClipboard);
+
+  const btnNativeShare = document.getElementById("btn-native-share-quiz");
+  if (btnNativeShare) btnNativeShare.addEventListener("click", triggerNativeShare);
+
+  const btnShareModalExportJson = document.getElementById("btn-share-modal-export-json");
+  if (btnShareModalExportJson) {
+    btnShareModalExportJson.addEventListener("click", () => {
+      if (currentShareQuiz) exportSingleQuiz(currentShareQuiz.id);
+    });
+  }
+
+  const btnSetupShare = document.getElementById("btn-setup-share-quiz");
+  if (btnSetupShare) {
+    btnSetupShare.addEventListener("click", () => {
+      if (targetQuizForSetup) {
+        openShareQuizModal(targetQuizForSetup.id);
+      }
+    });
+  }
+
+  // Received Shared Quiz Modal listeners
+  const btnCloseReceived = document.getElementById("btn-close-received-quiz");
+  const modalReceived = document.getElementById("modal-received-quiz");
+  if (btnCloseReceived) {
+    btnCloseReceived.addEventListener("click", () => {
+      if (modalReceived) modalReceived.classList.remove("open");
+      history.replaceState(null, "", window.location.pathname + window.location.search);
+    });
+  }
+  if (modalReceived) {
+    modalReceived.addEventListener("click", (e) => {
+      if (e.target === modalReceived) {
+        modalReceived.classList.remove("open");
+        history.replaceState(null, "", window.location.pathname + window.location.search);
+      }
+    });
+  }
+
+  const btnReceivedSaveOnly = document.getElementById("btn-received-save-only");
+  if (btnReceivedSaveOnly) btnReceivedSaveOnly.addEventListener("click", saveReceivedQuizToLibrary);
+
+  const btnReceivedStartPractice = document.getElementById("btn-received-start-practice");
+  if (btnReceivedStartPractice) btnReceivedStartPractice.addEventListener("click", () => startReceivedQuiz("PRACTICE"));
+
+  const btnReceivedStartExam = document.getElementById("btn-received-start-exam");
+  if (btnReceivedStartExam) btnReceivedStartExam.addEventListener("click", () => startReceivedQuiz("EXAM"));
+
+  // Check URL hash for shared quiz on startup
+  checkSharedQuizFromUrl();
+
+  window.addEventListener("hashchange", () => {
+    if (window.location.hash.startsWith("#share=")) {
+      checkSharedQuizFromUrl();
+    }
+  });
+
   // Khởi động PWA Service Worker & Install prompt
   initPwaInstall();
 });
@@ -8852,4 +8925,288 @@ window.closeAiGeneratorModal = closeAiGeneratorModal;
 window.handleGenerateExamWithAi = handleGenerateExamWithAi;
 window.setZenAmbientSound = setZenAmbientSound;
 window.setZenAmbientVolume = setZenAmbientVolume;
+
+// =============================================================================
+// TÍNH NĂNG #4: CHIA SẺ ĐỀ THI TRỰC TIẾP QUA URL LINK (DEFLATE / BASE64URL)
+// =============================================================================
+
+let currentShareQuiz = null;
+let currentShareUrl = "";
+let receivedSharedQuiz = null;
+
+function bytesToBase64Url(bytes) {
+  let bin = "";
+  const len = bytes.byteLength;
+  for (let i = 0; i < len; i++) {
+    bin += String.fromCharCode(bytes[i]);
+  }
+  return btoa(bin).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+}
+
+function base64UrlToBytes(base64url) {
+  let base64 = base64url.replace(/-/g, "+").replace(/_/g, "/");
+  while (base64.length % 4) base64 += "=";
+  const bin = atob(base64);
+  const bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) {
+    bytes[i] = bin.charCodeAt(i);
+  }
+  return bytes;
+}
+
+async function compressQuizForShare(quiz) {
+  const compact = {
+    v: 1,
+    t: quiz.title || "Đề thi trắc nghiệm",
+    d: quiz.description || "",
+    c: quiz.category || "Chung",
+    m: Number(quiz.timeLimit) || 15,
+    q: (quiz.questions || []).map(q => ({
+      x: q.text || "",
+      o: q.options || [],
+      a: q.correctIndex !== undefined ? q.correctIndex : 0,
+      e: q.explanation || "",
+      i: (q.image && !q.image.startsWith("data:")) ? q.image : ""
+    }))
+  };
+  const jsonStr = JSON.stringify(compact);
+
+  try {
+    if (typeof CompressionStream !== "undefined") {
+      const stream = new Blob([jsonStr]).stream().pipeThrough(new CompressionStream("deflate"));
+      const buffer = await new Response(stream).arrayBuffer();
+      return "z." + bytesToBase64Url(new Uint8Array(buffer));
+    }
+  } catch (err) {
+    console.warn("Deflate compression fallback:", err);
+  }
+
+  const utf8Bytes = new TextEncoder().encode(jsonStr);
+  return "b." + bytesToBase64Url(utf8Bytes);
+}
+
+async function decompressQuizFromShare(payload) {
+  if (!payload) throw new Error("Mã đề thi chia sẻ không hợp lệ hoặc đã bị cắt ngắn.");
+
+  let jsonStr = "";
+  if (payload.startsWith("z.")) {
+    const raw = payload.slice(2);
+    const bytes = base64UrlToBytes(raw);
+    const stream = new Blob([bytes]).stream().pipeThrough(new DecompressionStream("deflate"));
+    jsonStr = await new Response(stream).text();
+  } else if (payload.startsWith("b.")) {
+    const raw = payload.slice(2);
+    const bytes = base64UrlToBytes(raw);
+    jsonStr = new TextDecoder().decode(bytes);
+  } else {
+    const bytes = base64UrlToBytes(payload);
+    jsonStr = new TextDecoder().decode(bytes);
+  }
+
+  const compact = JSON.parse(jsonStr);
+  return {
+    id: "quiz_shared_" + Date.now() + "_" + Math.random().toString(36).substring(2, 7),
+    title: compact.t || "Đề thi được chia sẻ",
+    description: compact.d || "Được chia sẻ qua liên kết trực tiếp",
+    category: compact.c || "Chung",
+    timeLimit: Number(compact.m) || 15,
+    questions: (compact.q || []).map((q, idx) => ({
+      id: idx + 1,
+      text: q.x || "",
+      options: q.o || [],
+      correctIndex: q.a !== undefined ? q.a : 0,
+      explanation: q.e || "",
+      image: q.i || ""
+    }))
+  };
+}
+
+async function openShareQuizModal(quizId, event) {
+  if (event) {
+    if (typeof event.stopPropagation === "function") event.stopPropagation();
+    if (typeof event.preventDefault === "function") event.preventDefault();
+  }
+  const quiz = AppState.quizzes.find(q => String(q.id) === String(quizId));
+  if (!quiz) {
+    showToast("Không tìm thấy bộ đề thi!", "warning");
+    return;
+  }
+  currentShareQuiz = quiz;
+
+  const modal = document.getElementById("modal-share-quiz");
+  if (!modal) return;
+
+  // Set quiz info
+  const titleEl = document.getElementById("share-modal-quiz-title");
+  const badgeEl = document.getElementById("share-modal-badge");
+  const countEl = document.getElementById("share-modal-q-count");
+  const durEl = document.getElementById("share-modal-duration");
+  const statusText = document.getElementById("share-copy-status-text");
+  const urlInput = document.getElementById("input-share-quiz-url");
+  const sizeBadge = document.getElementById("share-url-size-badge");
+
+  if (titleEl) titleEl.textContent = quiz.title;
+  if (badgeEl) badgeEl.textContent = quiz.category || "Chung";
+  if (countEl) countEl.textContent = (quiz.questions || []).length;
+  if (durEl) durEl.textContent = quiz.timeLimit || 15;
+  if (statusText) statusText.style.display = "none";
+  if (urlInput) urlInput.value = "Đang tạo liên kết chia sẻ...";
+
+  modal.classList.add("open");
+
+  try {
+    const payload = await compressQuizForShare(quiz);
+    const baseUrl = window.location.origin + window.location.pathname;
+    currentShareUrl = baseUrl + "#share=" + payload;
+    if (urlInput) {
+      urlInput.value = currentShareUrl;
+      urlInput.focus();
+      urlInput.select();
+    }
+
+    if (sizeBadge) {
+      const kb = (currentShareUrl.length / 1024).toFixed(1);
+      sizeBadge.textContent = `Độ dài URL: ${currentShareUrl.length} ký tự (~${kb} KB)`;
+    }
+  } catch (err) {
+    console.error("Lỗi tạo link chia sẻ:", err);
+    showToast("Không thể tạo liên kết chia sẻ cho bộ đề này.", "danger");
+    if (urlInput) urlInput.value = "Lỗi khi tạo liên kết.";
+  }
+}
+
+function closeShareQuizModal() {
+  const modal = document.getElementById("modal-share-quiz");
+  if (modal) modal.classList.remove("open");
+}
+
+async function copyShareUrlToClipboard() {
+  if (!currentShareUrl) return;
+  try {
+    await navigator.clipboard.writeText(currentShareUrl);
+    showToast("Đã sao chép liên kết chia sẻ vào bộ nhớ đệm!", "success");
+    const statusText = document.getElementById("share-copy-status-text");
+    if (statusText) {
+      statusText.style.display = "inline";
+      setTimeout(() => { statusText.style.display = "none"; }, 3000);
+    }
+  } catch (err) {
+    const input = document.getElementById("input-share-quiz-url");
+    if (input) {
+      input.focus();
+      input.select();
+      document.execCommand("copy");
+      showToast("Đã sao chép liên kết vào bộ nhớ tạm!", "success");
+    }
+  }
+}
+
+async function triggerNativeShare() {
+  if (!currentShareQuiz || !currentShareUrl) return;
+  if (navigator.share) {
+    try {
+      await navigator.share({
+        title: currentShareQuiz.title + " - NovaQuiz",
+        text: `Mời bạn làm thử đề thi "${currentShareQuiz.title}" (${(currentShareQuiz.questions || []).length} câu - ${currentShareQuiz.timeLimit || 15} phút):`,
+        url: currentShareUrl
+      });
+    } catch (err) {
+      if (err.name !== "AbortError") {
+        copyShareUrlToClipboard();
+      }
+    }
+  } else {
+    copyShareUrlToClipboard();
+  }
+}
+
+async function checkSharedQuizFromUrl() {
+  const hash = window.location.hash;
+  if (!hash || !hash.startsWith("#share=")) return;
+
+  const payload = hash.slice(7);
+  if (!payload) return;
+
+  try {
+    const quiz = await decompressQuizFromShare(payload);
+    receivedSharedQuiz = quiz;
+
+    const modal = document.getElementById("modal-received-quiz");
+    if (!modal) return;
+
+    const titleEl = document.getElementById("received-modal-title");
+    const descEl = document.getElementById("received-modal-desc");
+    const catEl = document.getElementById("received-modal-category");
+    const countEl = document.getElementById("received-modal-count");
+    const timeEl = document.getElementById("received-modal-time");
+    const previewList = document.getElementById("received-modal-preview-list");
+
+    if (titleEl) titleEl.textContent = quiz.title;
+    if (descEl) descEl.textContent = quiz.description || "Bộ đề được chia sẻ qua liên kết trực tiếp.";
+    if (catEl) catEl.textContent = quiz.category || "Chung";
+    if (countEl) countEl.textContent = `${(quiz.questions || []).length} câu`;
+    if (timeEl) timeEl.textContent = `${quiz.timeLimit || 15} phút`;
+
+    if (previewList) {
+      const sample = (quiz.questions || []).slice(0, 3);
+      previewList.innerHTML = sample.map((q, idx) => `
+        <div style="background: var(--bg-card); padding: 0.6rem 0.85rem; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle); font-size: 0.825rem; line-height: 1.4;">
+          <strong style="color: var(--primary);">Câu ${idx + 1}:</strong> ${escapeHtml(q.text ? q.text.substring(0, 110) : "")}${q.text && q.text.length > 110 ? "..." : ""}
+        </div>
+      `).join("");
+      if ((quiz.questions || []).length > 3) {
+        previewList.innerHTML += `<div style="text-align: center; font-size: 0.78rem; color: var(--text-muted); font-style: italic; margin-top: 2px;">... và còn ${(quiz.questions || []).length - 3} câu hỏi khác</div>`;
+      }
+    }
+
+    modal.classList.add("open");
+  } catch (err) {
+    console.error("Lỗi đọc đề thi từ liên kết:", err);
+    showToast("Không thể tải đề thi từ liên kết chia sẻ. Đường dẫn có thể đã bị thiếu ký tự!", "danger");
+  }
+}
+
+function saveReceivedQuizToLibrary() {
+  if (!receivedSharedQuiz) return;
+  const quiz = receivedSharedQuiz;
+  const existing = AppState.quizzes.find(q => q.title === quiz.title && q.questions.length === quiz.questions.length);
+  if (!existing) {
+    AppState.quizzes.unshift(quiz);
+    saveQuizzes();
+    renderDashboard();
+    showToast(`Đã thêm bộ đề "${quiz.title}" vào thư viện thành công!`, "success");
+  } else {
+    showToast(`Bộ đề "${quiz.title}" đã có sẵn trong thư viện của bạn!`, "info");
+  }
+  history.replaceState(null, "", window.location.pathname + window.location.search);
+  const modal = document.getElementById("modal-received-quiz");
+  if (modal) modal.classList.remove("open");
+}
+
+function startReceivedQuiz(mode = "EXAM") {
+  if (!receivedSharedQuiz) return;
+  const quiz = receivedSharedQuiz;
+  const existing = AppState.quizzes.find(q => q.title === quiz.title && q.questions.length === quiz.questions.length);
+  const targetId = existing ? existing.id : quiz.id;
+  if (!existing) {
+    AppState.quizzes.unshift(quiz);
+    saveQuizzes();
+    renderDashboard();
+  }
+  history.replaceState(null, "", window.location.pathname + window.location.search);
+  const modal = document.getElementById("modal-received-quiz");
+  if (modal) modal.classList.remove("open");
+
+  openSetupModal(targetId, mode);
+}
+
+// Expose Feature #4 functions to window
+window.openShareQuizModal = openShareQuizModal;
+window.closeShareQuizModal = closeShareQuizModal;
+window.copyShareUrlToClipboard = copyShareUrlToClipboard;
+window.triggerNativeShare = triggerNativeShare;
+window.checkSharedQuizFromUrl = checkSharedQuizFromUrl;
+window.saveReceivedQuizToLibrary = saveReceivedQuizToLibrary;
+window.startReceivedQuiz = startReceivedQuiz;
+
 

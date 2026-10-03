@@ -1110,12 +1110,18 @@ Giải thích: Số 2 là số nguyên tố chẵn duy nhất trong tập hợp 
         </div>
       </div>
 
-      <div class="modal-footer">
-        <button class="btn btn-secondary" id="btn-cancel-setup">Hủy</button>
-        <button class="btn btn-primary btn-lg" id="btn-start-quiz-now">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
-          Bắt Đầu Ngay
+      <div class="modal-footer" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem;">
+        <button type="button" class="btn btn-secondary" id="btn-setup-share-quiz" title="Chia sẻ bộ đề thi này qua đường link trực tiếp">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 4px;"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
+          Chia Sẻ Đề Này
         </button>
+        <div style="display: flex; gap: 0.65rem;">
+          <button class="btn btn-secondary" id="btn-cancel-setup">Hủy</button>
+          <button class="btn btn-primary btn-lg" id="btn-start-quiz-now">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+            Bắt Đầu Ngay
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -1791,6 +1797,143 @@ Giải thích: Số 2 là số nguyên tố chẵn duy nhất trong tập hợp 
         <button class="btn btn-survival btn-lg" id="btn-survival-retry">
           ⚡ Chơi Lại Ngay
         </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== SHARE QUIZ VIA LINK MODAL ==================== -->
+  <div class="modal-backdrop" id="modal-share-quiz">
+    <div class="modal-dialog" style="max-width: 580px; max-height: 92vh; display: flex; flex-direction: column;">
+      <div class="modal-header" style="padding: 1.25rem 1.75rem;">
+        <div style="display: flex; align-items: center; gap: 0.75rem;">
+          <div style="width: 42px; height: 42px; border-radius: var(--radius-md); background: linear-gradient(135deg, #d97706, #b45309); color: white; display: flex; align-items: center; justify-content: center; font-size: 1.25rem; box-shadow: 0 4px 12px rgba(217, 119, 6, 0.3);">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
+          </div>
+          <div>
+            <h3 class="modal-title" style="font-size: 1.2rem; font-weight: 800;">Chia Sẻ Đề Thi Qua Đường Link</h3>
+            <p style="font-size: 0.8rem; color: var(--text-muted); margin: 0.15rem 0 0 0;">Người nhận chỉ cần nhấp vào link là mở thi ngay, không cần đăng nhập!</p>
+          </div>
+        </div>
+        <button class="btn-ghost btn-sm" id="btn-close-share-quiz" style="padding: 0.4rem; border-radius: 50%;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+      </div>
+
+      <div class="modal-body" style="padding: 1.25rem 1.75rem; overflow-y: auto; flex: 1; display: flex; flex-direction: column; gap: 1.15rem;">
+        <!-- Quiz Info Card -->
+        <div style="background: var(--bg-surface); padding: 1rem 1.15rem; border-radius: var(--radius-md); border: 1px solid var(--border-subtle); display: flex; flex-direction: column; gap: 0.4rem;">
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 0.5rem;">
+            <h4 id="share-modal-quiz-title" style="font-size: 1.05rem; font-weight: 800; color: var(--text-main); margin: 0;">Đề thi...</h4>
+            <span id="share-modal-badge" class="badge badge-primary">Chung</span>
+          </div>
+          <div id="share-modal-quiz-stats" style="font-size: 0.825rem; color: var(--text-muted); display: flex; gap: 1rem;">
+            <span>📝 <strong id="share-modal-q-count">0</strong> câu hỏi</span>
+            <span>⏱️ <strong id="share-modal-duration">15</strong> phút</span>
+          </div>
+        </div>
+
+        <!-- Share URL Input and Copy Button -->
+        <div class="form-group" style="margin-bottom: 0;">
+          <label class="form-label" style="font-weight: 700; display: flex; justify-content: space-between; align-items: center;">
+            <span>🔗 Đường link chia sẻ trực tiếp:</span>
+            <span id="share-url-size-badge" style="font-size: 0.75rem; color: var(--text-muted); font-weight: normal;">Đã nén tối ưu</span>
+          </label>
+          <div style="display: flex; gap: 0.5rem; align-items: center;">
+            <input type="text" class="form-input" id="input-share-quiz-url" readonly style="font-family: monospace; font-size: 0.85rem; background: var(--bg-surface); cursor: text;" onclick="this.select()">
+            <button type="button" class="btn btn-primary" id="btn-copy-share-quiz-url" style="white-space: nowrap; display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.65rem 1.1rem;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+              <span>Sao Chép</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Quick Share Actions: Zalo / Mobile apps -->
+        <div style="display: flex; flex-direction: column; gap: 0.6rem;">
+          <button type="button" class="btn btn-secondary" id="btn-native-share-quiz" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 0.55rem; padding: 0.75rem 1rem; font-weight: 600;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
+            <span>📱 Gửi qua Zalo / Messenger / Ứng dụng khác</span>
+          </button>
+          
+          <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 0.25rem;">
+            <button type="button" class="btn btn-ghost btn-sm" id="btn-share-modal-export-json" style="color: var(--text-muted); font-size: 0.8rem; display: inline-flex; align-items: center; gap: 0.35rem;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+              <span>Tải file đề thi (.json) để gửi file</span>
+            </button>
+            <span id="share-copy-status-text" style="font-size: 0.8rem; color: var(--success); font-weight: 600; display: none;">✓ Đã sao chép vào bộ nhớ đệm!</span>
+          </div>
+        </div>
+
+        <div style="background: var(--primary-light); padding: 0.85rem 1rem; border-radius: var(--radius-md); font-size: 0.825rem; line-height: 1.5; color: var(--text-main); border: 1px solid var(--border-subtle);">
+          💡 <strong>Cơ chế bảo mật &amp; Không cần Server:</strong> Đề thi được mã hóa nén trực tiếp vào đường link. Bạn có thể gửi link này lên Zalo nhóm, Facebook, Messenger hoặc dán vào trình duyệt bất kỳ máy tính/điện thoại nào để làm bài hoặc lưu lại ngay tức khắc!
+        </div>
+      </div>
+
+      <div class="modal-footer" style="padding: 1rem 1.75rem; display: flex; justify-content: flex-end;">
+        <button class="btn btn-secondary" id="btn-close-share-quiz-footer">Đóng</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== RECEIVED SHARED QUIZ MODAL ==================== -->
+  <div class="modal-backdrop" id="modal-received-quiz">
+    <div class="modal-dialog" style="max-width: 580px; max-height: 92vh; display: flex; flex-direction: column;">
+      <div class="modal-header" style="padding: 1.25rem 1.75rem;">
+        <div style="display: flex; align-items: center; gap: 0.75rem;">
+          <div style="width: 42px; height: 42px; border-radius: var(--radius-md); background: linear-gradient(135deg, #10b981, #059669); color: white; display: flex; align-items: center; justify-content: center; font-size: 1.35rem; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);">
+            🎁
+          </div>
+          <div>
+            <h3 class="modal-title" style="font-size: 1.2rem; font-weight: 800;">Bạn Đã Nhận Được Bộ Đề Thi!</h3>
+            <p style="font-size: 0.8rem; color: var(--text-muted); margin: 0.15rem 0 0 0;">Bộ đề được chia sẻ trực tiếp qua liên kết</p>
+          </div>
+        </div>
+        <button class="btn-ghost btn-sm" id="btn-close-received-quiz" style="padding: 0.4rem; border-radius: 50%;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+      </div>
+
+      <div class="modal-body" style="padding: 1.25rem 1.75rem; overflow-y: auto; flex: 1; display: flex; flex-direction: column; gap: 1rem;">
+        <div style="background: var(--bg-surface); padding: 1.15rem; border-radius: var(--radius-md); border: 1.5px solid var(--border-subtle);">
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; margin-bottom: 0.4rem;">
+            <span id="received-modal-category" class="badge badge-primary">Chung</span>
+            <span style="font-size: 0.8rem; color: var(--success); font-weight: 700;">✓ Sẵn sàng làm bài</span>
+          </div>
+          <h4 id="received-modal-title" style="font-size: 1.2rem; font-weight: 800; color: var(--primary); margin: 0 0 0.4rem 0;">...</h4>
+          <p id="received-modal-desc" style="font-size: 0.875rem; color: var(--text-muted); margin: 0; line-height: 1.5;">Bộ đề luyện thi trắc nghiệm.</p>
+
+          <div style="margin-top: 1rem; display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.75rem;">
+            <div style="background: var(--primary-light); padding: 0.65rem 0.85rem; border-radius: var(--radius-sm); text-align: center;">
+              <div style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600;">Số lượng câu hỏi</div>
+              <div id="received-modal-count" style="font-size: 1.2rem; font-weight: 800; color: var(--primary);">0 câu</div>
+            </div>
+            <div style="background: var(--primary-light); padding: 0.65rem 0.85rem; border-radius: var(--radius-sm); text-align: center;">
+              <div style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600;">Thời gian tiêu chuẩn</div>
+              <div id="received-modal-time" style="font-size: 1.2rem; font-weight: 800; color: var(--primary);">15 phút</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Preview first 2-3 questions -->
+        <div>
+          <div style="font-size: 0.85rem; font-weight: 700; margin-bottom: 0.5rem; color: var(--text-main);">Trích đoạn câu hỏi trong đề:</div>
+          <div id="received-modal-preview-list" style="display: flex; flex-direction: column; gap: 0.5rem; max-height: 180px; overflow-y: auto; padding-right: 4px;">
+            <!-- Questions rendered here -->
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer" style="padding: 1rem 1.75rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem;">
+        <button class="btn btn-secondary" id="btn-received-save-only">
+          💾 Lưu Vào Thư Viện
+        </button>
+        <div style="display: flex; gap: 0.65rem;">
+          <button class="btn btn-primary" id="btn-received-start-practice" style="background: var(--bg-card); color: var(--text-main); border: 1.5px solid var(--border-subtle);">
+            🎯 Ôn Tập
+          </button>
+          <button class="btn btn-primary" id="btn-received-start-exam">
+            🚀 Thi Thử Ngay
+          </button>
+        </div>
       </div>
     </div>
   </div>

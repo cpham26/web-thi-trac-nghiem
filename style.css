@@ -906,6 +906,20 @@ a {
   transform: translateY(-1px);
 }
 
+.card-tool-btn.btn-tool-share {
+  color: var(--primary);
+  background: var(--primary-light);
+  border-color: rgba(217, 119, 6, 0.3);
+}
+
+.card-tool-btn.btn-tool-share:hover {
+  color: #ffffff;
+  background: var(--primary);
+  border-color: var(--primary);
+  box-shadow: 0 2px 8px rgba(217, 119, 6, 0.45);
+  transform: translateY(-1.5px) scale(1.05);
+}
+
 .card-tool-btn.btn-tool-docx:hover {
   color: #3b82f6;
   border-color: rgba(59, 130, 246, 0.4);
