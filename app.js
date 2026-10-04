@@ -1,5 +1,5 @@
 /**
- * NOVAQUIZ PRO - MAIN APPLICATION ENGINE v4.0.0
+ * NOVAQUIZ PRO - MAIN APPLICATION ENGINE v4.1.1
  * Modern Exam & Practice Web App (AI Exam Generator, Tinder Flashcard, Zen Mode 2.0, Mệnh Thổ Amber)
  */
 
@@ -1540,16 +1540,15 @@ function resetCreatorForm() {
   // Reset file uploader nếu có
   const fileUploader = document.getElementById("file-uploader");
   if (fileUploader) fileUploader.value = "";
-  const uploadPreviewArea = document.getElementById("file-upload-preview");
-  if (uploadPreviewArea) uploadPreviewArea.innerHTML = "";
 
   // Reset OCR images
-  const ocrInput = document.getElementById("ocr-multi-file-input");
+  const ocrInput = document.getElementById("input-ai-ocr-files");
   if (ocrInput) ocrInput.value = "";
-  const ocrGallery = document.getElementById("ocr-gallery-container");
+  const ocrGallery = document.getElementById("ocr-thumbnails-grid");
   if (ocrGallery) ocrGallery.innerHTML = "";
-  const ocrPreviewArea = document.getElementById("ocr-preview-area");
+  const ocrPreviewArea = document.getElementById("ocr-selected-images-container");
   if (ocrPreviewArea) ocrPreviewArea.style.display = "none";
+  if (AppState) AppState.ocrImages = [];
   if (window.uploadedOcrImages) window.uploadedOcrImages = [];
 
   // Reset toàn bộ thông báo và panel "AI vừa sửa đáp án"
@@ -6788,41 +6787,6 @@ Giải thích: HDMI (High-Definition Multimedia Interface) truyền tải cả v
     btnFixSpellingManualAll.addEventListener("click", fixSpellingManualQuestionsAll);
   }
 
-  // AI Tự Lọc & Khớp Đáp Án: Tự quét mọi định dạng đáp án (DA:, ĐA:, Key:, Bảng đáp án, sửa dãn chữ)
-  const btnAutoDetect = document.getElementById("btn-auto-detect-answers");
-  if (btnAutoDetect) {
-    btnAutoDetect.addEventListener("click", autoDetectAndLinkAnswers);
-  }
-
-  // AI Offline Cleaner: Lọc rác & Tự động thêm A, B, C, D & Ghép đáp án nếu có
-  const btnAiClean = document.getElementById("btn-ai-clean-offline");
-  if (btnAiClean) {
-    btnAiClean.addEventListener("click", () => {
-      const textarea = document.getElementById("smart-text-input");
-      if (!textarea || !textarea.value.trim()) {
-        showToast("Vui lòng dán đề thi vào khung văn bản trước khi lọc!", "warning");
-        return;
-      }
-      const before = textarea.value;
-      // 1. Tự động kiểm tra xem có bảng đáp án riêng ở cuối không
-      const sepResult = autoDetectAndApplySeparateAnswers(before);
-      let textToClean = before;
-      let sepMsg = "";
-      if (sepResult.appliedCount > 0) {
-        textToClean = sepResult.text;
-        sepMsg = ` (🎉 Tự động ghép ${sepResult.appliedCount} đáp án từ bảng đáp án riêng!)`;
-      }
-      const cleaned = aiFilterAndCleanExam(textToClean);
-      textarea.value = cleaned;
-      updateSmartParsePreview();
-      showToast(`AI đã lọc sạch rác và tự động thêm tiền tố A, B, C, D!${sepMsg}`, "success");
-      const diffs = detectAiAuditChanges(before, cleaned);
-      if (diffs.length > 0) {
-        processAndShowAiAuditDiff(before, cleaned);
-      }
-    });
-  }
-
   // Nút Soát & Sửa Câu Sai Bằng AI trên thanh công cụ
   const btnQuickAudit = document.getElementById("btn-quick-audit-wrong");
   const selectModel = document.getElementById("select-gemini-model");
@@ -8513,11 +8477,12 @@ function applyGeneratedQuizToCreator(topic, rawOutput, count, isAi = true) {
 
   const tabPasteBtn = document.querySelector('.creator-tab[data-tab="tab-smart-paste"]');
   if (tabPasteBtn) {
+    tabPasteBtn.click();
+  } else {
     document.querySelectorAll(".creator-tab").forEach(t => t.classList.remove("active"));
-    tabPasteBtn.classList.add("active");
-    document.querySelectorAll(".creator-panel").forEach(p => p.classList.remove("active"));
+    document.querySelectorAll(".tab-pane").forEach(p => p.style.display = "none");
     const panel = document.getElementById("tab-smart-paste");
-    if (panel) panel.classList.add("active");
+    if (panel) panel.style.display = "block";
   }
 
   // 3. Đưa văn bản đề thi vào khung soạn thảo
