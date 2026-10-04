@@ -255,12 +255,6 @@ Giải thích: Số 2 là số nguyên tố chẵn duy nhất trong tập hợp 
                 <span>Công Cụ AI Thông Minh:</span>
               </div>
               <div class="ai-toolbar-actions">
-                <button type="button" class="btn btn-secondary btn-sm" id="btn-quick-fix-spelling" title="Tự động sửa lỗi chính tả, dãn chữ OCR & làm đẹp đề thi mà vẫn giữ nguyên 100% đáp án đúng gốc">
-                  ✍️ Sửa chính tả
-                </button>
-                <button type="button" class="btn btn-secondary btn-sm" id="btn-open-separate-answers" title="Ghép bảng đáp án riêng ở cuối đề (Phiếu soi đáp án 1.A, 2.B, 3.C...) vào từng câu hỏi">
-                  📋 Ghép đáp án riêng
-                </button>
                 <button type="button" class="btn btn-ai btn-sm" id="btn-quick-ocr-upload" title="Tải ảnh đề thi để AI nhận diện và trích xuất thành câu hỏi trắc nghiệm (Hỗ trợ nhiều ảnh)">
                   <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
                   📸 Quét ảnh AI
@@ -304,12 +298,9 @@ Giải thích: Số 2 là số nguyên tố chẵn duy nhất trong tập hợp 
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
                   Hợp lệ: <span id="parse-stat-valid">0</span> câu
                 </div>
-                <div class="stat-item" style="color: var(--danger); display: flex; align-items: center; gap: 0.35rem;" id="parse-stat-invalid-container">
+                <div class="stat-item" style="color: var(--danger);" id="parse-stat-invalid-container">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
-                  <span>Chưa có đáp án: <span id="parse-stat-invalid">0</span> câu</span>
-                  <button type="button" class="btn btn-outline-danger btn-xs" id="btn-quick-audit-wrong" style="padding: 0.15rem 0.45rem; font-size: 0.75rem; margin-left: 0.25rem;" title="Nhờ AI rà soát & giải/chọn đáp án đúng cho các câu hỏi">
-                    🔍 Soát câu sai bằng AI
-                  </button>
+                  Chưa có đáp án: <span id="parse-stat-invalid">0</span> câu
                 </div>
                 <div class="stat-item" style="color: #d97706; display: none;" id="parse-stat-audited-container" title="Bấm để xem các câu hỏi AI vừa sửa đáp án">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
@@ -424,10 +415,6 @@ Giải thích: Số 2 là số nguyên tố chẵn duy nhất trong tập hợp 
                 <button type="button" class="btn btn-secondary" id="btn-load-sample-docx">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polygon points="10 8 16 12 10 16 10 8"></polygon></svg>
                   Nạp thử file Word mẫu
-                </button>
-                <button type="button" class="btn btn-secondary" id="btn-open-separate-answers-tab2" title="Ghép bảng đáp án riêng nếu file Word hoặc tài liệu có bảng đáp án ở cuối">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
-                  📋 Ghép bảng đáp án riêng
                 </button>
               </div>
             </div>
@@ -644,14 +631,6 @@ Giải thích: Số 2 là số nguyên tố chẵn duy nhất trong tập hợp 
               </button>
             </div>
           </div>
-
-          <button class="btn btn-ghost btn-sm" id="btn-runner-sound-toggle" title="Bật/Tắt âm thanh hiệu ứng (Phím S)" style="font-size: 1rem; padding: 0.35rem 0.55rem;">
-            <span id="runner-sound-icon">🔊</span>
-          </button>
-
-          <button class="btn btn-ghost btn-sm" id="btn-open-shortcuts-runner" title="Xem bảng phím tắt (Phím ?)" style="font-size: 1rem; padding: 0.35rem 0.55rem;">
-            ⌨️
-          </button>
 
           <button class="btn btn-secondary btn-sm" id="btn-toggle-zen-mode" title="Bật/Tắt chế độ tập trung (ẩn thanh điều hướng, mở rộng màn hình)">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h6v6"></path><path d="M9 21H3v-6"></path><path d="M21 3l-7 7"></path><path d="M3 21l7-7"></path></svg>

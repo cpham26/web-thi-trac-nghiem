@@ -118,10 +118,8 @@ function isSoundEnabled() {
 function updateSoundUI() {
   const enabled = isSoundEnabled();
   const iconHeader = document.getElementById("sound-toggle-icon");
-  const iconRunner = document.getElementById("runner-sound-icon");
   const text = enabled ? "🔊" : "🔇";
   if (iconHeader) iconHeader.textContent = text;
-  if (iconRunner) iconRunner.textContent = text;
 }
 
 function toggleSoundSetting() {
@@ -6764,22 +6762,6 @@ Giải thích: HDMI (High-Definition Multimedia Interface) truyền tải cả v
     });
   }
 
-  // ✍️ Nút Sửa lỗi chính tả & OCR (Giữ nguyên đáp án) trên thanh công cụ
-  const btnQuickFixSpelling = document.getElementById("btn-quick-fix-spelling");
-  if (btnQuickFixSpelling) {
-    btnQuickFixSpelling.addEventListener("click", () => {
-      const textarea = document.getElementById("smart-text-input");
-      if (!textarea || !textarea.value.trim()) {
-        showToast("Vui lòng dán nội dung đề thi vào khung văn bản trước khi sửa chính tả!", "warning");
-        return;
-      }
-      const before = textarea.value;
-      const cleaned = fixSpellingAndFormattingKeepAnswers(before);
-      textarea.value = cleaned;
-      updateSmartParsePreview();
-      showToast("✓ Đã sửa sạch toàn bộ lỗi chính tả & định dạng OCR mà không thay đổi bất kỳ đáp án nào!", "success");
-    });
-  }
 
   // Nút Sửa chính tả tất cả câu hỏi trong Tab Soạn Thảo Thủ Công (Tab 3)
   const btnFixSpellingManualAll = document.getElementById("btn-fix-spelling-manual-all");
@@ -6787,8 +6769,7 @@ Giải thích: HDMI (High-Definition Multimedia Interface) truyền tải cả v
     btnFixSpellingManualAll.addEventListener("click", fixSpellingManualQuestionsAll);
   }
 
-  // Nút Soát & Sửa Câu Sai Bằng AI trên thanh công cụ
-  const btnQuickAudit = document.getElementById("btn-quick-audit-wrong");
+  // Cấu hình mô hình AI Gemini
   const selectModel = document.getElementById("select-gemini-model");
   const modelBadge = document.getElementById("gemini-model-badge-info");
   const containerCustomModel = document.getElementById("container-custom-gemini-model");
@@ -6832,40 +6813,6 @@ Giải thích: HDMI (High-Definition Multimedia Interface) truyền tải cả v
         setSavedGeminiCustomModel(customVal);
         if (modelBadge) modelBadge.textContent = `Đang chọn: ${customVal}`;
       }
-    });
-  }
-
-  if (btnQuickAudit) {
-    btnQuickAudit.addEventListener("click", () => {
-      const textarea = document.getElementById("smart-text-input");
-      if (!textarea || !textarea.value.trim()) {
-        showToast("Vui lòng dán đề thi vào khung văn bản trước khi soát câu sai!", "warning");
-        return;
-      }
-
-      const savedKey = getSavedGeminiKey();
-      if (inputGeminiKey) inputGeminiKey.value = savedKey;
-
-      let savedModel = getSavedGeminiModel();
-      if (selectModel) {
-        if (Array.from(selectModel.options).some(o => o.value === savedModel)) {
-          selectModel.value = savedModel;
-          if (containerCustomModel) containerCustomModel.style.display = "none";
-        } else if (savedModel === "auto") {
-          selectModel.value = "auto";
-          if (containerCustomModel) containerCustomModel.style.display = "none";
-        } else {
-          selectModel.value = "custom";
-          if (containerCustomModel) containerCustomModel.style.display = "block";
-          if (inputCustomModel) inputCustomModel.value = savedModel;
-        }
-        if (modelBadge) modelBadge.textContent = `Đang chọn: ${savedModel}`;
-      }
-
-      const auditRadio = document.querySelector('input[name="ai-task"][value="audit-correct"]');
-      if (auditRadio) auditRadio.checked = true;
-
-      if (modalGemini) modalGemini.classList.add("open");
     });
   }
 
@@ -7025,173 +6972,6 @@ Giải thích: HDMI (High-Definition Multimedia Interface) truyền tải cả v
   if (btnCloseAiTutor && modalAiTutor) btnCloseAiTutor.addEventListener("click", () => modalAiTutor.classList.remove("open"));
   if (btnCloseAiTutorFooter && modalAiTutor) btnCloseAiTutorFooter.addEventListener("click", () => modalAiTutor.classList.remove("open"));
 
-  // Separate Answers Modal Listeners
-  const modalSeparateAnswers = document.getElementById("modal-separate-answers");
-  const btnOpenSeparateAnswers = document.getElementById("btn-open-separate-answers");
-  const btnOpenSeparateAnswersTab2 = document.getElementById("btn-open-separate-answers-tab2");
-  const btnCloseSeparateAnswers = document.getElementById("btn-close-separate-answers");
-  const btnCancelSeparateAnswers = document.getElementById("btn-cancel-separate-answers");
-  const textareaSeparateAnswers = document.getElementById("textarea-separate-answers");
-  const statusSeparateAnswers = document.getElementById("separate-answers-status");
-  const badgeSeparateAnswers = document.getElementById("separate-answers-preview-badge");
-  const btnClearSeparateAnswers = document.getElementById("btn-clear-separate-answers");
-  const btnUploadSeparateAnswersFile = document.getElementById("btn-upload-separate-answers-file");
-  const inputSeparateAnswersFile = document.getElementById("input-separate-answers-file");
-  const btnApplySeparateAnswers = document.getElementById("btn-apply-separate-answers");
-
-  function updateSeparateAnswersBadge() {
-    if (!textareaSeparateAnswers || !badgeSeparateAnswers || !statusSeparateAnswers) return;
-    const text = textareaSeparateAnswers.value.trim();
-    if (!text) {
-      statusSeparateAnswers.textContent = "Chưa nhập đáp án";
-      statusSeparateAnswers.style.color = "var(--text-muted)";
-      badgeSeparateAnswers.style.display = "none";
-      return;
-    }
-    const answerMap = parseAnswerKeyText(text);
-    if (answerMap.size > 0) {
-      statusSeparateAnswers.textContent = `Đã tìm thấy ${answerMap.size} đáp án`;
-      statusSeparateAnswers.style.color = "var(--success)";
-      
-      const sampleEntries = Array.from(answerMap.entries()).slice(0, 12).map(([k, v]) => `<strong>${k}:</strong> ${v}`).join(", ");
-      const moreText = answerMap.size > 12 ? ` ... và còn ${answerMap.size - 12} câu khác` : "";
-      badgeSeparateAnswers.innerHTML = `✓ <strong>Đã nhận diện ${answerMap.size} đáp án:</strong> ${sampleEntries}${moreText}`;
-      badgeSeparateAnswers.style.display = "block";
-    } else {
-      statusSeparateAnswers.textContent = "Chưa nhận diện được đáp án (thử định dạng 1.A 2.B hoặc 1A 2B...)";
-      statusSeparateAnswers.style.color = "var(--danger)";
-      badgeSeparateAnswers.style.display = "none";
-    }
-  }
-
-  function openSeparateAnswersModal() {
-    if (!modalSeparateAnswers) return;
-    modalSeparateAnswers.classList.add("open");
-    updateSeparateAnswersBadge();
-    if (textareaSeparateAnswers) textareaSeparateAnswers.focus();
-  }
-
-  if (btnOpenSeparateAnswers) btnOpenSeparateAnswers.addEventListener("click", openSeparateAnswersModal);
-  if (btnOpenSeparateAnswersTab2) btnOpenSeparateAnswersTab2.addEventListener("click", openSeparateAnswersModal);
-  if (btnCloseSeparateAnswers && modalSeparateAnswers) btnCloseSeparateAnswers.addEventListener("click", () => modalSeparateAnswers.classList.remove("open"));
-  if (btnCancelSeparateAnswers && modalSeparateAnswers) btnCancelSeparateAnswers.addEventListener("click", () => modalSeparateAnswers.classList.remove("open"));
-
-  if (modalSeparateAnswers) {
-    modalSeparateAnswers.addEventListener("click", (e) => {
-      if (e.target === modalSeparateAnswers) modalSeparateAnswers.classList.remove("open");
-    });
-  }
-
-  if (textareaSeparateAnswers) {
-    textareaSeparateAnswers.addEventListener("input", updateSeparateAnswersBadge);
-  }
-
-  if (btnClearSeparateAnswers && textareaSeparateAnswers) {
-    btnClearSeparateAnswers.addEventListener("click", () => {
-      textareaSeparateAnswers.value = "";
-      updateSeparateAnswersBadge();
-    });
-  }
-
-  // Upload separate answer key file (.txt, .docx, .pdf, .csv)
-  if (btnUploadSeparateAnswersFile && inputSeparateAnswersFile) {
-    btnUploadSeparateAnswersFile.addEventListener("click", () => {
-      inputSeparateAnswersFile.click();
-    });
-
-    inputSeparateAnswersFile.addEventListener("change", async (e) => {
-      const file = e.target.files && e.target.files[0];
-      if (!file) return;
-
-      const fileName = file.name.toLowerCase();
-      try {
-        let extractedText = "";
-        if (fileName.endsWith(".pdf")) {
-          showToast(`Đang đọc bảng đáp án từ PDF "${file.name}"...`, "info");
-          if (typeof pdfjsLib === "undefined") throw new Error("Chưa tải thư viện PDF.js");
-          pdfjsLib.GlobalWorkerOptions.workerSrc = "pdf.worker.min.js";
-          const arrayBuffer = await file.arrayBuffer();
-          const pdfDoc = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-          for (let p = 1; p <= pdfDoc.numPages; p++) {
-            const page = await pdfDoc.getPage(p);
-            const content = await page.getTextContent();
-            extractedText += content.items.map(it => it.str).join(" ") + "\n";
-          }
-        } else if (fileName.endsWith(".docx") || fileName.endsWith(".doc")) {
-          showToast(`Đang đọc bảng đáp án từ Word "${file.name}"...`, "info");
-          if (typeof JSZip === "undefined") throw new Error("Chưa tải thư viện JSZip");
-          const arrayBuffer = await file.arrayBuffer();
-          const zip = await JSZip.loadAsync(arrayBuffer);
-          const docXml = zip.file("word/document.xml");
-          if (docXml) {
-            const xmlStr = await docXml.async("text");
-            const parser = new DOMParser();
-            const xmlDoc = parser.parseFromString(xmlStr, "application/xml");
-            const pEls = xmlDoc.getElementsByTagName("w:p");
-            for (let i = 0; i < pEls.length; i++) {
-              extractedText += pEls[i].textContent + "\n";
-            }
-          }
-        } else {
-          // File văn bản txt/csv
-          extractedText = await file.text();
-        }
-
-        if (extractedText.trim()) {
-          textareaSeparateAnswers.value = extractedText;
-          updateSeparateAnswersBadge();
-          showToast(`Đã đọc xong tệp đáp án "${file.name}"!`, "success");
-        } else {
-          showToast("Không tìm thấy văn bản trong tệp!", "warning");
-        }
-      } catch (err) {
-        console.error("Lỗi đọc tệp đáp án:", err);
-        showToast(`Không thể đọc tệp: ${err.message}`, "danger");
-      }
-      inputSeparateAnswersFile.value = "";
-    });
-  }
-
-  // Nút ghép đáp án vào đề thi
-  if (btnApplySeparateAnswers) {
-    btnApplySeparateAnswers.addEventListener("click", () => {
-      const answerKeyText = textareaSeparateAnswers ? textareaSeparateAnswers.value.trim() : "";
-      if (!answerKeyText) {
-        showToast("Vui lòng dán hoặc tải lên bảng đáp án trước!", "warning");
-        return;
-      }
-
-      const answerMap = parseAnswerKeyText(answerKeyText);
-      if (answerMap.size === 0) {
-        showToast("Không tìm thấy đáp án hợp lệ nào! Hãy kiểm tra định dạng (ví dụ: 1.A 2.B 3.C... hoặc 1A 2B...)", "danger");
-        return;
-      }
-
-      const mainTextarea = document.getElementById("smart-text-input");
-      if (!mainTextarea || !mainTextarea.value.trim()) {
-        showToast("Chưa có câu hỏi trong đề thi! Vui lòng dán đề hoặc tải file đề thi trước.", "warning");
-        return;
-      }
-
-      // Làm sạch sơ bộ đề thi nếu cần
-      let currentExamText = mainTextarea.value;
-      currentExamText = smartPreprocessExamText(currentExamText);
-
-      const rawLines = currentExamText.split('\n');
-      const blocks = splitIntoQuestionBlocks(rawLines);
-
-      const { updatedBlocks, appliedCount } = applyAnswerKeyToBlocks(blocks, answerMap);
-
-      if (appliedCount > 0) {
-        mainTextarea.value = updatedBlocks.join('\n\n');
-        updateSmartParsePreview();
-        modalSeparateAnswers.classList.remove("open");
-        showToast(`🎉 Đã ghép thành công ${appliedCount}/${answerMap.size} đáp án vào các câu hỏi trong đề thi!`, "success");
-      } else {
-        showToast(`Đã quét được ${answerMap.size} đáp án nhưng không khớp được với câu hỏi nào trong đề. Vui lòng kiểm tra lại số thứ tự câu hỏi (ví dụ: Câu 1, Câu 2...)`, "warning");
-      }
-    });
-  }
 
   // Image zoom lightbox handler
   const zoomOverlay = document.getElementById("image-zoom-overlay");
@@ -7275,13 +7055,9 @@ Giải thích: HDMI (High-Definition Multimedia Interface) truyền tải cả v
   const btnFlashcardNeedReview = document.getElementById("btn-flashcard-need-review");
   if (btnFlashcardNeedReview) btnFlashcardNeedReview.addEventListener("click", markFlashcardNeedReview);
 
-  // Sound toggles
+  // Sound toggle
   const btnSoundToggle = document.getElementById("btn-sound-toggle");
   if (btnSoundToggle) btnSoundToggle.addEventListener("click", toggleSoundSetting);
-
-  const btnRunnerSoundToggle = document.getElementById("btn-runner-sound-toggle");
-  if (btnRunnerSoundToggle) btnRunnerSoundToggle.addEventListener("click", toggleSoundSetting);
-
 
   // Analytics Modal buttons
   const btnOpenAnalytics = document.getElementById("btn-open-analytics");
@@ -7299,9 +7075,6 @@ Giải thích: HDMI (High-Definition Multimedia Interface) truyền tải cả v
   // Shortcuts Modal buttons
   const btnOpenShortcuts = document.getElementById("btn-open-shortcuts");
   if (btnOpenShortcuts) btnOpenShortcuts.addEventListener("click", openShortcutsModal);
-
-  const btnOpenShortcutsRunner = document.getElementById("btn-open-shortcuts-runner");
-  if (btnOpenShortcutsRunner) btnOpenShortcutsRunner.addEventListener("click", openShortcutsModal);
 
   const btnCloseShortcuts = document.getElementById("btn-close-shortcuts");
   if (btnCloseShortcuts) btnCloseShortcuts.addEventListener("click", closeShortcutsModal);
