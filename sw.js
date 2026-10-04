@@ -1,5 +1,5 @@
-// NovaQuiz v4.1.0 - Service Worker (Network-First for Fresh Updates & Offline PWA)
-const CACHE_NAME = "novaquiz-cache-v4.1.0";
+// NovaQuiz v4.1.1 - Service Worker (Network-First for Fresh Updates & Offline PWA)
+const CACHE_NAME = "novaquiz-cache-v4.1.1";
 const ASSETS_TO_CACHE = [
   "./",
   "./index.html",

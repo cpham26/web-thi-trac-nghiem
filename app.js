@@ -38,17 +38,17 @@ function setSavedGeminiKey(val) {
 }
 
 function getSavedGeminiModel() {
-  let m = localStorage.getItem(STORAGE_KEYS.GEMINI_MODEL) || localStorage.getItem(STORAGE_KEYS.GEMINI_MODEL_LEGACY) || "gemini-2.5-flash";
-  // Migration: Tự động khôi phục về model Google Gemini chính thức nếu trước đó lưu model ảo hoặc không hợp lệ
-  if (!m || m.includes("3.8") || m.includes("3.5") || m.includes("interactions") || m.includes("tts") || m.includes("embedding") || m.includes("8b")) {
-    m = "gemini-2.5-flash";
+  let m = localStorage.getItem(STORAGE_KEYS.GEMINI_MODEL) || localStorage.getItem(STORAGE_KEYS.GEMINI_MODEL_LEGACY) || "gemini-3.8-flash";
+  // Migration: Tự động nâng cấp lên thế hệ Gemini 3+ mới nhất nếu người dùng đang lưu các model < Gemini 3 đã bị khai tử
+  if (!m || m.includes("1.5") || m.includes("2.0") || m.includes("2.5") || m.includes("1.0") || m.includes("interactions") || m.includes("tts") || m.includes("embedding") || m.includes("8b")) {
+    m = "gemini-3.8-flash";
     setSavedGeminiModel(m);
   }
   return m;
 }
 
 function setSavedGeminiModel(val) {
-  const modelVal = val || "gemini-2.5-flash";
+  const modelVal = val || "gemini-3.8-flash";
   localStorage.setItem(STORAGE_KEYS.GEMINI_MODEL, modelVal);
   localStorage.setItem(STORAGE_KEYS.GEMINI_MODEL_LEGACY, modelVal);
 }
@@ -1837,24 +1837,24 @@ function aiFilterAndCleanExam(rawText) {
 // GEMINI AI INTEGRATION - DYNAMIC MODEL DISCOVERY & QUIZ AUDITOR
 // =============================================================================
 
-// Danh sách các mô hình Google Gemini văn bản hỗ trợ chuẩn generateContent ổn định nhất (Thế hệ 2.5 & 2.0 & 1.5 chính thức)
+// Danh sách các mô hình Google Gemini văn bản hỗ trợ chuẩn generateContent ổn định nhất (Thế hệ Gemini 3+ mới nhất)
 const GEMINI_FALLBACK_MODELS = [
-  "gemini-2.5-flash",
-  "gemini-2.0-flash",
-  "gemini-1.5-flash",
-  "gemini-2.0-flash-lite",
-  "gemini-1.5-pro",
-  "gemini-2.5-pro"
+  "gemini-3.8-flash",
+  "gemini-3.8-pro",
+  "gemini-3.5-flash-lite",
+  "gemini-3.5-flash",
+  "gemini-3.5-pro",
+  "gemini-3.0-flash"
 ];
 
 // Danh sách độ ưu tiên mô hình văn bản MỚI NHẤT & ỔN ĐỊNH của Google cho generateContent
 const GEMINI_NEWEST_PRIORITY = [
-  "gemini-2.5-flash",
-  "gemini-2.5-pro",
-  "gemini-2.0-flash",
-  "gemini-2.0-flash-lite",
-  "gemini-1.5-flash",
-  "gemini-1.5-pro"
+  "gemini-3.8-flash",
+  "gemini-3.8-pro",
+  "gemini-3.5-flash-lite",
+  "gemini-3.5-flash",
+  "gemini-3.5-pro",
+  "gemini-3.0-flash"
 ];
 
 let activeGeminiModel = getSavedGeminiModel();
@@ -1904,7 +1904,7 @@ async function discoverGeminiModels(apiKey) {
         };
       });
 
-    // Sắp xếp các model theo thứ tự ưu tiên (Gemini 2.5 Flash -> 2.5 Pro -> 2.0 Flash -> 2.0 Flash-Lite -> 1.5 Flash...)
+    // Sắp xếp các model theo thứ tự ưu tiên (Gemini 3.8 Flash -> 3.8 Pro -> 3.5 Flash-Lite -> 3.5 Flash -> 3.5 Pro -> 3.0 Flash...)
     validModels.sort((a, b) => {
       const idxA = GEMINI_NEWEST_PRIORITY.indexOf(a.id);
       const idxB = GEMINI_NEWEST_PRIORITY.indexOf(b.id);
@@ -1932,7 +1932,7 @@ function populateGeminiModelDropdown(modelsList, preferredModel) {
 
   const autoOpt = document.createElement("option");
   autoOpt.value = "auto";
-  autoOpt.textContent = "🚀 Tự động chọn mô hình tối ưu (Ưu tiên Gemini 2.5 Flash / 2.0 Flash)";
+  autoOpt.textContent = "🚀 Tự động chọn mô hình tối ưu (Ưu tiên Gemini 3.8 Flash / 3.5 Flash-Lite)";
   select.appendChild(autoOpt);
 
   if (modelsList && modelsList.length > 0) {
@@ -1941,12 +1941,12 @@ function populateGeminiModelDropdown(modelsList, preferredModel) {
       const opt = document.createElement("option");
       opt.value = m.id;
       let label = m.displayName || m.id;
-      if (m.id.includes("2.5-flash")) label = `🔥 ${label} (Thế hệ mới nhất - Đỉnh cao trí tuệ & siêu tốc)`;
-      else if (m.id.includes("2.5-pro")) label = `🧠 ${label} (Tư duy suy luận sâu 2.5)`;
-      else if (m.id.includes("2.0-flash-lite")) label = `⚡ ${label} (Siêu tốc & tối ưu Quota - Khuyên dùng)`;
-      else if (m.id.includes("2.0-flash")) label = `⚡ ${label} (Chuẩn thế hệ 2.0 đa nhiệm)`;
-      else if (m.id.includes("1.5-flash")) label = `⚡ ${label} (Thế hệ 1.5 bền bỉ & chính xác cao)`;
-      else if (m.id.includes("1.5-pro")) label = `🧠 ${label} (Tư duy chuyên gia 1.5)`;
+      if (m.id.includes("3.8-flash")) label = `🔥 ${label} (Thế hệ 3.8 MỚI NHẤT - Đỉnh cao trí tuệ & siêu tốc)`;
+      else if (m.id.includes("3.8-pro")) label = `🧠 ${label} (Tư duy suy luận sâu thế hệ 3.8)`;
+      else if (m.id.includes("3.5-flash-lite")) label = `⚡ ${label} (Siêu nhanh, ổn định & tối ưu Quota)`;
+      else if (m.id.includes("3.5-flash")) label = `⚡ ${label} (Thế hệ 3.5 toàn diện & chính xác cao)`;
+      else if (m.id.includes("3.5-pro")) label = `🧠 ${label} (Tư duy chuyên gia 3.5)`;
+      else if (m.id.includes("3.0-flash") || m.id.includes("3-flash")) label = `⚡ ${label} (Chuẩn thế hệ 3.0)`;
       else if (m.id.includes("pro")) label = `🧠 ${label} (Tư duy sâu & lập luận chuyên gia)`;
       else label = `⚡ ${label}`;
       opt.textContent = label;
@@ -1957,12 +1957,12 @@ function populateGeminiModelDropdown(modelsList, preferredModel) {
       const opt = document.createElement("option");
       opt.value = id;
       let label = id;
-      if (id.includes("2.5-flash")) label = `🔥 ${id} (Thế hệ mới nhất - Đỉnh cao trí tuệ & siêu tốc)`;
-      else if (id.includes("2.5-pro")) label = `🧠 ${id} (Tư duy suy luận sâu 2.5)`;
-      else if (id.includes("2.0-flash-lite")) label = `⚡ ${id} (Siêu tốc & tối ưu Quota - Khuyên dùng)`;
-      else if (id.includes("2.0-flash")) label = `⚡ ${id} (Chuẩn thế hệ 2.0 đa nhiệm)`;
-      else if (id.includes("1.5-flash")) label = `⚡ ${id} (Thế hệ 1.5 bền bỉ & chính xác cao)`;
-      else if (id.includes("1.5-pro")) label = `🧠 ${id} (Tư duy chuyên gia 1.5)`;
+      if (id.includes("3.8-flash")) label = `🔥 ${id} (Thế hệ 3.8 MỚI NHẤT - Đỉnh cao trí tuệ & siêu tốc)`;
+      else if (id.includes("3.8-pro")) label = `🧠 ${id} (Tư duy suy luận sâu thế hệ 3.8)`;
+      else if (id.includes("3.5-flash-lite")) label = `⚡ ${id} (Siêu nhanh, ổn định & tối ưu Quota)`;
+      else if (id.includes("3.5-flash")) label = `⚡ ${id} (Thế hệ 3.5 toàn diện & chính xác cao)`;
+      else if (id.includes("3.5-pro")) label = `🧠 ${id} (Tư duy chuyên gia 3.5)`;
+      else if (id.includes("3.0-flash")) label = `⚡ ${id} (Chuẩn thế hệ 3.0)`;
       else label = `⚡ ${id}`;
       opt.textContent = label;
       select.appendChild(opt);
@@ -1971,13 +1971,13 @@ function populateGeminiModelDropdown(modelsList, preferredModel) {
 
   const customOpt = document.createElement("option");
   customOpt.value = "custom";
-  customOpt.textContent = "✏️ Nhập mã mô hình tùy chọn khác...";
+  customOpt.textContent = "✏️ Nhập mã mô hình tùy chọn khác (Gemini 3+, 4...)...";
   select.appendChild(customOpt);
 
   if (currentVal && currentVal !== "auto" && Array.from(select.options).some(o => o.value === currentVal)) {
     select.value = currentVal;
   } else {
-    select.value = "gemini-2.5-flash";
+    select.value = "gemini-3.8-flash";
   }
 }
 
@@ -2051,15 +2051,15 @@ async function testGeminiApiKey(apiKey) {
       candidateIds = availableModels.map(m => m.id);
     }
 
-    // Đảm bảo các mô hình thế hệ 2.5 và 2.0 luôn có mặt trong danh sách thử
+    // Đảm bảo các mô hình thế hệ Gemini 3+ luôn có mặt trong danh sách thử
     GEMINI_FALLBACK_MODELS.forEach(fb => {
       if (!candidateIds.includes(fb)) candidateIds.push(fb);
     });
-    if (!candidateIds.includes("gemini-2.5-flash")) {
-      candidateIds.unshift("gemini-2.5-flash");
+    if (!candidateIds.includes("gemini-3.8-flash")) {
+      candidateIds.unshift("gemini-3.8-flash");
     }
-    if (!candidateIds.includes("gemini-2.0-flash")) {
-      candidateIds.push("gemini-2.0-flash");
+    if (!candidateIds.includes("gemini-3.5-flash-lite")) {
+      candidateIds.push("gemini-3.5-flash-lite");
     }
 
     let testSuccess = false;
@@ -2071,82 +2071,84 @@ async function testGeminiApiKey(apiKey) {
         continue;
       }
 
-      try {
-        const testResp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${modelCandidate}:generateContent?key=${cleanKey}`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            contents: [
-              {
-                role: "user",
-                parts: [{ text: "ping" }]
+      for (const apiVer of ["v1beta", "v1"]) {
+        try {
+          const testResp = await fetch(`https://generativelanguage.googleapis.com/${apiVer}/models/${modelCandidate}:generateContent?key=${cleanKey}`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              contents: [
+                {
+                  role: "user",
+                  parts: [{ text: "ping" }]
+                }
+              ],
+              generationConfig: {
+                maxOutputTokens: 10
               }
-            ],
-            generationConfig: {
-              maxOutputTokens: 10
+            })
+          });
+
+          if (testResp.ok) {
+            activeGeminiModel = modelCandidate;
+            setSavedGeminiModel(modelCandidate);
+            setSavedGeminiKey(cleanKey);
+            testSuccess = true;
+
+            if (selectModel) {
+              if (Array.from(selectModel.options).some(o => o.value === modelCandidate)) {
+                selectModel.value = modelCandidate;
+                const customContainer = document.getElementById("container-custom-gemini-model");
+                if (customContainer) customContainer.style.display = "none";
+              } else {
+                selectModel.value = "custom";
+                if (customInput) customInput.value = modelCandidate;
+                const customContainer = document.getElementById("container-custom-gemini-model");
+                if (customContainer) customContainer.style.display = "block";
+              }
             }
-          })
-        });
-
-        if (testResp.ok) {
-          activeGeminiModel = modelCandidate;
-          setSavedGeminiModel(modelCandidate);
-          setSavedGeminiKey(cleanKey);
-          testSuccess = true;
-
-          if (selectModel) {
-            if (Array.from(selectModel.options).some(o => o.value === modelCandidate)) {
-              selectModel.value = modelCandidate;
-              const customContainer = document.getElementById("container-custom-gemini-model");
-              if (customContainer) customContainer.style.display = "none";
-            } else {
-              selectModel.value = "custom";
-              if (customInput) customInput.value = modelCandidate;
-              const customContainer = document.getElementById("container-custom-gemini-model");
-              if (customContainer) customContainer.style.display = "block";
+            if (modelBadge) {
+              modelBadge.textContent = `Đang kết nối: ${modelCandidate}`;
             }
-          }
-          if (modelBadge) {
-            modelBadge.textContent = `Đang kết nối: ${modelCandidate}`;
-          }
 
-          let noteExtra = "";
-          if (userSelected && userSelected !== "auto" && userSelected !== modelCandidate) {
-            noteExtra = `<div style="margin-top: 0.45rem; padding: 0.4rem 0.65rem; border-radius: var(--radius-sm); background: rgba(59, 130, 246, 0.12); color: var(--primary); font-size: 0.8rem; line-height: 1.4;">
-              💡 <em>Lưu ý: Mô hình <code>${userSelected}</code> tạm thời chạm hạn mức (Rate limit) hoặc không hỗ trợ. Hệ thống đã tự động kết nối mô hình thay thế tốt nhất: <strong>${modelCandidate}</strong>!</em>
-            </div>`;
-          }
+            let noteExtra = "";
+            if (userSelected && userSelected !== "auto" && userSelected !== modelCandidate) {
+              noteExtra = `<div style="margin-top: 0.45rem; padding: 0.4rem 0.65rem; border-radius: var(--radius-sm); background: rgba(59, 130, 246, 0.12); color: var(--primary); font-size: 0.8rem; line-height: 1.4;">
+                💡 <em>Lưu ý: Mô hình <code>${userSelected}</code> tạm thời chạm hạn mức (Rate limit) hoặc không hỗ trợ. Hệ thống đã tự động kết nối mô hình thay thế tốt nhất: <strong>${modelCandidate}</strong>!</em>
+              </div>`;
+            }
 
-          resultDiv.style.background = "var(--success-light)";
-          resultDiv.style.color = "var(--success)";
-          resultDiv.innerHTML = `✅ <strong>API Key hoạt động xuất sắc!</strong><br>Đã kết nối thành công mô hình: <code style="font-weight: 700; font-size: 0.95rem;">${modelCandidate}</code>.<br><small>Hệ thống đã sẵn sàng giải đề, rà soát và đính chính các câu sai bằng AI!</small>${noteExtra}`;
-          showToast(`Đã kết nối thành công Google Gemini (${modelCandidate})!`, "success");
-          return;
-        } else {
-          const errJson = await testResp.json().catch(() => ({}));
-          const errMsg = errJson.error?.message || `HTTP ${testResp.status}`;
-          lastErrMsg = errMsg;
-
-          if (testResp.status === 400 && errMsg.toLowerCase().includes("api key not valid")) {
-            resultDiv.style.background = "var(--danger-light)";
-            resultDiv.style.color = "var(--danger)";
-            resultDiv.innerHTML = `❌ <strong>API Key không hợp lệ!</strong><br><small>${errMsg}</small><br>👉 Vui lòng tạo hoặc copy lại Key mới tại Google AI Studio.`;
+            resultDiv.style.background = "var(--success-light)";
+            resultDiv.style.color = "var(--success)";
+            resultDiv.innerHTML = `✅ <strong>API Key hoạt động xuất sắc!</strong><br>Đã kết nối thành công mô hình: <code style="font-weight: 700; font-size: 0.95rem;">${modelCandidate}</code>.<br><small>Hệ thống đã sẵn sàng giải đề, rà soát và sinh đề thi bằng AI Gemini 3+!</small>${noteExtra}`;
+            showToast(`Đã kết nối thành công Google Gemini (${modelCandidate})!`, "success");
             return;
-          }
-          if (testResp.status === 429) {
-            console.warn(`Mô hình ${modelCandidate} tạm hết hạn mức (429 Rate Limit/Quota), tự động thử mô hình dự phòng tiếp theo...`);
-            lastErrMsg = `Mô hình ${modelCandidate} tạm hết hạn mức (429 Quota/RPM)`;
-            continue;
-          }
-
-          if (errMsg.includes("no longer available") || errMsg.includes("is not found")) {
-            console.warn(`Mô hình ${modelCandidate} đã bị Google ngưng hoạt động (${errMsg}), tự động thử mô hình tiếp theo...`);
           } else {
-            console.warn(`Mô hình ${modelCandidate} không tương thích (${errMsg}), chuyển sang mô hình tiếp theo...`);
+            const errJson = await testResp.json().catch(() => ({}));
+            const errMsg = errJson.error?.message || `HTTP ${testResp.status}`;
+            lastErrMsg = errMsg;
+
+            if (testResp.status === 400 && errMsg.toLowerCase().includes("api key not valid")) {
+              resultDiv.style.background = "var(--danger-light)";
+              resultDiv.style.color = "var(--danger)";
+              resultDiv.innerHTML = `❌ <strong>API Key không hợp lệ!</strong><br><small>${errMsg}</small><br>👉 Vui lòng tạo hoặc copy lại Key mới tại Google AI Studio.`;
+              return;
+            }
+            if (testResp.status === 429) {
+              console.warn(`Mô hình ${modelCandidate} (${apiVer}) tạm hết hạn mức (429 Rate Limit/Quota), thử tiếp...`);
+              lastErrMsg = `Mô hình ${modelCandidate} tạm hết hạn mức (429 Quota/RPM)`;
+              continue;
+            }
+
+            if (errMsg.includes("no longer available") || errMsg.includes("is not found")) {
+              console.warn(`Mô hình ${modelCandidate} không khả dụng trên ${apiVer}, chuyển tiếp...`);
+            } else {
+              console.warn(`Mô hình ${modelCandidate} (${apiVer}) không tương thích (${errMsg}), chuyển sang mô hình tiếp theo...`);
+            }
           }
+        } catch (err) {
+          lastErrMsg = err.message;
         }
-      } catch (err) {
-        lastErrMsg = err.message;
       }
     }
 
@@ -2171,26 +2173,27 @@ async function executeSingleGeminiRequest(promptText, cleanKey) {
     modelToUse = customInput.value.trim();
   }
 
-  if (!modelToUse || modelToUse.includes("3.8") || modelToUse.includes("3.5") || modelToUse.includes("interactions") || modelToUse.includes("tts") || modelToUse.includes("8b")) {
-    modelToUse = "gemini-2.5-flash";
-    activeGeminiModel = "gemini-2.5-flash";
-    setSavedGeminiModel("gemini-2.5-flash");
+  // Tự động nâng cấp nếu model rỗng hoặc là model cũ < 3 đã bị khai tử
+  if (!modelToUse || modelToUse === "auto" || modelToUse.includes("1.5") || modelToUse.includes("2.0") || modelToUse.includes("2.5") || modelToUse.includes("1.0") || modelToUse.includes("interactions") || modelToUse.includes("tts") || modelToUse.includes("8b")) {
+    modelToUse = "gemini-3.8-flash";
+    activeGeminiModel = "gemini-3.8-flash";
+    setSavedGeminiModel("gemini-3.8-flash");
   }
 
   const rawCandidates = [
     modelToUse,
     ...GEMINI_FALLBACK_MODELS.filter(m => m !== modelToUse)
   ];
-  if (!rawCandidates.includes("gemini-2.5-flash")) {
-    rawCandidates.unshift("gemini-2.5-flash");
+  if (!rawCandidates.includes("gemini-3.8-flash")) {
+    rawCandidates.unshift("gemini-3.8-flash");
   }
-  if (!rawCandidates.includes("gemini-2.0-flash")) {
-    rawCandidates.push("gemini-2.0-flash");
+  if (!rawCandidates.includes("gemini-3.5-flash-lite")) {
+    rawCandidates.push("gemini-3.5-flash-lite");
   }
-  if (!rawCandidates.includes("gemini-1.5-flash")) {
-    rawCandidates.push("gemini-1.5-flash");
+  if (!rawCandidates.includes("gemini-3.5-flash")) {
+    rawCandidates.push("gemini-3.5-flash");
   }
-  const modelsToTry = rawCandidates.filter(m => !m.includes("8b") && !m.includes("tts") && !m.includes("interactions") && !m.includes("3.8") && !m.includes("3.5"));
+  const modelsToTry = rawCandidates.filter(m => !m.includes("8b") && !m.includes("tts") && !m.includes("interactions"));
 
   const payload = {
     contents: [
@@ -2266,26 +2269,26 @@ async function executeGeminiMultimodalRequest(parts, cleanKey) {
     modelToUse = customInput.value.trim();
   }
 
-  if (!modelToUse || modelToUse.includes("3.8") || modelToUse.includes("3.5") || modelToUse.includes("interactions") || modelToUse.includes("tts") || modelToUse.includes("8b")) {
-    modelToUse = "gemini-2.5-flash";
-    activeGeminiModel = "gemini-2.5-flash";
-    setSavedGeminiModel("gemini-2.5-flash");
+  if (!modelToUse || modelToUse === "auto" || modelToUse.includes("1.5") || modelToUse.includes("2.0") || modelToUse.includes("2.5") || modelToUse.includes("1.0") || modelToUse.includes("interactions") || modelToUse.includes("tts") || modelToUse.includes("8b")) {
+    modelToUse = "gemini-3.8-flash";
+    activeGeminiModel = "gemini-3.8-flash";
+    setSavedGeminiModel("gemini-3.8-flash");
   }
 
   const rawCandidates = [
     modelToUse,
     ...GEMINI_FALLBACK_MODELS.filter(m => m !== modelToUse)
   ];
-  if (!rawCandidates.includes("gemini-2.5-flash")) {
-    rawCandidates.unshift("gemini-2.5-flash");
+  if (!rawCandidates.includes("gemini-3.8-flash")) {
+    rawCandidates.unshift("gemini-3.8-flash");
   }
-  if (!rawCandidates.includes("gemini-2.0-flash")) {
-    rawCandidates.push("gemini-2.0-flash");
+  if (!rawCandidates.includes("gemini-3.5-flash-lite")) {
+    rawCandidates.push("gemini-3.5-flash-lite");
   }
-  if (!rawCandidates.includes("gemini-1.5-flash")) {
-    rawCandidates.push("gemini-1.5-flash");
+  if (!rawCandidates.includes("gemini-3.5-flash")) {
+    rawCandidates.push("gemini-3.5-flash");
   }
-  const modelsToTry = rawCandidates.filter(m => !m.includes("8b") && !m.includes("tts") && !m.includes("interactions") && !m.includes("3.8") && !m.includes("3.5"));
+  const modelsToTry = rawCandidates.filter(m => !m.includes("8b") && !m.includes("tts") && !m.includes("interactions"));
 
   const payload = {
     contents: [
@@ -6833,7 +6836,7 @@ Giải thích: HDMI (High-Definition Multimedia Interface) truyền tải cả v
       if (val === "custom") {
         if (containerCustomModel) containerCustomModel.style.display = "block";
         if (inputCustomModel) {
-          const customVal = inputCustomModel.value.trim() || getSavedGeminiCustomModel() || "gemini-2.5-flash";
+          const customVal = inputCustomModel.value.trim() || getSavedGeminiCustomModel() || "gemini-3.8-flash";
           inputCustomModel.value = customVal;
           inputCustomModel.focus();
           activeGeminiModel = customVal;
@@ -6848,9 +6851,9 @@ Giải thích: HDMI (High-Definition Multimedia Interface) truyền tải cả v
           if (modelBadge) modelBadge.textContent = `Đang chọn: ${val}`;
           showToast(`Đã chuyển sang mô hình: ${val}`, "info");
         } else {
-          activeGeminiModel = "gemini-2.5-flash";
-          setSavedGeminiModel("gemini-2.5-flash");
-          if (modelBadge) modelBadge.textContent = "Tự động chọn (Ưu tiên Gemini 2.5 Flash / 2.0 Flash)";
+          activeGeminiModel = "gemini-3.8-flash";
+          setSavedGeminiModel("gemini-3.8-flash");
+          if (modelBadge) modelBadge.textContent = "Tự động chọn (Ưu tiên Gemini 3.8 Flash / 3.5 Flash-Lite)";
         }
       }
     });
@@ -7005,15 +7008,15 @@ Giải thích: HDMI (High-Definition Multimedia Interface) truyền tải cả v
       }
       setSavedGeminiKey(key);
 
-      let modelChoice = selectModel ? selectModel.value : "gemini-2.5-flash";
+      let modelChoice = selectModel ? selectModel.value : "gemini-3.8-flash";
       if (modelChoice === "custom") {
-        modelChoice = (inputCustomModel ? inputCustomModel.value.trim() : "") || "gemini-2.5-flash";
+        modelChoice = (inputCustomModel ? inputCustomModel.value.trim() : "") || "gemini-3.8-flash";
       } else if (modelChoice === "auto") {
-        modelChoice = "gemini-2.5-flash";
+        modelChoice = "gemini-3.8-flash";
       }
 
-      if (modelChoice.includes("3.8") || modelChoice.includes("3.5") || modelChoice.includes("interactions") || modelChoice.includes("tts") || modelChoice.includes("8b")) {
-        modelChoice = "gemini-2.5-flash";
+      if (modelChoice.includes("1.5") || modelChoice.includes("2.0") || modelChoice.includes("2.5") || modelChoice.includes("1.0") || modelChoice.includes("interactions") || modelChoice.includes("tts") || modelChoice.includes("8b")) {
+        modelChoice = "gemini-3.8-flash";
       }
 
       activeGeminiModel = modelChoice;
@@ -8281,6 +8284,43 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 
+  const genModelSelect = document.getElementById("ai-gen-model-select");
+  const genCustomBox = document.getElementById("ai-gen-custom-model-box");
+  const genCustomInput = document.getElementById("ai-gen-custom-model-input");
+  if (genModelSelect) {
+    genModelSelect.addEventListener("change", () => {
+      const val = genModelSelect.value;
+      if (val === "custom") {
+        if (genCustomBox) genCustomBox.style.display = "block";
+        if (genCustomInput) {
+          genCustomInput.focus();
+          const customVal = genCustomInput.value.trim() || getSavedGeminiCustomModel() || "gemini-3.8-flash";
+          genCustomInput.value = customVal;
+          activeGeminiModel = customVal;
+          setSavedGeminiModel(customVal);
+        }
+      } else {
+        if (genCustomBox) genCustomBox.style.display = "none";
+        activeGeminiModel = val;
+        setSavedGeminiModel(val);
+        const selectMainModel = document.getElementById("select-gemini-model");
+        if (selectMainModel && Array.from(selectMainModel.options).some(o => o.value === val)) {
+          selectMainModel.value = val;
+        }
+      }
+    });
+  }
+  if (genCustomInput) {
+    genCustomInput.addEventListener("input", () => {
+      const customVal = genCustomInput.value.trim();
+      if (customVal) {
+        activeGeminiModel = customVal;
+        setSavedGeminiModel(customVal);
+        setSavedGeminiCustomModel(customVal);
+      }
+    });
+  }
+
   const modalAiGen = document.getElementById("modal-ai-generator");
   if (modalAiGen) {
     modalAiGen.addEventListener("click", (e) => {
@@ -8411,6 +8451,22 @@ function openAiGeneratorModal() {
   } else {
     if (keyContainer) keyContainer.style.display = "none";
     if (keyInput) keyInput.value = savedKey;
+  }
+
+  // Đồng bộ mô hình đang chọn với dropdown trong Modal AI Sinh Đề
+  const genModelSelect = document.getElementById("ai-gen-model-select");
+  const genCustomBox = document.getElementById("ai-gen-custom-model-box");
+  const genCustomInput = document.getElementById("ai-gen-custom-model-input");
+  if (genModelSelect) {
+    const curModel = getSavedGeminiModel();
+    if (Array.from(genModelSelect.options).some(o => o.value === curModel)) {
+      genModelSelect.value = curModel;
+      if (genCustomBox) genCustomBox.style.display = "none";
+    } else {
+      genModelSelect.value = "custom";
+      if (genCustomBox) genCustomBox.style.display = "block";
+      if (genCustomInput) genCustomInput.value = curModel;
+    }
   }
 
   const progressBox = document.getElementById("ai-gen-progress-box");
@@ -8893,12 +8949,28 @@ async function handleGenerateExamWithAi() {
   const level = levelSelect ? levelSelect.value : "Cân bằng mọi mức độ";
   const hasExpl = explCheck ? explCheck.checked : true;
 
+  // Cập nhật model từ lựa chọn trong Modal AI Sinh Đề
+  const genModelSelect = document.getElementById("ai-gen-model-select");
+  const genCustomInput = document.getElementById("ai-gen-custom-model-input");
+  if (genModelSelect) {
+    let chosen = genModelSelect.value;
+    if (chosen === "custom" && genCustomInput && genCustomInput.value.trim()) {
+      chosen = genCustomInput.value.trim();
+    }
+    if (chosen && chosen !== "custom") {
+      activeGeminiModel = chosen;
+      setSavedGeminiModel(chosen);
+    }
+  }
+
+  const modelName = activeGeminiModel || getSavedGeminiModel();
+
   if (progressBox) progressBox.style.display = "block";
   if (btnSubmit) {
     btnSubmit.disabled = true;
-    btnSubmit.innerHTML = `<span>⏳ Đang sinh đề thi...</span>`;
+    btnSubmit.innerHTML = `<span>⏳ Đang sinh đề thi (${modelName})...</span>`;
   }
-  if (statusText) statusText.textContent = `Gemini AI đang tư duy và soạn ${count} câu hỏi trắc nghiệm...`;
+  if (statusText) statusText.textContent = `Google AI (${modelName}) đang tư duy và biên soạn ${count} câu hỏi trắc nghiệm...`;
 
   const promptText = `Bạn là một chuyên gia sư phạm và chuyên gia biên soạn đề thi trắc nghiệm học đường & kỳ thi chuẩn hóa.
 Nhiệm vụ của bạn là: TẠO BỘ ĐỀ THI TRẮC NGHIỆM GỒM ĐÚNG ${count} CÂU HỎI CHẤT LƯỢNG CAO về chủ đề: "${topic}".

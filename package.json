@@ -1,6 +1,6 @@
 {
   "name": "novaquiz",
-  "version": "4.1.0",
+  "version": "4.1.1",
   "description": "Nền tảng tạo đề thi, ôn tập trắc nghiệm thông minh, AI sinh đề theo yêu cầu, PWA ngoại tuyến",
   "scripts": {
     "start": "npx serve ."

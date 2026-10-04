@@ -20,7 +20,7 @@
   <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"></script>
 
-  <link rel="stylesheet" href="style.css?v=4.1.0">
+  <link rel="stylesheet" href="style.css?v=4.1.1">
 </head>
 <body>
 
@@ -53,7 +53,7 @@
         </div>
         <div class="brand-name">
           NovaQuiz
-          <span class="brand-badge brand-badge-v3">v4.1.0</span>
+          <span class="brand-badge brand-badge-v3">v4.1.1</span>
         </div>
       </div>
 
@@ -1214,7 +1214,7 @@ Giải thích: Số 2 là số nguyên tố chẵn duy nhất trong tập hợp 
           </div>
           <div id="gemini-key-test-result" style="display: none; font-size: 0.825rem; padding: 0.5rem 0.75rem; border-radius: var(--radius-sm); margin-top: 0.4rem;"></div>
           <span style="font-size: 0.75rem; color: var(--text-muted); display: block; margin-top: 0.25rem;">
-            Khóa được lưu cục bộ trên trình duyệt. Hỗ trợ đầy đủ các mô hình Google Gemini chính thức: <strong>gemini-2.5-flash</strong>, <strong>gemini-2.0-flash</strong>, <strong>gemini-1.5-flash</strong>.
+            Khóa được lưu cục bộ trên trình duyệt. Hỗ trợ đầy đủ các mô hình Google Gemini 3+ thế hệ mới nhất: <strong>gemini-3.8-flash</strong>, <strong>gemini-3.8-pro</strong>, <strong>gemini-3.5-flash-lite</strong>.
           </span>
         </div>
 
@@ -1224,25 +1224,25 @@ Giải thích: Số 2 là số nguyên tố chẵn duy nhất trong tập hợp 
             <span id="gemini-model-badge-info" style="font-size: 0.75rem; color: var(--primary); font-weight: 600;">Tự động chọn tối ưu</span>
           </label>
           <select class="form-select" id="select-gemini-model" style="width: 100%; padding: 0.55rem 0.75rem; border-radius: var(--radius-md); background: var(--bg-app); border: 1px solid var(--border-subtle); color: var(--text-main); font-size: 0.875rem;">
-            <option value="auto">🚀 Tự động chọn mô hình tối ưu (Ưu tiên Gemini 2.5 Flash / 2.0 Flash)</option>
-            <option value="gemini-2.5-flash" selected>🔥 Gemini 2.5 Flash (Thế hệ mới nhất - Đỉnh cao trí tuệ & siêu tốc)</option>
-            <option value="gemini-2.5-pro">🧠 Gemini 2.5 Pro (Tư duy suy luận sâu thế hệ mới)</option>
-            <option value="gemini-2.0-flash">⚡ Gemini 2.0 Flash (Chuẩn thế hệ 2.0 - Ổn định & toàn diện)</option>
-            <option value="gemini-2.0-flash-lite">⚡ Gemini 2.0 Flash-Lite (Siêu nhanh, ổn định & tối ưu Quota)</option>
-            <option value="gemini-1.5-flash">⚡ Gemini 1.5 Flash (Bền bỉ, ổn định cao)</option>
-            <option value="gemini-1.5-pro">🧠 Gemini 1.5 Pro (Tư duy học thuật chuyên sâu)</option>
-            <option value="custom">✏️ Nhập mã mô hình tùy chọn khác...</option>
+            <option value="auto">🚀 Tự động chọn mô hình tối ưu (Ưu tiên Gemini 3.8 Flash / 3.5 Flash-Lite)</option>
+            <option value="gemini-3.8-flash" selected>🔥 Gemini 3.8 Flash (Thế hệ 3.8 MỚI NHẤT - Đỉnh cao trí tuệ & siêu tốc)</option>
+            <option value="gemini-3.8-pro">🧠 Gemini 3.8 Pro (Tư duy suy luận sâu thế hệ 3.8)</option>
+            <option value="gemini-3.5-flash-lite">⚡ Gemini 3.5 Flash-Lite (Siêu nhanh, ổn định & tối ưu Quota miễn phí)</option>
+            <option value="gemini-3.5-flash">⚡ Gemini 3.5 Flash (Thế hệ 3.5 toàn diện & chính xác cao)</option>
+            <option value="gemini-3.5-pro">🧠 Gemini 3.5 Pro (Tư duy chuyên gia 3.5)</option>
+            <option value="gemini-3.0-flash">⚡ Gemini 3.0 Flash (Chuẩn thế hệ 3.0)</option>
+            <option value="custom">✏️ Nhập mã mô hình tùy chọn khác (Gemini 3+, 4...)...</option>
           </select>
           
           <div id="container-custom-gemini-model" style="display: none; margin-top: 0.5rem;">
-            <input type="text" class="form-input" id="input-custom-gemini-model" placeholder="Nhập mã mô hình Google AI, VD: gemini-2.5-flash, gemini-2.0-flash..." style="font-size: 0.85rem; padding: 0.5rem 0.75rem;">
+            <input type="text" class="form-input" id="input-custom-gemini-model" placeholder="Nhập mã mô hình Google AI, VD: gemini-3.8-flash, gemini-3.5-flash..." style="font-size: 0.85rem; padding: 0.5rem 0.75rem;">
             <span style="font-size: 0.725rem; color: var(--text-muted); display: block; margin-top: 0.25rem;">
               💡 Nhập trực tiếp tên mã model bất kỳ từ Google AI Studio (hỗ trợ cả các bản preview mới ra mắt).
             </span>
           </div>
 
           <span style="font-size: 0.75rem; color: var(--text-muted); display: block; margin-top: 0.35rem; line-height: 1.4;">
-            💡 <em>Lưu ý: <strong>Gemini 2.5 Flash</strong> & <strong>2.0 Flash</strong> là các thế hệ mô hình hàng đầu hiện nay của Google với khả năng xử lý bài thi và tư duy vượt bậc. Nếu tài khoản đạt ngưỡng giới hạn RPM, hệ thống tự động chuyển sang <strong>Gemini 1.5 Flash / Flash-Lite</strong> để không gián đoạn!</em>
+            💡 <em>Lưu ý: <strong>Gemini 3.8 Flash</strong> là thế hệ mới nhất của Google DeepMind với khả năng xử lý bài thi và tư duy vượt bậc. Nếu tài khoản đạt ngưỡng giới hạn RPM, hệ thống tự động chuyển sang <strong>Gemini 3.5 Flash-Lite</strong> để không gián đoạn!</em>
           </span>
         </div>
 
@@ -1394,6 +1394,28 @@ Giải thích: Số 2 là số nguyên tố chẵn duy nhất trong tập hợp 
               <option value="Vận dụng và Vận dụng cao (Nâng cao)">Nâng cao (Khó)</option>
               <option value="Chuyên sâu / Đề thi học sinh giỏi">Chuyên sâu / Học sinh giỏi</option>
             </select>
+          </div>
+        </div>
+
+        <!-- Model Selection inside AI Exam Generator -->
+        <div class="form-group" style="margin-top: -0.25rem;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">
+            <label class="form-label" for="ai-gen-model-select" style="font-weight: 700; margin: 0; font-size: 0.85rem;">
+              🤖 Mô hình Google AI (Gemini 3+):
+            </label>
+            <span style="font-size: 0.75rem; color: var(--primary); font-weight: 600;" id="ai-gen-model-badge">Thế hệ Gemini 3+ Mới nhất</span>
+          </div>
+          <select class="form-input" id="ai-gen-model-select" style="font-size: 0.875rem; padding: 0.45rem 0.65rem;">
+            <option value="gemini-3.8-flash" selected>🔥 Gemini 3.8 Flash (Mặc định - Thông minh, siêu tốc & đỉnh cao trí tuệ)</option>
+            <option value="gemini-3.8-pro">🧠 Gemini 3.8 Pro (Tư duy suy luận chuyên sâu)</option>
+            <option value="gemini-3.5-flash-lite">⚡ Gemini 3.5 Flash-Lite (Siêu nhanh, ổn định & tối ưu Quota)</option>
+            <option value="gemini-3.5-flash">⚡ Gemini 3.5 Flash (Thế hệ 3.5 toàn diện & chính xác cao)</option>
+            <option value="gemini-3.5-pro">🧠 Gemini 3.5 Pro (Tư duy chuyên gia 3.5)</option>
+            <option value="gemini-3.0-flash">⚡ Gemini 3.0 Flash (Chuẩn thế hệ 3.0)</option>
+            <option value="custom">✏️ Nhập mã mô hình tùy chọn khác (Gemini 3+, 4...)...</option>
+          </select>
+          <div id="ai-gen-custom-model-box" style="display: none; margin-top: 0.4rem;">
+            <input type="text" class="form-input" id="ai-gen-custom-model-input" placeholder="Nhập tên mã mô hình Google AI, VD: gemini-3.8-flash, gemini-3.5-flash..." style="font-size: 0.85rem; padding: 0.45rem 0.65rem;">
           </div>
         </div>
 
@@ -1960,6 +1982,6 @@ Giải thích: Số 2 là số nguyên tố chẵn duy nhất trong tập hợp 
   <script src="jszip.min.js"></script>
   <script src="pdf.min.js"></script>
   <script src="sample-data.js"></script>
-  <script src="app.js?v=4.1.0"></script>
+  <script src="app.js?v=4.1.1"></script>
 </body>
 </html>
