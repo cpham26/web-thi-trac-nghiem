@@ -1,51 +1,36 @@
-# NovaQuiz v3.6 - Nền Tảng Ôn Thi & Thi Thử Trắc Nghiệm Thông Minh
+# NovaQuiz v4.2 - Nền Tảng Ôn Thi & Thi Thử Trắc Nghiệm Thông Minh
 
-Một ứng dụng web trắc nghiệm hiện đại, tối ưu trải nghiệm học tập và thi cử với giao diện **Crystal Liquid Glass & 3D Optics** cao cấp, được xây dựng hoàn chỉnh bằng HTML5, CSS3 hiện đại và JavaScript thuần (Vanilla JS), không cần backend server phức tạp, chạy trực tiếp trên mọi trình duyệt (Chrome, Cốc Cốc, Edge, Safari, Mobile).
+Một ứng dụng web trắc nghiệm hiện đại, tối ưu trải nghiệm học tập và thi cử với giao diện **Crystal Liquid Glass & 3D Optics v4.2** cao cấp, được xây dựng hoàn chỉnh bằng HTML5, CSS3 hiện đại và JavaScript thuần (Vanilla JS), không cần backend server phức tạp, chạy trực tiếp trên mọi trình duyệt (Chrome, Cốc Cốc, Edge, Safari, Mobile).
 
 ---
 
-## 🚀 Các Tính Năng Đột Phá Bản v3.6
+## 🚀 Các Tính Năng Đột Phá Bản v4.2
 
-### 1. 📱 Ứng Dụng Đa Nền Tảng PWA & Chế Độ Offline
-- **Cài đặt như Native App**: Hỗ trợ chuẩn **Progressive Web App (PWA)**, người dùng có thể bấm nút **"📱 Cài đặt App"** ngay trên thanh tiêu đề để cài đặt NovaQuiz trực tiếp lên Desktop Windows/Mac hoặc màn hình chính điện thoại iOS/Android.
-- **Service Worker Offline Cache**: Tự động lưu trữ offline toàn bộ mã nguồn, dữ liệu đề thi và tài nguyên tĩnh, cho phép làm bài thi và ôn luyện ngay cả khi mất kết nối mạng.
+### 1. 📄 Engine Đọc File Word (.docx) & PDF (.pdf) Siêu Chuẩn Xác
+- **Trích xuất thông minh từ Word (.docx)**:
+  - Khắc phục triệt để lỗi câu hỏi in đậm bị nhận diện nhầm thành đáp án đúng.
+  - Tự động tách câu hỏi và các phương án A, B, C, D nằm cùng một dòng hoặc trong bảng biểu.
+  - Nhận diện phương án có màu sắc (đỏ, xanh, tím...), highlight nền hoặc gạch chân để gán đáp án chính xác 100%.
+  - Giữ nguyên toàn bộ hình ảnh minh họa chất lượng cao trong đề thi.
+- **Bóc tách mạnh mẽ từ PDF (.pdf)**:
+  - Tự động nhận diện cấu trúc đề thi **2 cột (Two-Column Layout)** chuẩn Bộ Giáo Dục, đọc riêng từng cột từ trên xuống dưới mà không bị xáo trộn nội dung.
+  - Loại bỏ hoàn toàn header, footer và số trang rác.
+  - Nhận diện font chữ in đậm (Bold) làm căn cứ xác định đáp án đúng.
+  - Tự động quét và ghép nối bảng đáp án riêng ở cuối tài liệu.
 
-### 2. 🔀 Trộn Nhiều Mã Đề Thi (101, 102, 103, 104) & Xuất Word Kèm Ma Trận Đáp Án
-- **Tạo 2, 4, 6, 8 mã đề song song**: Tự động xáo trộn ngẫu nhiên thứ tự câu hỏi và thứ tự các phương án lựa chọn (A, B, C, D) mà vẫn bảo toàn chính xác đáp án đúng.
-- **Lưu trực tiếp vào Thư viện**: Biến các mã đề thành các đề thi độc lập trong ngân hàng đề chỉ với một cú click.
-- **Xuất tệp Microsoft Word (.docx) chuyên nghiệp**:
-  - Gộp tất cả các mã đề thi vào một tệp Word duy nhất với ngắt trang (`Page Break`) tự động giữa các mã đề.
-  - Tự động lập **Bảng Ma Trận Đáp Án Đối Chiếu (Master Answer Key Matrix)** ở cuối tài liệu (dạng bảng Word chuẩn theo cột: *Câu hỏi | Mã 101 | Mã 102 | Mã 103 | Mã 104*), giúp Thầy Cô và nhóm học tập chấm thi trắc nghiệm thần tốc!
+### 2. 💎 Giao Diện Kính Lỏng (Crystal Liquid Glass) & Nút Bấm Đồng Nhất
+- **Ngôn ngữ thiết kế đồng bộ tuyệt đối**: Quy chuẩn toàn bộ hệ thống nút bấm theo chuẩn bo góc **12px Squircle Kính Lỏng**, xóa bỏ hoàn toàn tình trạng nút bo tròn lệch pha hoặc kích thước không cân đối.
+- **Tỉ lệ vàng kích thước**: Chiều cao nút bấm và thanh công cụ được chuẩn hóa đồng đều (Small 36px, Regular 42px, Large 48px), tạo cảm giác hài hòa, mượt mà và sang trọng bậc nhất.
+- **Tinh giản 2 chế độ Sáng ☀️ & Tối 🌙**: Tập trung vào 2 giao diện màu sắc tương phản cao, loại bỏ chế độ Sepia ít dùng.
 
-### 3. ⚡ Chế Độ Sinh Tồn (Survival Mode / Time-Rush)
-- **Cơ chế Arcade gay cấn**: Thử thách phản xạ kiến thức với áp lực thời gian:
-  - ⏳ **15 giây đếm ngược** cho mỗi câu hỏi.
-  - ❤️ **3 Mạng (Lives)**: Trả lời sai hoặc hết giờ bị trừ 1 mạng và kích hoạt hiệu ứng rung màn hình (*Screen Rumble*).
-  - 🔥 **Chuỗi Combo & Hệ số nhân điểm**: Đúng liên tiếp tăng chuỗi combo (x1, x2, x3...), cộng dồn điểm số thần tốc.
-  - ⏱️ **Time Bonus**: Mỗi câu trả lời đúng được thưởng thêm +5 giây vào quỹ thời gian.
-  - 🏆 **Kỷ lục cá nhân & Game Over Modal**: Tự động lưu điểm số cao nhất trong `localStorage`, hiển thị bảng thành tích đầy đủ và hỗ trợ chơi lại ngay.
+### 3. 🎯 Chế Độ Ôn Tập (Practice Mode) Thông Minh
+- **Không áp lực thời gian**: Tự do ôn luyện kiến thức bao lâu tùy thích, bỏ giới hạn thời gian thi.
+- **Bộ đếm Đúng / Sai trực tiếp**: Hiển thị ngay số câu Đúng (xanh ngọc) và số câu Sai (đỏ ruby) trên thanh trạng thái phòng thi theo thời gian thực.
+- **Bỏ lật thẻ trùng lặp**: Loại bỏ nút lật thẻ trong phòng ôn tập để tập trung tối đa vào trải nghiệm làm bài trắc nghiệm (Flashcard đã có riêng ở chế độ Thẻ ghi nhớ 3D).
 
-### 4. 📝 Ghi Chú Cá Nhân Trên Từng Câu Hỏi (Sticky Notes)
-- **Tự động lưu vĩnh viễn**: Mỗi câu hỏi đều có ngăn ghi chú cá nhân riêng biệt, tự động lưu ngay khi gõ vào `localStorage`.
-- **Gắn Tag nhanh tiện lợi**: Các thẻ gợi ý `#Cần_ôn_kỹ`, `#Hay_nhầm_A_và_B`, `#Công_thức_quan_trọng`, `#Mẹo_nhớ_nhanh` giúp phân loại ghi chú chỉ bằng 1 cú chạm.
-- **Dấu hiệu trực quan**: Câu hỏi có ghi chú sẽ hiện chấm sáng màu hổ phách trên Bảng điều hướng câu hỏi và nút ghi chú.
-- **Tích hợp bảng xem lại**: Ghi chú cá nhân tự động xuất hiện trong Bảng xem lại chi tiết sau khi nộp bài để dễ dàng đối chiếu.
-
-### 5. 🏷️ Tự Động Phân Loại Độ Khó & Bộ Lọc Đề Thi
-- **Hệ thống AI nhận diện độ khó**: Tự động phân loại câu hỏi thành **🟢 Dễ**, **🟡 Vừa**, hoặc **🔴 Khó** dựa trên cấu trúc câu, độ dài, thuật ngữ chuyên sâu, công thức hoặc các tag có sẵn như `[Dễ]`, `[Khó]`, `#easy`, `#hard`.
-- **Huy hiệu độ khó trực quan**: Xuất hiện ngay trên đầu câu hỏi trong phòng thi và trong danh sách xem lại kết quả.
-- **Bộ lọc độ khó khi bắt đầu thi**: Cho phép thí sinh chọn luyện tập tập trung: *Toàn bộ câu*, *Chỉ câu Dễ*, *Chỉ câu Vừa*, hoặc *Chỉ câu Khó*.
-
-### 6. 📖 Chế Độ Đọc Dịu Mắt (Sepia Warm Mode)
-- **Chu trình chuyển đổi giao diện 3 trạng thái**: **Sáng ☀️ ➡️ Tối 🌙 ➡️ Giấy thi vàng Dịu Mắt 📜 ➡️ Sáng ☀️**.
-- Tông màu Sepia / Giấy ngà cổ điển giúp giảm mỏi mắt tối đa khi học bài đêm hoặc đọc đề thi kéo dài nhiều giờ.
-
-### 7. ⏩ Tự Động Chuyển Câu Thông Minh (Smart Auto-Advance)
-- **Tùy biến tốc độ chuyển câu linh hoạt**:
-  - ❌ **Tắt**: Giữ nguyên câu hỏi để bấm nút "Tiếp" thủ công.
-  - ⚡ **Chuyển ngay lập tức (0s)**: Vừa bấm/gõ đáp án xong là chuyển ngay tức thì sang câu kế tiếp mà không cần bấm thêm thao tác nào.
-  - ⏱️ **Hẹn giờ chuyển sau X giây** (1.0s, 1.5s, 2.0s, 3.0s, 5.0s): Hiển thị thanh đếm ngược thông minh kèm nút "Dừng lại" cho phép kịp nhìn kết quả đúng/sai và đọc giải thích chi tiết trong chế độ Ôn tập.
-- **Điều khiển trực tiếp mọi lúc**: Nút bấm cài đặt ngay trên thanh công cụ câu hỏi phòng thi và trong hộp thoại Cài đặt trước khi làm bài. Tự động lưu cấu hình yêu thích vào `localStorage`.
+### 4. 🔄 Nút "Làm Lại Từ Đầu" & Tự Động Chuyển Câu Sau 0.5 Giây
+- **Làm lại bài thi 1-Click**: Nút bấm làm mới trực tiếp trên thanh công cụ và danh sách câu hỏi, cho phép xóa bài làm và bắt đầu lại từ câu số 1 ngay lập tức.
+- **Tự động chuyển câu sau 0.5s**: Bổ sung mốc thời gian 0.5 giây cực kỳ lý tưởng cho những ai thích làm bài nhanh gọn mà vẫn kịp nhìn đáp án.
 
 ---
 

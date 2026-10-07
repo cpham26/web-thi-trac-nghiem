@@ -1,6 +1,6 @@
 /**
- * NOVAQUIZ PRO - MAIN APPLICATION ENGINE v4.1.1
- * Modern Exam & Practice Web App (AI Exam Generator, Tinder Flashcard, Zen Mode 2.0, Mệnh Thổ Amber)
+ * NOVAQUIZ PRO - MAIN APPLICATION ENGINE v4.2
+ * Modern Exam & Practice Web App (Client-Side Smart Docx/PDF Engine, Crystal Liquid Glass, Pure Vanilla JS)
  */
 
 // =============================================================================
@@ -287,41 +287,36 @@ function saveQuizzes() {
 }
 
 function initTheme() {
-  const savedTheme = localStorage.getItem(STORAGE_KEYS.THEME) || localStorage.getItem(STORAGE_KEYS.THEME_LEGACY) || "light";
+  let savedTheme = localStorage.getItem(STORAGE_KEYS.THEME) || localStorage.getItem(STORAGE_KEYS.THEME_LEGACY) || "light";
+  if (savedTheme === "sepia") {
+    savedTheme = "light";
+    localStorage.setItem(STORAGE_KEYS.THEME, "light");
+  }
   document.documentElement.setAttribute("data-theme", savedTheme);
   updateThemeIcon(savedTheme);
 }
 
 function toggleTheme() {
   const current = document.documentElement.getAttribute("data-theme") || "light";
-  let target = "dark";
-  if (current === "dark") target = "sepia";
-  else if (current === "sepia") target = "light";
-  else target = "dark";
+  const target = current === "dark" ? "light" : "dark";
 
   document.documentElement.setAttribute("data-theme", target);
   localStorage.setItem(STORAGE_KEYS.THEME, target);
   updateThemeIcon(target);
 
-  let label = "Tối (Dark 🌙)";
-  if (target === "sepia") label = "Giấy Vàng Sepia Dịu Mắt 📜";
-  if (target === "light") label = "Sáng (Light ☀️)";
-
-  showToast(`Đã chuyển sang chế độ ${label}`);
+  const label = target === "dark" ? "Tối (Dark 🌙)" : "Sáng (Light ☀️)";
+  showToast(`Đã chuyển sang chế độ ${label}`, "info");
 }
 
 function updateThemeIcon(theme) {
   const btn = document.getElementById("btn-theme-toggle");
   if (!btn) return;
   if (theme === "dark") {
-    btn.title = "Chuyển sang chế độ Giấy Sepia Dịu Mắt";
-    btn.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>`;
-  } else if (theme === "sepia") {
-    btn.title = "Chuyển sang chế độ Sáng (Light)";
-    btn.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"></path><path d="M6 6h10"></path><path d="M6 10h10"></path></svg>`;
-  } else {
-    btn.title = "Chuyển sang chế độ Tối (Dark)";
+    btn.title = "Chuyển sang chế độ Sáng (Phím T)";
     btn.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>`;
+  } else {
+    btn.title = "Chuyển sang chế độ Tối (Phím T)";
+    btn.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>`;
   }
 }
 
@@ -3487,10 +3482,15 @@ async function parseDocxFile(fileOrBuffer, fileName = "de_thi.docx") {
         fullText += run.text;
       }
 
-      // Nhận diện xem trong dòng này có các lựa chọn A., B., C., D. hay không
-      const optMatches = [...fullText.matchAll(/(?:^|[\s\t]+)([A-Fa-f])[\.\)\:\/]\s*/g)];
+      // Nhận diện xem trong dòng này có các lựa chọn A., B., C., D. hay không (hỗ trợ [A], (A), a., b...)
+      const optRegex = /(?:^|[\s\t]+)(?:\*|\+|\([xX]\)|\[[xX]\])?\s*(?:[\(\[]?([A-Ha-h])[\.\)\:\/\]])\s*/g;
+      const optMatches = [...fullText.matchAll(optRegex)];
 
-      if (optMatches.length > 0) {
+      // Kiểm tra tính hợp lệ: có từ 2 lựa chọn trở lên hoặc bắt đầu bằng A/a
+      const isValidOptionSequence = optMatches.length >= 2 || (optMatches.length === 1 && /^[Aa]$/.test(optMatches[0][1]));
+
+      if (optMatches.length > 0 && isValidOptionSequence) {
+        const extractedOpts = [];
         for (let i = 0; i < optMatches.length; i++) {
           const curMatch = optMatches[i];
           const endIdx = (i + 1 < optMatches.length) ? optMatches[i + 1].index : fullText.length;
@@ -3504,23 +3504,49 @@ async function parseDocxFile(fileOrBuffer, fileName = "de_thi.docx") {
             }
           }
 
-          if (hasSpecialChar) {
+          extractedOpts.push({
+            optChunk,
+            hasSpecialChar,
+            letter: curMatch[1].toUpperCase()
+          });
+        }
+
+        // Nếu tất cả các phương án đều in đậm/tô màu giống nhau (đề bôi đậm hàng loạt), không gán * cả 4
+        const allSpecial = extractedOpts.length > 1 && extractedOpts.every(o => o.hasSpecialChar);
+
+        for (let i = 0; i < extractedOpts.length; i++) {
+          const opt = extractedOpts[i];
+          const curMatch = optMatches[i];
+
+          const isMarked = opt.hasSpecialChar && !allSpecial;
+          if (isMarked) {
             detectedColoredOptionsCount++;
           }
 
-          const prefix = (hasSpecialChar && !optChunk.startsWith('*')) ? '*' : '';
+          const prefix = (isMarked && !opt.optChunk.startsWith('*')) ? '*' : '';
           if (i === 0 && curMatch.index > 0) {
             const preText = fullText.slice(0, curMatch.index).trim();
             if (preText) lines.push(preText);
           }
-          lines.push(`${prefix}${optChunk}`);
+          lines.push(`${prefix}${opt.optChunk}`);
         }
       } else {
         // Dòng không có A., B., C., D. (có thể là câu hỏi hoặc phương án gạch đầu dòng)
+        const trimmed = fullText.trim();
+        const isQuestionLine = /^(?:Câu|Bài|Question|Part)\s*\d+[\.\:\/\s]/i.test(trimmed) ||
+                               /^\d+[\.\:\)]\s*[A-Za-zÀ-ỹ]/.test(trimmed) ||
+                               trimmed.endsWith("?") ||
+                               trimmed.endsWith(":?");
+        const isBulletOption = /^[\-\•\+\*\o]\s+/.test(trimmed);
         const hasSpecialChar = charMeta.some(Boolean);
-        if (hasSpecialChar) detectedColoredOptionsCount++;
-        const prefix = (hasSpecialChar && !fullText.trim().startsWith('*')) ? '*' : '';
-        lines.push(`${prefix}${fullText.trim()}`);
+
+        // CHỈ đánh dấu * nếu đây là phương án (bullet hoặc dòng phương án), TUYỆT ĐỐI KHÔNG đánh dấu * nếu là câu hỏi!
+        let prefix = '';
+        if (hasSpecialChar && !isQuestionLine && isBulletOption) {
+          prefix = '*';
+          detectedColoredOptionsCount++;
+        }
+        lines.push(`${prefix}${trimmed}`);
       }
     }
 
@@ -4036,26 +4062,77 @@ async function parsePdfFile(fileOrBuffer, fileName = "de_thi.pdf") {
     for (let pageNum = 1; pageNum <= numPages; pageNum++) {
       const page = await pdfDoc.getPage(pageNum);
 
+      const viewport = page.getViewport({ scale: 1.0 });
+      const pageWidth = viewport.width;
+      const pageHeight = viewport.height;
+
       // 1. Trích xuất văn bản từ trang
       const textContent = await page.getTextContent();
-      const items = textContent.items || [];
+      const rawItems = textContent.items || [];
 
-      // Sắp xếp các đoạn chữ theo tọa độ Y (từ trên xuống dưới) và X (từ trái sang phải)
-      items.sort((a, b) => {
-        const yDiff = b.transform[5] - a.transform[5];
-        if (Math.abs(yDiff) > 6) {
-          return yDiff;
+      // Lọc bỏ Header / Footer / Số trang ở mép trên và dưới trang
+      const validItems = rawItems.filter(item => {
+        const str = (item.str || "").trim();
+        if (!str) return false;
+        const curY = item.transform[5];
+        const isEdge = (curY > pageHeight - 35 || curY < 35);
+        if (isEdge && /^(?:Trang|Page|\d+\s*\/\s*\d+|\d+)$/i.test(str)) {
+          return false;
         }
-        return a.transform[4] - b.transform[4];
+        return true;
       });
+
+      // Nhận diện bố cục 2 cột (Two-Column Layout) trong đề thi
+      let isTwoColumn = false;
+      const midLeft = pageWidth * 0.48;
+      const midRight = pageWidth * 0.52;
+      let leftCount = 0;
+      let rightCount = 0;
+
+      for (const item of validItems) {
+        const x = item.transform[4];
+        if (x < midLeft) leftCount++;
+        else if (x > midRight) rightCount++;
+      }
+
+      if (leftCount >= 10 && rightCount >= 10) {
+        isTwoColumn = true;
+      }
+
+      let sortedItems = [];
+      if (isTwoColumn) {
+        // Tách 2 cột: Cột 1 trước, Cột 2 sau
+        const col1 = validItems.filter(item => item.transform[4] < pageWidth * 0.5);
+        const col2 = validItems.filter(item => item.transform[4] >= pageWidth * 0.5);
+
+        const sortCol = (list) => {
+          list.sort((a, b) => {
+            const yDiff = b.transform[5] - a.transform[5];
+            if (Math.abs(yDiff) > 6) return yDiff;
+            return a.transform[4] - b.transform[4];
+          });
+        };
+
+        sortCol(col1);
+        sortCol(col2);
+        sortedItems = [...col1, ...col2];
+      } else {
+        // 1 cột tiêu chuẩn
+        sortedItems = [...validItems];
+        sortedItems.sort((a, b) => {
+          const yDiff = b.transform[5] - a.transform[5];
+          if (Math.abs(yDiff) > 6) return yDiff;
+          return a.transform[4] - b.transform[4];
+        });
+      }
 
       let lastY = null;
       let pageText = "";
 
-      for (const item of items) {
+      for (const item of sortedItems) {
         const curY = item.transform[5];
         const str = item.str;
-        const isBold = item.fontName && (item.fontName.toLowerCase().includes("bold") || item.fontName.toLowerCase().includes("black") || item.fontName.toLowerCase().includes("heavy"));
+        const isBold = item.fontName && /(?:bold|black|heavy|mediumbld|w[6-9]|semibold)/i.test(item.fontName);
 
         let tokenText = str;
         if (isBold && /^\s*([A-Fa-f])[\.\)\:\/\-]\s*/.test(tokenText) && !tokenText.trim().startsWith('*')) {
@@ -4075,6 +4152,22 @@ async function parsePdfFile(fileOrBuffer, fileName = "de_thi.pdf") {
         }
         lastY = curY;
       }
+
+      // Tách nếu các phương án A., B., C., D. nằm cùng trên 1 dòng trong PDF
+      pageText = pageText.split('\n').map(line => {
+        const matches = [...line.matchAll(/(?:^|[\s\t]{2,}|\t+)(?:\*|\+)?\s*([A-Ha-h])[\.\)\:\/]\s*/g)];
+        if (matches.length > 1) {
+          let result = [];
+          for (let i = 0; i < matches.length; i++) {
+            const start = matches[i].index;
+            const end = (i + 1 < matches.length) ? matches[i + 1].index : line.length;
+            result.push(line.slice(start, end).trim());
+          }
+          return result.join('\n');
+        }
+        return line;
+      }).join('\n');
+
       fullText += pageText + "\n\n";
 
       // 2. Trích xuất hình ảnh (chụp màn hình code, sơ đồ) gắn theo từng câu hỏi
@@ -4393,11 +4486,17 @@ function updateModeSelectionCards(mode) {
   const examCard = document.getElementById("mode-card-exam");
   const flashcardCard = document.getElementById("mode-card-flashcard");
   const survivalCard = document.getElementById("mode-card-survival");
+  const customTimeGroup = document.getElementById("group-custom-time");
 
   if (practiceCard) practiceCard.classList.toggle("selected", mode === "PRACTICE");
   if (examCard) examCard.classList.toggle("selected", mode === "EXAM");
   if (flashcardCard) flashcardCard.classList.toggle("selected", mode === "FLASHCARD");
   if (survivalCard) survivalCard.classList.toggle("selected", mode === "SURVIVAL");
+
+  // Ẩn chọn thời gian thi khi ở chế độ Ôn tập hoặc Flashcard vì ôn tập bao lâu cũng được
+  if (customTimeGroup) {
+    customTimeGroup.style.display = (mode === "EXAM" || mode === "SURVIVAL") ? "block" : "none";
+  }
 }
 
 // Fisher-Yates array shuffle algorithm
@@ -4436,23 +4535,13 @@ function extractQuestionTags(text) {
 }
 
 /**
- * Chuẩn bị câu hỏi với tùy chọn XÁO TRỘN CÂU HỎI & XÁO TRỘN ĐÁP ÁN & LỌC ĐỘ KHÓ:
+ * Chuẩn bị câu hỏi với tùy chọn XÁO TRỘN CÂU HỎI & XÁO TRỘN ĐÁP ÁN:
  * Khi đảo đáp án, chúng ta bảo đảm ánh xạ chính xác vị trí đáp án đúng mới!
  */
-function prepareSessionQuestions(rawQuestions, shuffleQuestions, shuffleOptions, limitCount, difficultyFilter = "ALL") {
+function prepareSessionQuestions(rawQuestions, shuffleQuestions, shuffleOptions, limitCount) {
   if (!Array.isArray(rawQuestions)) return [];
 
-  let filtered = rawQuestions;
-  if (difficultyFilter && difficultyFilter !== "ALL") {
-    const matched = rawQuestions.filter(q => getQuestionDifficulty(q) === difficultyFilter);
-    if (matched.length > 0) {
-      filtered = matched;
-    } else {
-      showToast(`Không có câu hỏi theo độ khó đã chọn, hệ thống dùng toàn bộ câu hỏi.`, "info");
-    }
-  }
-
-  let processed = filtered.map(q => {
+  let processed = rawQuestions.map(q => {
     let options = Array.isArray(q.options) ? [...q.options] : [];
     let correctIndex = typeof q.correctIndex === "number" ? q.correctIndex : 0;
     const diff = getQuestionDifficulty(q);
@@ -4497,14 +4586,14 @@ function prepareSessionQuestions(rawQuestions, shuffleQuestions, shuffleOptions,
   return processed;
 }
 
-// Bắt đầu làm bài từ Modal Setup (Đã sửa triệt để lỗi targetQuizForSetup bị null)
+// Bắt đầu làm bài từ Modal Setup
 function startQuizSession() {
   if (!targetQuizForSetup) {
     showToast("Không tìm thấy đề thi để bắt đầu!", "danger");
     return;
   }
 
-  // LƯU Ý QUAN TRỌNG: Lưu tham chiếu đề thi và chế độ TRƯỚC KHI gọi closeSetupModal()
+  // Lưu tham chiếu đề thi và chế độ TRƯỚC KHI gọi closeSetupModal()
   const currentQuiz = targetQuizForSetup;
   const currentMode = currentSetupMode || "PRACTICE";
 
@@ -4512,7 +4601,6 @@ function startQuizSession() {
   const shuffleOpts = document.getElementById("toggle-shuffle-options") ? document.getElementById("toggle-shuffle-options").checked : true;
   const limitVal = document.getElementById("select-question-limit") ? document.getElementById("select-question-limit").value : "ALL";
   const customTime = parseInt(document.getElementById("input-custom-duration")?.value) || currentQuiz.timeLimit || 15;
-  const diffFilter = document.getElementById("select-difficulty-filter") ? document.getElementById("select-difficulty-filter").value : "ALL";
 
   const shortcutsEl = document.getElementById("toggle-setup-shortcuts");
   if (shortcutsEl) {
@@ -4525,8 +4613,7 @@ function startQuizSession() {
     currentQuiz.questions,
     shuffleQ,
     shuffleOpts,
-    limitCount,
-    diffFilter
+    limitCount
   );
 
   if (!preparedQuestions || preparedQuestions.length === 0) {
@@ -4626,20 +4713,17 @@ function initRunnerSession(config) {
     else finishBtnText.textContent = (config.mode === "PRACTICE" || config.mode === "FLASHCARD") ? "Kết Thúc Ôn Tập" : "Nộp Bài Thi";
   }
 
+  // Ẩn nút lật thẻ flashcard trong chế độ ôn tập (chế độ flashcard đã có riêng ở menu chọn)
   if (flashcardToggleBtn) {
-    flashcardToggleBtn.style.display = (config.mode === "PRACTICE" || config.mode === "FLASHCARD") ? "inline-flex" : "none";
-    if (isFlashcard) {
-      flashcardToggleBtn.innerHTML = `
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 14 14"></polyline></svg>
-        Chuyển về Trắc nghiệm
-      `;
-    } else {
-      flashcardToggleBtn.innerHTML = `
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>
-        Chế độ Flashcard
-      `;
-    }
+    flashcardToggleBtn.style.display = "none";
   }
+
+  // Hiển thị thống kê câu đúng / sai tức thì trong chế độ Ôn tập
+  const practiceStatsEl = document.getElementById("practice-score-stats");
+  if (practiceStatsEl) {
+    practiceStatsEl.style.display = (config.mode === "PRACTICE") ? "inline-flex" : "none";
+  }
+  updatePracticeStats();
 
   if (standardView && flashcardView) {
     if (isFlashcard) {
@@ -4912,8 +4996,70 @@ function selectOption(qIndex, optionIndex) {
   // Re-render current question view
   loadQuestion(qIndex);
 
+  // Cập nhật thống kê đúng / sai tức thì cho chế độ Ôn tập
+  if (isPractice) {
+    updatePracticeStats();
+  }
+
   // Trigger auto-advance if enabled
   triggerAutoAdvance(qIndex);
+}
+
+function updatePracticeStats() {
+  const practiceStatsEl = document.getElementById("practice-score-stats");
+  if (!practiceStatsEl) return;
+  if (!AppState.session || AppState.session.mode !== "PRACTICE") {
+    practiceStatsEl.style.display = "none";
+    return;
+  }
+  practiceStatsEl.style.display = "inline-flex";
+
+  let correct = 0;
+  let wrong = 0;
+  const questions = AppState.session.questions || [];
+  for (let i = 0; i < questions.length; i++) {
+    const ans = AppState.session.userAnswers[i];
+    if (ans !== undefined) {
+      if (ans === questions[i].correctIndex) {
+        correct++;
+      } else {
+        wrong++;
+      }
+    }
+  }
+
+  const cEl = document.getElementById("practice-correct-count");
+  const wEl = document.getElementById("practice-wrong-count");
+  if (cEl) cEl.textContent = correct;
+  if (wEl) wEl.textContent = wrong;
+}
+
+function restartCurrentQuizSession() {
+  if (!AppState.session || !AppState.session.questions || AppState.session.questions.length === 0) return;
+
+  if (!confirm("Bạn có muốn làm lại từ đầu bộ đề thi này không? Tất cả các câu trả lời hiện tại sẽ được làm mới.")) {
+    return;
+  }
+
+  cancelAutoAdvance();
+  AppState.session.userAnswers = {};
+  AppState.session.flags.clear();
+  AppState.session.currentIndex = 0;
+  AppState.session.timeSpent = 0;
+
+  if (AppState.session.mode === "SURVIVAL") {
+    AppState.session.survivalLives = 3;
+    AppState.session.survivalScore = 0;
+    AppState.session.survivalCombo = 1;
+    AppState.session.survivalMaxCombo = 1;
+    AppState.session.survivalSurvived = 0;
+    updateSurvivalHUD();
+  }
+
+  updatePracticeStats();
+  renderPalette();
+  loadQuestion(0);
+  showToast("Đã làm mới bài thi, bắt đầu lại từ câu số 1!", "info");
 }
 
 // =============================================================================
@@ -5348,19 +5494,23 @@ function toggleFlashcardMode() {
   const toggleBtn = document.getElementById("btn-toggle-flashcard-mode");
 
   if (AppState.session.isFlashcard) {
-    standardView.style.display = "none";
-    flashcardView.style.display = "block";
-    toggleBtn.innerHTML = `
-      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 14 14"></polyline></svg>
-      Chuyển về Trắc nghiệm
-    `;
+    if (standardView) standardView.style.display = "none";
+    if (flashcardView) flashcardView.style.display = "block";
+    if (toggleBtn) {
+      toggleBtn.innerHTML = `
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 14 14"></polyline></svg>
+        Chuyển về Trắc nghiệm
+      `;
+    }
   } else {
-    standardView.style.display = "block";
-    flashcardView.style.display = "none";
-    toggleBtn.innerHTML = `
-      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>
-      Chế độ Thẻ ghi nhớ (Flashcard)
-    `;
+    if (standardView) standardView.style.display = "block";
+    if (flashcardView) flashcardView.style.display = "none";
+    if (toggleBtn) {
+      toggleBtn.innerHTML = `
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>
+        Chế độ Thẻ ghi nhớ (Flashcard)
+      `;
+    }
   }
 }
 
@@ -7037,7 +7187,8 @@ Giải thích: HDMI (High-Definition Multimedia Interface) truyền tải cả v
   }
 
   document.getElementById("btn-flag-question").addEventListener("click", toggleFlagCurrentQuestion);
-  document.getElementById("btn-toggle-flashcard-mode").addEventListener("click", toggleFlashcardMode);
+  const btnToggleFlashcard = document.getElementById("btn-toggle-flashcard-mode");
+  if (btnToggleFlashcard) btnToggleFlashcard.addEventListener("click", toggleFlashcardMode);
 
   // Flashcard flip on click
   const flashcardEl = document.getElementById("flashcard-element");
@@ -7148,6 +7299,10 @@ Giải thích: HDMI (High-Definition Multimedia Interface) truyền tải cả v
       switchView("view-dashboard");
     }
   });
+
+  // Nút Làm Lại Từ Đầu trong lúc làm bài
+  const btnRunnerRestart = document.getElementById("btn-runner-restart");
+  if (btnRunnerRestart) btnRunnerRestart.addEventListener("click", restartCurrentQuizSession);
 
   // 8. Results screen actions
   document.getElementById("btn-retry-all").addEventListener("click", retryAllQuestions);

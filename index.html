@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>NovaQuiz v4.1.1 - Nền Tảng Ôn Thi &amp; Thi Thử Trắc Nghiệm Thông Minh</title>
+  <title>NovaQuiz v4.2 - Nền Tảng Ôn Thi &amp; Thi Thử Trắc Nghiệm Thông Minh</title>
   <meta name="description" content="Nền tảng tạo đề thi, ôn tập trắc nghiệm thông minh, AI sinh đề theo yêu cầu, thẻ Flashcard vuốt cảm ứng, âm thanh tập trung Zen Mode 2.0 và ngoại tuyến PWA.">
   <meta name="theme-color" content="#d97706">
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -20,7 +20,7 @@
   <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"></script>
 
-  <link rel="stylesheet" href="style.css?v=4.1.1">
+  <link rel="stylesheet" href="style.css?v=4.2">
 </head>
 <body>
 
@@ -53,7 +53,7 @@
         </div>
         <div class="brand-name">
           NovaQuiz
-          <span class="brand-badge brand-badge-v3">v4.1.1</span>
+          <span class="brand-badge brand-badge-v3">v4.2</span>
         </div>
       </div>
 
@@ -79,7 +79,7 @@
           ⌨️
         </button>
 
-        <button class="btn-icon-only" id="btn-theme-toggle" title="Chuyển chế độ Sáng / Tối / Giấy Sepia dịu mắt">
+        <button class="btn-icon-only" id="btn-theme-toggle" title="Chuyển đổi giao diện Sáng / Tối (Phím T)">
           <svg class="theme-icon-light" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <circle cx="12" cy="12" r="5"></circle>
             <line x1="12" y1="1" x2="12" y2="3"></line>
@@ -574,6 +574,12 @@ Giải thích: Số 2 là số nguyên tố chẵn duy nhất trong tập hợp 
         </div>
 
         <div class="quiz-runner-controls" style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
+          <!-- Thống Kê Số Câu Đúng / Sai Trực Tiếp Trong Chế Độ Ôn Tập -->
+          <div class="practice-score-stats" id="practice-score-stats" style="display: none;">
+            <span class="stat-badge stat-correct" id="practice-stat-correct" title="Số câu trả lời đúng">🟢 Đúng: <strong id="practice-correct-count">0</strong></span>
+            <span class="stat-badge stat-wrong" id="practice-stat-wrong" title="Số câu trả lời sai">🔴 Sai: <strong id="practice-wrong-count">0</strong></span>
+          </div>
+
           <div class="quiz-timer-box" id="quiz-timer-container">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <circle cx="12" cy="12" r="10"></circle>
@@ -604,6 +610,11 @@ Giải thích: Số 2 là số nguyên tố chẵn duy nhất trong tập hợp 
                 <span class="opt-title">Chuyển ngay (0s)</span>
                 <span class="opt-check">✓</span>
               </button>
+              <button type="button" class="auto-advance-opt" data-speed="0.5">
+                <span class="opt-bullet">⚡</span>
+                <span class="opt-title">Sau 0.5 giây</span>
+                <span class="opt-check">✓</span>
+              </button>
               <button type="button" class="auto-advance-opt" data-speed="1">
                 <span class="opt-bullet">⏱️</span>
                 <span class="opt-title">Sau 1.0 giây</span>
@@ -631,6 +642,12 @@ Giải thích: Số 2 là số nguyên tố chẵn duy nhất trong tập hợp 
               </button>
             </div>
           </div>
+
+          <!-- Nút Làm Lại Từ Đầu Trong Lúc Làm Bài -->
+          <button class="btn btn-secondary btn-sm" id="btn-runner-restart" title="Làm lại từ đầu bộ đề thi này (Bắt đầu lại từ câu số 1)" type="button">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"></path><path d="M21 3v5h-5"></path><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"></path><path d="M8 16H3v5"></path></svg>
+            <span>Làm lại từ đầu</span>
+          </button>
 
           <button class="btn btn-secondary btn-sm" id="btn-toggle-zen-mode" title="Bật/Tắt chế độ tập trung (ẩn thanh điều hướng, mở rộng màn hình)">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h6v6"></path><path d="M9 21H3v-6"></path><path d="M21 3l-7 7"></path><path d="M3 21l7-7"></path></svg>
@@ -722,11 +739,6 @@ Giải thích: Số 2 là số nguyên tố chẵn duy nhất trong tập hợp 
                 </div>
               </div>
 
-              <!-- Practice Mode only: Flashcard Flip Toggle -->
-              <button class="btn btn-secondary btn-sm" id="btn-toggle-flashcard-mode" style="display: none;">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>
-                Chế độ Flashcard
-              </button>
 
               <button class="btn-note" id="btn-toggle-note" title="Mở sổ tay ghi chú cá nhân cho câu hỏi này">
                 <span>📝 Ghi chú</span>
@@ -861,7 +873,7 @@ Giải thích: Số 2 là số nguyên tố chẵn duy nhất trong tập hợp 
         <!-- Question Palette Sidebar -->
         <aside class="palette-sidebar">
           <div class="palette-header">
-            <span style="display: flex; align-items: center; gap: 0.55rem;">
+            <span style="display: flex; align-items: center; gap: 0.55rem; white-space: nowrap;">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect width="7" height="7" x="3" y="3" rx="1"></rect><rect width="7" height="7" x="14" y="3" rx="1"></rect><rect width="7" height="7" x="14" y="14" rx="1"></rect><rect width="7" height="7" x="3" y="14" rx="1"></rect></svg>
               Danh sách câu hỏi
             </span>
@@ -986,7 +998,7 @@ Giải thích: Số 2 là số nguyên tố chẵn duy nhất trong tập hợp 
           <h3 class="modal-title" id="setup-modal-title">Cài Đặt Bài Thi & Ôn Tập</h3>
           <p style="font-size: 0.85rem; color: var(--text-muted);" id="setup-modal-subtitle">Tùy chỉnh chế độ làm bài và xáo trộn câu hỏi</p>
         </div>
-        <button class="btn-ghost btn-sm" id="btn-close-setup-modal" style="padding: 0.4rem; border-radius: 50%;">
+        <button class="btn-ghost btn-sm" id="btn-close-setup-modal" style="width: 34px; height: 34px; padding: 0; display: inline-flex; align-items: center; justify-content: center; border-radius: var(--radius-btn);">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
         </button>
       </div>
@@ -999,7 +1011,7 @@ Giải thích: Số 2 là số nguyên tố chẵn duy nhất trong tập hợp 
             <div class="mode-card selected" id="mode-card-practice" data-mode="PRACTICE">
               <div class="mode-card-icon">🎯</div>
               <div class="mode-card-title">Chế độ Ôn tập</div>
-              <div class="mode-card-desc">Biết ngay đáp án Đúng/Sai sau khi chọn, hiện giải thích chi tiết, tùy chọn lật thẻ.</div>
+              <div class="mode-card-desc">Biết ngay đáp án Đúng/Sai sau khi chọn, hiện giải thích chi tiết, đếm câu đúng/sai trực tiếp.</div>
             </div>
 
             <div class="mode-card" id="mode-card-exam" data-mode="EXAM">
@@ -1079,21 +1091,12 @@ Giải thích: Số 2 là số nguyên tố chẵn duy nhất trong tập hợp 
               </select>
             </div>
 
-            <div class="form-group" id="group-difficulty-filter">
-              <label class="form-label" for="select-difficulty-filter">Lọc theo độ khó</label>
-              <select class="form-select" id="select-difficulty-filter">
-                <option value="ALL" selected>Tất cả độ khó (Mặc định)</option>
-                <option value="EASY">🟢 Chỉ câu Dễ</option>
-                <option value="MEDIUM">🟡 Chỉ câu Vừa</option>
-                <option value="HARD">🔴 Chỉ câu Khó</option>
-              </select>
-            </div>
-
             <div class="form-group" id="group-setup-auto-advance">
               <label class="form-label" for="select-setup-auto-advance">⚡ Tự động chuyển câu khi chọn đáp án:</label>
               <select class="form-select" id="select-setup-auto-advance">
                 <option value="off">Tắt (Bấm nút Tiếp thủ công)</option>
                 <option value="0">Chuyển ngay lập tức (0s)</option>
+                <option value="0.5">Chuyển sau 0.5 giây</option>
                 <option value="1">Chuyển sau 1.0 giây</option>
                 <option value="1.5" selected>Chuyển sau 1.5 giây (Khuyên dùng ôn tập)</option>
                 <option value="2">Chuyển sau 2.0 giây</option>
@@ -1157,7 +1160,7 @@ Giải thích: Số 2 là số nguyên tố chẵn duy nhất trong tập hợp 
             <p style="font-size: 0.8rem; color: var(--text-muted); margin: 0;">Xác nhận xóa khỏi thư viện</p>
           </div>
         </div>
-        <button class="btn-ghost btn-sm" id="btn-close-delete-modal" style="padding: 0.4rem; border-radius: 50%;">
+        <button class="btn-ghost btn-sm" id="btn-close-delete-modal" style="width: 34px; height: 34px; padding: 0; display: inline-flex; align-items: center; justify-content: center; border-radius: var(--radius-btn);">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
         </button>
       </div>
@@ -1192,7 +1195,7 @@ Giải thích: Số 2 là số nguyên tố chẵn duy nhất trong tập hợp 
             <p style="font-size: 0.8rem; color: var(--text-muted);">Sử dụng mô hình Google Gemini AI để nhận diện, giải đề & phân loại</p>
           </div>
         </div>
-        <button class="btn-ghost btn-sm" id="btn-close-gemini-modal" style="padding: 0.4rem; border-radius: 50%;">
+        <button class="btn-ghost btn-sm" id="btn-close-gemini-modal" style="width: 34px; height: 34px; padding: 0; display: inline-flex; align-items: center; justify-content: center; border-radius: var(--radius-btn);">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
         </button>
       </div>
@@ -1325,7 +1328,7 @@ Giải thích: Số 2 là số nguyên tố chẵn duy nhất trong tập hợp 
             <p style="font-size: 0.8rem; color: var(--text-muted);" id="ai-tutor-modal-subtitle">Phân tích cặn kẽ nguyên nhân làm sai, bẫy trắc nghiệm và phương pháp ghi nhớ</p>
           </div>
         </div>
-        <button class="btn-ghost btn-sm" id="btn-close-ai-tutor" style="padding: 0.4rem; border-radius: 50%;">
+        <button class="btn-ghost btn-sm" id="btn-close-ai-tutor" style="width: 34px; height: 34px; padding: 0; display: inline-flex; align-items: center; justify-content: center; border-radius: var(--radius-btn);">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
         </button>
       </div>
@@ -1352,7 +1355,7 @@ Giải thích: Số 2 là số nguyên tố chẵn duy nhất trong tập hợp 
             <p style="font-size: 0.8rem; color: var(--text-muted); margin: 0.15rem 0 0 0;">Nhập chủ đề hoặc nội dung cần ôn, Gemini AI sẽ tự động tạo đề thi chuẩn</p>
           </div>
         </div>
-        <button class="btn-ghost btn-sm" id="btn-close-ai-generator" style="padding: 0.4rem; border-radius: 50%;">
+        <button class="btn-ghost btn-sm" id="btn-close-ai-generator" style="width: 34px; height: 34px; padding: 0; display: inline-flex; align-items: center; justify-content: center; border-radius: var(--radius-btn);">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
         </button>
       </div>
@@ -1477,7 +1480,7 @@ Giải thích: Số 2 là số nguyên tố chẵn duy nhất trong tập hợp 
             <p style="font-size: 0.8rem; color: var(--text-muted);">Dành cho đề thi không tô đậm/màu, có bảng đáp án ở cuối hoặc ở tệp riêng</p>
           </div>
         </div>
-        <button class="btn-ghost btn-sm" id="btn-close-separate-answers" style="padding: 0.4rem; border-radius: 50%;">
+        <button class="btn-ghost btn-sm" id="btn-close-separate-answers" style="width: 34px; height: 34px; padding: 0; display: inline-flex; align-items: center; justify-content: center; border-radius: var(--radius-btn);">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
         </button>
       </div>
@@ -1535,7 +1538,7 @@ Giải thích: Số 2 là số nguyên tố chẵn duy nhất trong tập hợp 
             <p style="font-size: 0.8rem; color: var(--text-muted);">Tự động lưu các câu làm sai từ mọi đề thi để luyện tập lại</p>
           </div>
         </div>
-        <button class="btn-ghost btn-sm" id="btn-close-mistake-vault" style="padding: 0.4rem; border-radius: 50%;">
+        <button class="btn-ghost btn-sm" id="btn-close-mistake-vault" style="width: 34px; height: 34px; padding: 0; display: inline-flex; align-items: center; justify-content: center; border-radius: var(--radius-btn);">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
         </button>
       </div>
@@ -1583,7 +1586,7 @@ Giải thích: Số 2 là số nguyên tố chẵn duy nhất trong tập hợp 
             <p style="font-size: 0.8rem; color: var(--text-muted); margin: 0.15rem 0 0 0;">Phân tích kết quả luyện thi và xu hướng điểm số của bạn</p>
           </div>
         </div>
-        <button class="btn-ghost btn-sm" id="btn-close-analytics" style="padding: 0.4rem; border-radius: 50%;">
+        <button class="btn-ghost btn-sm" id="btn-close-analytics" style="width: 34px; height: 34px; padding: 0; display: inline-flex; align-items: center; justify-content: center; border-radius: var(--radius-btn);">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
         </button>
       </div>
@@ -1662,7 +1665,7 @@ Giải thích: Số 2 là số nguyên tố chẵn duy nhất trong tập hợp 
             <p style="font-size: 0.8rem; color: var(--text-muted); margin: 0.15rem 0 0 0;">Làm bài trắc nghiệm thần tốc không cần dùng chuột</p>
           </div>
         </div>
-        <button class="btn-ghost btn-sm" id="btn-close-shortcuts" style="padding: 0.4rem; border-radius: 50%;">
+        <button class="btn-ghost btn-sm" id="btn-close-shortcuts" style="width: 34px; height: 34px; padding: 0; display: inline-flex; align-items: center; justify-content: center; border-radius: var(--radius-btn);">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
         </button>
       </div>
@@ -1735,7 +1738,7 @@ Giải thích: Số 2 là số nguyên tố chẵn duy nhất trong tập hợp 
             <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 2px;">Tạo nhiều phiên bản đề thi độc lập &amp; xuất Word kèm Ma trận đáp án chuẩn</p>
           </div>
         </div>
-        <button class="btn-ghost btn-sm" id="btn-close-multi-code" style="padding: 0.4rem; border-radius: 50%;">
+        <button class="btn-ghost btn-sm" id="btn-close-multi-code" style="width: 34px; height: 34px; padding: 0; display: inline-flex; align-items: center; justify-content: center; border-radius: var(--radius-btn);">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
         </button>
       </div>
@@ -1846,7 +1849,7 @@ Giải thích: Số 2 là số nguyên tố chẵn duy nhất trong tập hợp 
             <p style="font-size: 0.8rem; color: var(--text-muted); margin: 0.15rem 0 0 0;">Người nhận chỉ cần nhấp vào link là mở thi ngay, không cần đăng nhập!</p>
           </div>
         </div>
-        <button class="btn-ghost btn-sm" id="btn-close-share-quiz" style="padding: 0.4rem; border-radius: 50%;">
+        <button class="btn-ghost btn-sm" id="btn-close-share-quiz" style="width: 34px; height: 34px; padding: 0; display: inline-flex; align-items: center; justify-content: center; border-radius: var(--radius-btn);">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
         </button>
       </div>
@@ -1919,7 +1922,7 @@ Giải thích: Số 2 là số nguyên tố chẵn duy nhất trong tập hợp 
             <p style="font-size: 0.8rem; color: var(--text-muted); margin: 0.15rem 0 0 0;">Bộ đề được chia sẻ trực tiếp qua liên kết</p>
           </div>
         </div>
-        <button class="btn-ghost btn-sm" id="btn-close-received-quiz" style="padding: 0.4rem; border-radius: 50%;">
+        <button class="btn-ghost btn-sm" id="btn-close-received-quiz" style="width: 34px; height: 34px; padding: 0; display: inline-flex; align-items: center; justify-content: center; border-radius: var(--radius-btn);">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
         </button>
       </div>

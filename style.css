@@ -80,11 +80,11 @@
   --radius-3xl: 34px;
   --radius-full: 9999px;
 
-  /* Harmonized Button & Control Radii */
+  /* Harmonized Button & Control Radii - Chuẩn 1 Loại Bo Góc 12px Squircle Đồng Nhất Toàn Bộ */
   --radius-btn: 12px;
-  --radius-btn-sm: 10px;
-  --radius-btn-lg: 14px;
-  --radius-btn-icon: 10px;
+  --radius-btn-sm: 12px;
+  --radius-btn-lg: 12px;
+  --radius-btn-icon: 12px;
   
   --transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
   --transition-fast: all 0.15s ease;
@@ -137,64 +137,7 @@
   --shadow-3d-btn-active: 0 1px 4px rgba(0, 0, 0, 0.4), inset 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
-[data-theme="sepia"] {
-  --bg-app: #f5eedc;
-  --bg-surface: rgba(253, 248, 237, 0.94);
-  --bg-surface-elevated: rgba(255, 252, 245, 0.98);
-  --bg-muted: rgba(235, 225, 206, 0.85);
-  --bg-accent: rgba(246, 238, 222, 0.92);
-  
-  --border-subtle: rgba(180, 160, 130, 0.45);
-  --border-strong: rgba(150, 130, 95, 0.65);
-  
-  --text-main: #2b1d0c;
-  --text-muted: #6b553b;
-  --text-inverse: #ffffff;
-  
-  --primary: #b45309;
-  --primary-hover: #92400e;
-  --primary-light: rgba(180, 83, 9, 0.15);
-  --primary-glow: rgba(180, 83, 9, 0.28);
-  --primary-gradient: linear-gradient(135deg, #b45309 0%, #d97706 50%, #eab308 100%);
-  
-  --secondary: #9a3412;
-  --secondary-hover: #7c2d12;
-  --secondary-glow: rgba(154, 52, 18, 0.25);
-  
-  --cyan: #0d9488;
-  --cyan-glow: rgba(13, 148, 136, 0.25);
-  
-  --success: #15803d;
-  --success-light: rgba(21, 128, 61, 0.14);
-  --success-glow: rgba(21, 128, 61, 0.25);
-  
-  --danger: #b91c1c;
-  --danger-light: rgba(185, 28, 28, 0.14);
-  --danger-glow: rgba(185, 28, 28, 0.25);
-  
-  --warning: #d97706;
-  --warning-light: rgba(217, 119, 6, 0.14);
-  --warning-glow: rgba(217, 119, 6, 0.25);
-
-  --glass-bg: rgba(253, 248, 237, 0.88);
-  --glass-bg-hover: rgba(255, 252, 245, 0.98);
-  --glass-card: rgba(253, 248, 237, 0.92);
-  --glass-card-hover: rgba(255, 254, 249, 1);
-  --glass-border: rgba(180, 160, 130, 0.45);
-  --glass-border-highlight: rgba(255, 255, 255, 0.9);
-  --glass-blur: blur(16px) saturate(140%);
-  --glass-specular: inset 0 1px 1px 0 rgba(255, 255, 255, 0.85);
-
-  --shadow-sm: 0 1px 3px rgba(90, 60, 20, 0.06), 0 1px 2px rgba(90, 60, 20, 0.04);
-  --shadow-md: 0 4px 14px -2px rgba(90, 60, 20, 0.09), 0 2px 6px -1px rgba(90, 60, 20, 0.05);
-  --shadow-lg: 0 10px 24px -4px rgba(90, 60, 20, 0.12), 0 4px 10px -2px rgba(90, 60, 20, 0.05);
-  --shadow-xl: 0 20px 40px -8px rgba(90, 60, 20, 0.14), 0 8px 16px -4px rgba(90, 60, 20, 0.05);
-
-  --shadow-3d-card: 0 4px 20px -2px rgba(90, 60, 20, 0.08), 0 1px 3px rgba(90, 60, 20, 0.04), inset 0 1px 0 rgba(255, 255, 255, 0.7);
-  --shadow-3d-card-hover: 0 16px 36px -4px rgba(90, 60, 20, 0.16), 0 0 0 1px rgba(180, 120, 40, 0.3), inset 0 1px 0 #ffffff;
-  --shadow-3d-btn: 0 3px 12px rgba(180, 83, 9, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.35);
-  --shadow-3d-btn-active: 0 1px 3px rgba(90, 60, 20, 0.2);
-}
+/* Giao diện 2 Theme Chuẩn Tinh Tế: Sáng ☀️ & Tối 🌙 */
 
 /* ==========================================================================
    RESET & BASE STYLES
@@ -378,35 +321,100 @@ a {
   align-items: center;
   justify-content: center;
   gap: 0.55rem;
-  padding: 0.7rem 1.35rem;
+  height: 42px;
+  min-height: 42px;
+  padding: 0.55rem 1.25rem;
   border-radius: var(--radius-btn);
   font-size: 0.925rem;
   font-weight: 600;
+  line-height: 1;
   transition: var(--transition);
   white-space: nowrap;
   position: relative;
   overflow: hidden;
   user-select: none;
+  cursor: pointer;
+  box-sizing: border-box;
 }
 
 .btn-sm {
-  padding: 0.42rem 0.85rem;
+  height: 36px;
+  min-height: 36px;
+  padding: 0.38rem 0.85rem;
   font-size: 0.825rem;
-  border-radius: var(--radius-btn-sm);
-  gap: 0.35rem;
+  border-radius: var(--radius-btn);
+  gap: 0.4rem;
+  box-sizing: border-box;
 }
 
 .btn-lg {
-  padding: 0.85rem 1.65rem;
-  font-size: 1.05rem;
+  height: 48px;
+  min-height: 48px;
+  padding: 0.72rem 1.6rem;
+  font-size: 1.025rem;
   font-weight: 700;
-  border-radius: var(--radius-btn-lg);
+  border-radius: var(--radius-btn);
   gap: 0.65rem;
+  box-sizing: border-box;
 }
 
 /* 3D Tactile Active State */
 .btn:active {
   transform: translateY(2px) scale(0.98) !important;
+}
+
+/* Real-time Practice Mode Stats Badge (Đúng/Sai) */
+.practice-score-stats {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  padding: 0.25rem 0.55rem;
+  border-radius: var(--radius-btn);
+  border: 1px solid var(--glass-border);
+  border-top: 1px solid var(--glass-border-highlight);
+  box-shadow: var(--shadow-sm);
+  font-size: 0.85rem;
+  font-weight: 700;
+  height: 36px;
+  box-sizing: border-box;
+  user-select: none;
+}
+
+.practice-score-stats .stat-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.22rem 0.55rem;
+  border-radius: 8px;
+  transition: var(--transition-fast);
+  line-height: 1.2;
+}
+
+.practice-score-stats .stat-correct {
+  background: rgba(16, 185, 129, 0.12);
+  color: #10b981;
+  border: 1px solid rgba(16, 185, 129, 0.25);
+}
+
+[data-theme="dark"] .practice-score-stats .stat-correct {
+  background: rgba(16, 185, 129, 0.2);
+  color: #34d399;
+  border-color: rgba(16, 185, 129, 0.4);
+}
+
+.practice-score-stats .stat-wrong {
+  background: rgba(239, 68, 68, 0.12);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.25);
+}
+
+[data-theme="dark"] .practice-score-stats .stat-wrong {
+  background: rgba(239, 68, 68, 0.2);
+  color: #f87171;
+  border-color: rgba(239, 68, 68, 0.4);
 }
 
 /* Primary Button - Crystal Liquid Gradient */
@@ -554,14 +562,18 @@ a {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 }
 
-/* Icon-only Buttons (Theme Toggle, etc.) */
+/* Icon-only Buttons (Theme Toggle, Sound, Shortcuts...) */
 .btn-icon-only {
-  width: 42px;
-  height: 42px;
-  border-radius: var(--radius-btn-icon);
-  display: flex;
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
+  min-height: 40px;
+  border-radius: var(--radius-btn);
+  display: inline-flex;
   align-items: center;
   justify-content: center;
+  padding: 0;
+  box-sizing: border-box;
   background: var(--glass-bg);
   backdrop-filter: var(--glass-blur);
   -webkit-backdrop-filter: var(--glass-blur);
@@ -570,6 +582,7 @@ a {
   color: var(--text-main);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04), inset 0 1px 0 rgba(255, 255, 255, 0.6);
   transition: var(--transition);
+  cursor: pointer;
 }
 
 .btn-icon-only:hover {
@@ -651,13 +664,6 @@ a {
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-top: 1px solid rgba(255, 255, 255, 0.18);
   box-shadow: 0 12px 36px -4px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1);
-}
-
-[data-theme="sepia"] .hero-banner {
-  background: linear-gradient(135deg, rgba(253, 248, 237, 0.96) 0%, rgba(246, 237, 219, 0.92) 100%);
-  border: 1px solid rgba(180, 160, 130, 0.45);
-  border-top: 1px solid rgba(255, 255, 255, 0.9);
-  box-shadow: 0 10px 28px -4px rgba(90, 60, 20, 0.08), inset 0 1px 1px 0 rgba(255, 255, 255, 0.85);
 }
 
 .hero-content {
@@ -754,10 +760,16 @@ a {
 }
 
 .filter-chip {
-  padding: 0.45rem 1.05rem;
-  border-radius: var(--radius-btn-sm);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 36px;
+  min-height: 36px;
+  padding: 0.38rem 1rem;
+  border-radius: var(--radius-btn);
   font-size: 0.85rem;
   font-weight: 500;
+  box-sizing: border-box;
   background: var(--glass-bg);
   backdrop-filter: var(--glass-blur);
   -webkit-backdrop-filter: var(--glass-blur);
@@ -1800,11 +1812,15 @@ input:checked + .slider:before {
 .btn-flag {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 0.45rem;
-  padding: 0.45rem 0.95rem;
-  border-radius: var(--radius-btn-sm);
+  height: 36px;
+  min-height: 36px;
+  padding: 0.38rem 0.95rem;
+  border-radius: var(--radius-btn);
   font-size: 0.85rem;
   font-weight: 700;
+  box-sizing: border-box;
   border: 1px solid var(--glass-border);
   color: var(--text-muted);
   background: rgba(255, 255, 255, 0.4);
@@ -4168,14 +4184,18 @@ kbd {
 .btn-note {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 0.4rem;
-  padding: 0.45rem 0.85rem;
-  border-radius: var(--radius-btn-sm);
+  height: 36px;
+  min-height: 36px;
+  padding: 0.38rem 0.85rem;
+  border-radius: var(--radius-btn);
   border: 1px solid var(--border-subtle);
   background: var(--bg-surface);
   color: var(--text-main);
   font-weight: 600;
   font-size: 0.825rem;
+  box-sizing: border-box;
   cursor: pointer;
   transition: var(--transition);
 }
@@ -4205,10 +4225,7 @@ kbd {
   background: rgba(180, 83, 9, 0.14);
   border-color: rgba(245, 158, 11, 0.4);
 }
-[data-theme="sepia"] .sticky-note-drawer {
-  background: rgba(253, 230, 138, 0.4);
-  border-color: rgba(180, 83, 9, 0.5);
-}
+
 
 .sticky-note-header {
   display: flex;
@@ -4376,13 +4393,17 @@ kbd {
 .btn-install-pwa {
   display: none;
   align-items: center;
+  justify-content: center;
   gap: 0.45rem;
+  height: 40px;
+  min-height: 40px;
+  box-sizing: border-box;
   background: linear-gradient(135deg, rgba(79, 70, 229, 0.12), rgba(6, 182, 212, 0.12));
   border: 1px solid rgba(79, 70, 229, 0.35);
   color: var(--primary);
   font-weight: 700;
   font-size: 0.85rem;
-  padding: 0.45rem 0.9rem;
+  padding: 0.4rem 0.95rem;
   border-radius: var(--radius-btn);
   cursor: pointer;
   transition: var(--transition);
@@ -4413,11 +4434,15 @@ kbd {
 .btn-auto-advance {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 0.45rem;
-  padding: 0.5rem 0.95rem;
-  border-radius: var(--radius-btn-sm);
+  height: 36px;
+  min-height: 36px;
+  padding: 0.38rem 0.95rem;
+  border-radius: var(--radius-btn);
   font-size: 0.825rem;
   font-weight: 700;
+  box-sizing: border-box;
   border: 1px solid var(--border-subtle);
   color: var(--primary);
   background: var(--primary-light);
