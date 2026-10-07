@@ -682,9 +682,11 @@ function formatSquishedCode(text) {
   if (!text) return text;
   let s = text;
 
-  // 1. Tách đáp án dính vào ký tự code trước (ngoặc, nháy, số): '}B. ' -> '}\nB. ' hoặc '10* B. ' -> '10\n* B. '
-  s = s.replace(/([\}\)\"\'0-9])\s*((\*|\+)\s*[A-Ha-h][\.\)\:\/]\s+)/g, '$1\n$2');
-  s = s.replace(/([\}\)\"\'0-9])([A-Ha-h][\.\)\:\/]\s+)/g, '$1\n$2');
+  // 1. Tách đáp án dính vào ký tự code trước (ngoặc, nháy): '}B. ' -> '}\nB. ' hoặc '10* B. ' -> '10\n* B. '
+  // (Tránh ngắt dòng trong các cụm từ kích thước/công nghệ như 2D, 3D, 4D, 5D)
+  s = s.replace(/([\}\"\'\]])\s*((\*|\+)?\s*[A-Ha-h][\.\)\:\/]\s+)/g, '$1\n$2');
+  s = s.replace(/([0-9])\s*((\*|\+)\s*[A-Ha-h][\.\)\:\/]\s+)/g, '$1\n$2');
+  s = s.replace(/(?<!\b[2345])([0-9])([A-Ha-h]\.\s+)/g, '$1\n$2');
 
   // 2. Colon trước câu lệnh: def square(x):return -> def square(x):\n    return
   s = s.replace(/(\:\s*)(return\b|print\b|for\b|while\b|if\b)/g, ':\n    $2');
@@ -800,8 +802,8 @@ function fixSpellingAndFormattingKeepAnswers(rawText) {
   return fixedText;
 }
 
-// Regex nhận diện dòng đáp án toàn diện (DA: C, ĐA: C, D/A: C, Key: C, Đáp án: C, Answer: C, Ans: C, Chọn: C...)
-const ANSWER_LINE_REGEX = /^(?:[\(\[\{]\s*)?(?:(?:Đáp\s*án|Dap\s*an)(?:\s*(?:đúng|dung))?(?:\s*là)?|Đ\/?A|D\/?A|Key|Ans(?:wer)?|Câu\s*đúng|Chọn(?:\s*đáp\s*án)?|Phương\s*án(?:\s*đúng)?)[\s\:\-\.]*([A-Fa-f])\b/i;
+// Regex nhận diện dòng đáp án toàn diện (DA: C, ĐA: C, D/A: C, Key: C, Đáp án: C, Answer: C, Ans: C, Chọn: C, DA:3 a, DA:1)a...)
+const ANSWER_LINE_REGEX = /^(?:[\(\[\{]\s*)?(?:(?:Đáp\s*án|Dap\s*an)(?:\s*(?:đúng|dung))?(?:\s*là)?|Đ\/?A|D\/?A|Key|Ans(?:wer)?|Câu\s*đúng|Chọn(?:\s*đáp\s*án)?|Phương\s*án(?:\s*đúng)?)\s*[:\-\.]*\s*(?:\d+[\.\)\:\s-]*)?([A-Fa-f])\b/i;
 
 // Regex kiểm tra xem dòng có phải là tiền tố đáp án hoặc giải thích hay không
 const ANSWER_PREFIX_TEST_REGEX = /^(?:(?:Đáp\s*án|Dap\s*an)(?:\s*(?:đúng|dung))?(?:\s*là)?|Đ\/?A|D\/?A|Key|Ans(?:wer)?|Câu\s*đúng|Chọn|Phương\s*án|Giải\s*thích|Lời\s*giải|Hướng\s*dẫn)[\s\:\-\.]/i;
@@ -1060,7 +1062,7 @@ function smartPreprocessExamText(rawText) {
     // 1. Câu kết thúc bằng ":?" (như "Các phương pháp tối ưu cơ bản:?")
     // 2. Câu trần có đuôi '?' xuất hiện khi câu trước đã có >= 2 đáp án A, B, C, D
     const isUnnumberedQ = (line.endsWith(":?") && !line.startsWith("*") && !/^[A-Fa-f][\.\)\:\/]/.test(line)) ||
-                          ((line.endsWith("?") || line.endsWith(":?")) && currentOptionsCount >= 2);
+                          ((line.endsWith("?") || line.endsWith(":?")) && currentOptionsCount >= 2 && !/^(?:Câu|Bài|Question|Part|\d+)/i.test(line));
 
     if (isUnnumberedQ) {
       currentOptionsCount = 0;
@@ -1069,8 +1071,8 @@ function smartPreprocessExamText(rawText) {
       continue;
     }
 
-    // Kiểm tra dòng đáp án A, B, C, D, E, F... (không phải lời gọi hàm như L.append(...), D.clear())
-    const optMatch = !isMethodCall ? line.match(/^(\*+|\+|\([xX]\)|\[[xX]\])?\s*([A-Ha-h])[\.\)\:\/]\s+(.*)$/) : null;
+    // Kiểm tra dòng đáp án A, B, C, D, E, F... (hỗ trợ a:2000, 50a:, b Công nghệ...)
+    const optMatch = !isMethodCall ? line.match(/^(\*+|\+|\([xX]\)|\[[xX]\])?\s*(?:\d+[\.\/\-]?\s*)?([A-Ha-h])(?:[\.\)\:\/\-]|(?=\s+[A-ZÀ-Ỹa-zà-ỹ]))\s*(.*)$/) : null;
     if (optMatch) {
       const isStar = !!optMatch[1];
       const letter = optMatch[2].toUpperCase();
@@ -1113,10 +1115,16 @@ function smartPreprocessExamText(rawText) {
     processedLines.push(line);
   }
 
-  // Đánh lại số thứ tự Câu 1:, Câu 2:, Câu 3:... chuẩn mực
+  // Giữ nguyên số thứ tự câu hỏi gốc nếu đã có, chỉ đánh số lại nếu thiếu số
   let result = processedLines.join("\n");
   let qNum = 1;
-  result = result.replace(/^Câu(?:\s*\d+)?\s*[:\.]/gim, () => `Câu ${qNum++}:`);
+  result = result.replace(/^Câu(?:\s*(\d+))?\s*[:\.]/gim, (match, existingNum) => {
+    if (existingNum) {
+      qNum = parseInt(existingNum) + 1;
+      return `Câu ${existingNum}:`;
+    }
+    return `Câu ${qNum++}:`;
+  });
 
   return result.trim();
 }
@@ -1278,8 +1286,8 @@ function parseRawQuestions(rawText) {
     let correctIndex = -1;
     let explanation = "";
 
-    // Regex nhận diện các lựa chọn: A. / A) / A: / [A] / *A. / **A. / +A. (cho phép \s*)
-    const optionRegex = /^(\*+|\[x\]|\(x\)|\+)?\s*([A-Fa-f])[\.\)\:\/]\s*(.*)$/;
+    // Regex nhận diện các lựa chọn: A. / A) / A: / [A] / *A. / **A. / +A. / 50a: / a:2000 / b Công nghệ (cho phép \s*)
+    const optionRegex = /^(\*+|\[x\]|\(x\)|\+)?\s*(?:\d+[\.\/\-]?\s*)?([A-Ha-h])(?:[\.\)\:\/\-]|(?=\s+[A-ZÀ-Ỹa-zà-ỹ]))\s*(.*)$/;
     // Regex nhận diện giải thích (hỗ trợ cả markdown **Lời giải:**, Lời giải chi tiết:, Hướng dẫn giải:...)
     const explanationRegex = /^[\*\#\-\–\—\>\s💡✍️⚡]*(?:Giải\s*thích(?:\s*chi\s*tiết)?|Lời\s*giải(?:\s*chi\s*tiết)?|Hướng\s*dẫn(?:\s*giải)?|Explanation)[\s\:\-\.\*]+(.*)$/i;
 
@@ -3482,8 +3490,8 @@ async function parseDocxFile(fileOrBuffer, fileName = "de_thi.docx") {
         fullText += run.text;
       }
 
-      // Nhận diện xem trong dòng này có các lựa chọn A., B., C., D. hay không (hỗ trợ [A], (A), a., b...)
-      const optRegex = /(?:^|[\s\t]+)(?:\*|\+|\([xX]\)|\[[xX]\])?\s*(?:[\(\[]?([A-Ha-h])[\.\)\:\/\]])\s*/g;
+      // Nhận diện xem trong dòng này có các lựa chọn A., B., C., D. hay không (hỗ trợ [A], (A), a., b..., 50a:, b Công nghệ)
+      const optRegex = /(?:^|[\s\t]+)(?:\*|\+|\([xX]\)|\[[xX]\])?\s*(?:\d+[\.\/\-]?\s*)?(?:[\(\[]?([A-Ha-h])(?:[\.\)\:\/\]]|(?=\s+[A-ZÀ-Ỹa-zà-ỹ])))\s*/g;
       const optMatches = [...fullText.matchAll(optRegex)];
 
       // Kiểm tra tính hợp lệ: có từ 2 lựa chọn trở lên hoặc bắt đầu bằng A/a
@@ -4082,20 +4090,44 @@ async function parsePdfFile(fileOrBuffer, fileName = "de_thi.pdf") {
         return true;
       });
 
-      // Nhận diện bố cục 2 cột (Two-Column Layout) trong đề thi
+      // Nhận diện bố cục 2 cột (Two-Column Layout) trong đề thi:
+      // Chỉ coi là 2 cột NẾU không có nhiều dòng vắt ngang (dưới 3 dòng) VÀ có các đầu mục độc lập ở cột 2
       let isTwoColumn = false;
-      const midLeft = pageWidth * 0.48;
-      const midRight = pageWidth * 0.52;
-      let leftCount = 0;
-      let rightCount = 0;
+      const midLeft = pageWidth * 0.42;
+      const midRight = pageWidth * 0.55;
 
+      const lineMap = new Map();
       for (const item of validItems) {
-        const x = item.transform[4];
-        if (x < midLeft) leftCount++;
-        else if (x > midRight) rightCount++;
+        const y = Math.round(item.transform[5] / 6) * 6;
+        if (!lineMap.has(y)) lineMap.set(y, []);
+        lineMap.get(y).push(item);
       }
 
-      if (leftCount >= 10 && rightCount >= 10) {
+      let spanningLinesCount = 0;
+      let col2StartsCount = 0;
+
+      for (const [y, rowItems] of lineMap.entries()) {
+        rowItems.sort((a, b) => a.transform[4] - b.transform[4]);
+        const minX = rowItems[0].transform[4];
+        const lastItem = rowItems[rowItems.length - 1];
+        const maxX = lastItem.transform[4] + (lastItem.width || 20);
+
+        if (minX < midLeft && maxX > midRight) {
+          spanningLinesCount++;
+        }
+
+        for (let idx = 0; idx < rowItems.length; idx++) {
+          const it = rowItems[idx];
+          if (it.transform[4] >= midLeft && it.transform[4] <= midRight + 50) {
+            const str = (it.str || "").trim();
+            if (/^(?:Câu|Bài|[A-Da-d][\.\)\:\/])/i.test(str)) {
+              col2StartsCount++;
+            }
+          }
+        }
+      }
+
+      if (spanningLinesCount < 3 && col2StartsCount >= 2) {
         isTwoColumn = true;
       }
 
