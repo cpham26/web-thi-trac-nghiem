@@ -4493,9 +4493,9 @@ function updateModeSelectionCards(mode) {
   if (flashcardCard) flashcardCard.classList.toggle("selected", mode === "FLASHCARD");
   if (survivalCard) survivalCard.classList.toggle("selected", mode === "SURVIVAL");
 
-  // Ẩn chọn thời gian thi khi ở chế độ Ôn tập hoặc Flashcard vì ôn tập bao lâu cũng được
+  // Chỉ hiện chọn thời gian thi ở chế độ Thi thử (EXAM). Ôn tập, Flashcard và Sinh tồn đều không giới hạn thời gian thi.
   if (customTimeGroup) {
-    customTimeGroup.style.display = (mode === "EXAM" || mode === "SURVIVAL") ? "block" : "none";
+    customTimeGroup.style.display = (mode === "EXAM") ? "block" : "none";
   }
 }
 
@@ -4688,6 +4688,10 @@ function initRunnerSession(config) {
 
   if (hudContainer) {
     hudContainer.style.display = isSurvival ? "flex" : "none";
+  }
+
+  if (timerContainer) {
+    timerContainer.style.display = isSurvival ? "none" : "flex";
   }
 
   if (modeBadge) {
