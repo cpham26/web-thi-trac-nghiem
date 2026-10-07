@@ -38,19 +38,19 @@ function setSavedGeminiKey(val) {
 }
 
 function getSavedGeminiModel() {
-  let m = localStorage.getItem(STORAGE_KEYS.GEMINI_MODEL) || localStorage.getItem(STORAGE_KEYS.GEMINI_MODEL_LEGACY) || "gemini-2.5-flash";
-  // Migration: Tự động sửa lại nếu đang lưu các model ảo không có thực (3.8, 3.5, 3.0...) hoặc model không hỗ trợ
-  if (!m || m.includes("3.8") || m.includes("3.5") || m.includes("3.0") || m.includes("interactions") || m.includes("tts") || m.includes("embedding") || m === "auto") {
-    m = "gemini-2.5-flash";
+  let m = localStorage.getItem(STORAGE_KEYS.GEMINI_MODEL) || localStorage.getItem(STORAGE_KEYS.GEMINI_MODEL_LEGACY) || "gemini-3.8-flash";
+  // Tự động nâng cấp lên thế hệ Gemini 3.8 Flash mới nhất nếu chưa có hoặc là auto hoặc chứa các model cũ đã bị ngừng
+  if (!m || m === "auto" || m.includes("interactions") || m.includes("tts") || m.includes("embedding") || m.includes("1.5") || m.includes("2.0") || m.includes("2.5") || m.includes("1.0")) {
+    m = "gemini-3.8-flash";
     setSavedGeminiModel(m);
   }
   return m;
 }
 
 function setSavedGeminiModel(val) {
-  let modelVal = val || "gemini-2.5-flash";
-  if (modelVal.includes("3.8") || modelVal.includes("3.5") || modelVal.includes("3.0")) {
-    modelVal = "gemini-2.5-flash";
+  let modelVal = val || "gemini-3.8-flash";
+  if (modelVal.includes("1.5") || modelVal.includes("2.0") || modelVal.includes("2.5") || modelVal.includes("1.0")) {
+    modelVal = "gemini-3.8-flash";
   }
   localStorage.setItem(STORAGE_KEYS.GEMINI_MODEL, modelVal);
   localStorage.setItem(STORAGE_KEYS.GEMINI_MODEL_LEGACY, modelVal);
@@ -1840,24 +1840,24 @@ function aiFilterAndCleanExam(rawText) {
 // GEMINI AI INTEGRATION - DYNAMIC MODEL DISCOVERY & QUIZ AUDITOR
 // =============================================================================
 
-// Danh sách các mô hình Google Gemini văn bản hỗ trợ chuẩn generateContent chính thức & ổn định nhất của Google
+// Danh sách các mô hình Google Gemini văn bản hỗ trợ chuẩn generateContent thế hệ Gemini 3+ mới nhất
 const GEMINI_FALLBACK_MODELS = [
-  "gemini-2.5-flash",
-  "gemini-2.0-flash",
-  "gemini-2.0-flash-lite",
-  "gemini-1.5-flash",
-  "gemini-2.5-pro",
-  "gemini-1.5-pro"
+  "gemini-3.8-flash",
+  "gemini-3.8-pro",
+  "gemini-3.5-flash-lite",
+  "gemini-3.5-flash",
+  "gemini-3.5-pro",
+  "gemini-3.0-flash"
 ];
 
-// Danh sách độ ưu tiên mô hình Google Gemini khi tự động kết nối
+// Danh sách độ ưu tiên mô hình Google Gemini 3+ khi tự động kết nối
 const GEMINI_NEWEST_PRIORITY = [
-  "gemini-2.5-flash",
-  "gemini-2.0-flash",
-  "gemini-2.0-flash-lite",
-  "gemini-1.5-flash",
-  "gemini-2.5-pro",
-  "gemini-1.5-pro"
+  "gemini-3.8-flash",
+  "gemini-3.8-pro",
+  "gemini-3.5-flash-lite",
+  "gemini-3.5-flash",
+  "gemini-3.5-pro",
+  "gemini-3.0-flash"
 ];
 
 let activeGeminiModel = getSavedGeminiModel();
@@ -1880,6 +1880,23 @@ async function fetchWithTimeout(url, options = {}, timeoutMs = 28000) {
   } finally {
     clearTimeout(timer);
   }
+}
+
+// Trích xuất văn bản câu trả lời sạch từ phản hồi của Gemini 3+, tự động loại bỏ các khối suy nghĩ nội bộ (thought: true)
+function extractTextFromGeminiResponse(data) {
+  if (!data || !data.candidates || !data.candidates[0]) return "";
+  const candidate = data.candidates[0];
+  const parts = candidate.content?.parts || [];
+  if (!Array.isArray(parts) || parts.length === 0) return "";
+  
+  // Lọc lấy các part không phải thought (suy nghĩ nội bộ của Gemini 3+)
+  const nonThoughtParts = parts.filter(p => !p.thought && typeof p.text === "string");
+  if (nonThoughtParts.length > 0) {
+    return nonThoughtParts.map(p => p.text).join("\n").trim();
+  }
+  
+  // Dự phòng nếu không có cờ thought
+  return parts.map(p => p.text || "").join("\n").trim();
 }
 
 // Tự động khám phá danh sách model Google Gemini thực tế được cấp phép, LỌC BỎ các model không tương thích
@@ -1927,7 +1944,7 @@ async function discoverGeminiModels(apiKey) {
         };
       });
 
-    // Sắp xếp các model theo thứ tự ưu tiên chính thức (Gemini 2.5 Flash -> 2.0 Flash -> 2.0 Flash-Lite -> 1.5 Flash...)
+    // Sắp xếp các model theo thứ tự ưu tiên chính thức (Gemini 3.8 Flash -> 3.8 Pro -> 3.5 Flash-Lite...)
     validModels.sort((a, b) => {
       const idxA = GEMINI_NEWEST_PRIORITY.indexOf(a.id);
       const idxB = GEMINI_NEWEST_PRIORITY.indexOf(b.id);
@@ -1955,7 +1972,7 @@ function populateGeminiModelDropdown(modelsList, preferredModel) {
 
   const autoOpt = document.createElement("option");
   autoOpt.value = "auto";
-  autoOpt.textContent = "🚀 Tự động chọn mô hình tối ưu (Ưu tiên Gemini 2.5 Flash / 2.0 Flash)";
+  autoOpt.textContent = "🚀 Tự động chọn mô hình tối ưu (Ưu tiên Gemini 3.8 Flash / 3.5 Flash-Lite)";
   select.appendChild(autoOpt);
 
   if (modelsList && modelsList.length > 0) {
@@ -1964,12 +1981,12 @@ function populateGeminiModelDropdown(modelsList, preferredModel) {
       const opt = document.createElement("option");
       opt.value = m.id;
       let label = m.displayName || m.id;
-      if (m.id.includes("2.5-flash")) label = `⚡ ${label} (Thế hệ 2.5 MỚI NHẤT - Siêu thông minh & tối ưu Quota)`;
-      else if (m.id.includes("2.0-flash-lite")) label = `⚡ ${label} (Siêu nhanh, nhẹ & tiết kiệm Quota)`;
-      else if (m.id.includes("2.0-flash")) label = `🔥 ${label} (Chuẩn 2.0 - Tốc độ cực cao & toàn diện)`;
-      else if (m.id.includes("1.5-flash")) label = `🛡️ ${label} (Tương thích mọi tài khoản, bền bỉ)`;
-      else if (m.id.includes("2.5-pro")) label = `🧠 ${label} (Tư duy suy luận sâu thế hệ 2.5)`;
-      else if (m.id.includes("1.5-pro")) label = `🧠 ${label} (Tư duy chuyên gia 1.5)`;
+      if (m.id.includes("3.8-flash")) label = `🔥 ${label} (Thế hệ 3.8 MỚI NHẤT - Đỉnh cao trí tuệ & siêu tốc)`;
+      else if (m.id.includes("3.8-pro")) label = `🧠 ${label} (Tư duy suy luận sâu thế hệ 3.8)`;
+      else if (m.id.includes("3.5-flash-lite")) label = `⚡ ${label} (Siêu nhanh, ổn định & tối ưu Quota)`;
+      else if (m.id.includes("3.5-flash")) label = `⚡ ${label} (Thế hệ 3.5 toàn diện & chính xác cao)`;
+      else if (m.id.includes("3.5-pro")) label = `🧠 ${label} (Tư duy chuyên gia 3.5)`;
+      else if (m.id.includes("3.0-flash") || m.id.includes("3-flash")) label = `⚡ ${label} (Chuẩn thế hệ 3.0)`;
       else if (m.id.includes("pro")) label = `🧠 ${label} (Tư duy sâu & lập luận chuyên gia)`;
       else label = `⚡ ${label}`;
       opt.textContent = label;
@@ -1980,9 +1997,12 @@ function populateGeminiModelDropdown(modelsList, preferredModel) {
       const opt = document.createElement("option");
       opt.value = id;
       let label = id;
-      if (id.includes("2.5-flash")) label = `⚡ ${id} (Thế hệ 2.5 - Siêu thông minh & tối ưu Quota)`;
-      else if (id.includes("2.0-flash")) label = `🔥 ${id} (Chuẩn 2.0 - Tốc độ cao)`;
-      else if (id.includes("1.5-flash")) label = `🛡️ ${id} (Bền bỉ, tương thích mọi tài khoản)`;
+      if (id.includes("3.8-flash")) label = `🔥 ${id} (Thế hệ 3.8 MỚI NHẤT - Đỉnh cao trí tuệ & siêu tốc)`;
+      else if (id.includes("3.8-pro")) label = `🧠 ${id} (Tư duy suy luận sâu thế hệ 3.8)`;
+      else if (id.includes("3.5-flash-lite")) label = `⚡ ${id} (Siêu nhanh, ổn định & tối ưu Quota)`;
+      else if (id.includes("3.5-flash")) label = `⚡ ${id} (Thế hệ 3.5 toàn diện & chính xác cao)`;
+      else if (id.includes("3.5-pro")) label = `🧠 ${id} (Tư duy chuyên gia 3.5)`;
+      else if (id.includes("3.0-flash")) label = `⚡ ${id} (Chuẩn thế hệ 3.0)`;
       else label = `⚡ ${id}`;
       opt.textContent = label;
       select.appendChild(opt);
@@ -1997,7 +2017,7 @@ function populateGeminiModelDropdown(modelsList, preferredModel) {
   if (currentVal && currentVal !== "auto" && Array.from(select.options).some(o => o.value === currentVal)) {
     select.value = currentVal;
   } else {
-    select.value = "gemini-2.5-flash";
+    select.value = "gemini-3.8-flash";
   }
 }
 
@@ -2020,7 +2040,7 @@ async function testGeminiApiKey(apiKey) {
   resultDiv.style.display = "block";
   resultDiv.style.background = "var(--bg-accent)";
   resultDiv.style.color = "var(--text-main)";
-  resultDiv.innerHTML = "⏳ Đang kết nối Google AI để xác thực và chọn mô hình chính thức...";
+  resultDiv.innerHTML = "⏳ Đang kết nối Google AI để xác thực và chọn mô hình Gemini 3+ mới nhất...";
 
   try {
     let availableModels = [];
@@ -2071,7 +2091,7 @@ async function testGeminiApiKey(apiKey) {
       candidateIds = availableModels.map(m => m.id);
     }
 
-    // Đảm bảo các mô hình chuẩn luôn có mặt trong danh sách thử
+    // Đảm bảo các mô hình Gemini 3+ chuẩn luôn có mặt trong danh sách thử
     GEMINI_FALLBACK_MODELS.forEach(fb => {
       if (!candidateIds.includes(fb)) candidateIds.push(fb);
     });
@@ -2085,22 +2105,28 @@ async function testGeminiApiKey(apiKey) {
         continue;
       }
 
+      // Ưu tiên v1beta (chuẩn cho Gemini 3+), sau đó thử v1
       for (const apiVer of ["v1beta", "v1"]) {
         try {
+          const testPayload = {
+            contents: [
+              {
+                role: "user",
+                parts: [{ text: "hi" }]
+              }
+            ],
+            generationConfig: {
+              maxOutputTokens: 10,
+              thinkingConfig: {
+                thinkingLevel: "low"
+              }
+            }
+          };
+
           const testResp = await fetchWithTimeout(`https://generativelanguage.googleapis.com/${apiVer}/models/${modelCandidate}:generateContent?key=${cleanKey}`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              contents: [
-                {
-                  role: "user",
-                  parts: [{ text: "hi" }]
-                }
-              ],
-              generationConfig: {
-                maxOutputTokens: 10
-              }
-            })
+            body: JSON.stringify(testPayload)
           }, 12000);
 
           if (testResp.ok) {
@@ -2134,7 +2160,7 @@ async function testGeminiApiKey(apiKey) {
 
             resultDiv.style.background = "var(--success-light)";
             resultDiv.style.color = "var(--success)";
-            resultDiv.innerHTML = `✅ <strong>API Key hoạt động xuất sắc!</strong><br>Đã kết nối thành công mô hình: <code style="font-weight: 700; font-size: 0.95rem;">${modelCandidate}</code>.<br><small>Hệ thống đã sẵn sàng giải đề, rà soát và sinh đề thi bằng Google Gemini!</small>${noteExtra}`;
+            resultDiv.innerHTML = `✅ <strong>API Key hoạt động xuất sắc!</strong><br>Đã kết nối thành công mô hình: <code style="font-weight: 700; font-size: 0.95rem;">${modelCandidate}</code>.<br><small>Hệ thống đã sẵn sàng giải đề, rà soát và sinh đề thi bằng Google Gemini 3+!</small>${noteExtra}`;
             showToast(`Đã kết nối thành công Google Gemini (${modelCandidate})!`, "success");
             return;
           } else {
@@ -2187,18 +2213,18 @@ async function executeSingleGeminiRequest(promptText, cleanKey, onProgress = nul
     modelToUse = customInput.value.trim();
   }
 
-  // Tự động chuẩn hóa nếu model rỗng hoặc là model ảo không có thực
-  if (!modelToUse || modelToUse === "auto" || modelToUse.includes("3.8") || modelToUse.includes("3.5") || modelToUse.includes("3.0") || modelToUse.includes("interactions") || modelToUse.includes("tts")) {
-    modelToUse = "gemini-2.5-flash";
-    activeGeminiModel = "gemini-2.5-flash";
-    setSavedGeminiModel("gemini-2.5-flash");
+  // Tự động chuẩn hóa nếu model rỗng hoặc là auto
+  if (!modelToUse || modelToUse === "auto") {
+    modelToUse = "gemini-3.8-flash";
+    activeGeminiModel = "gemini-3.8-flash";
+    setSavedGeminiModel("gemini-3.8-flash");
   }
 
   const rawCandidates = [
     modelToUse,
     ...GEMINI_FALLBACK_MODELS.filter(m => m !== modelToUse)
   ];
-  const modelsToTry = [...new Set(rawCandidates)].filter(m => !m.includes("tts") && !m.includes("interactions") && !m.includes("3.8") && !m.includes("3.5"));
+  const modelsToTry = [...new Set(rawCandidates)].filter(m => !m.includes("tts") && !m.includes("interactions"));
 
   const payload = {
     contents: [
@@ -2209,7 +2235,10 @@ async function executeSingleGeminiRequest(promptText, cleanKey, onProgress = nul
     ],
     generationConfig: {
       temperature: 0.25,
-      maxOutputTokens: 8192
+      maxOutputTokens: 8192,
+      thinkingConfig: {
+        thinkingLevel: "low"
+      }
     }
   };
 
@@ -2218,6 +2247,7 @@ async function executeSingleGeminiRequest(promptText, cleanKey, onProgress = nul
   for (const model of modelsToTry) {
     if (onProgress) onProgress(`Đang gửi yêu cầu tới mô hình Google AI (${model})...`);
     
+    // Ưu tiên v1beta (chuẩn cho Gemini 3.8 Flash)
     const apiVersions = ["v1beta", "v1"];
     for (const apiVer of apiVersions) {
       const url = `https://generativelanguage.googleapis.com/${apiVer}/models/${model}:generateContent?key=${cleanKey}`;
@@ -2230,7 +2260,7 @@ async function executeSingleGeminiRequest(promptText, cleanKey, onProgress = nul
 
         if (resp.ok) {
           const data = await resp.json();
-          const textOutput = data.candidates?.[0]?.content?.parts?.[0]?.text;
+          const textOutput = extractTextFromGeminiResponse(data);
           if (textOutput) {
             activeGeminiModel = model;
             setSavedGeminiModel(model);
@@ -2240,6 +2270,31 @@ async function executeSingleGeminiRequest(promptText, cleanKey, onProgress = nul
           const errJson = await resp.json().catch(() => ({}));
           const errMsg = errJson.error?.message || `HTTP ${resp.status}`;
           lastError = new Error(errMsg);
+
+          // Nếu model không hỗ trợ thinkingConfig, tự động thử lại payload cơ bản
+          if (resp.status === 400 && errMsg.includes("thinkingConfig")) {
+            const fallbackPayload = {
+              contents: payload.contents,
+              generationConfig: {
+                temperature: 0.25,
+                maxOutputTokens: 8192
+              }
+            };
+            const fbResp = await fetchWithTimeout(url, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(fallbackPayload)
+            }, 32000);
+            if (fbResp.ok) {
+              const fbData = await fbResp.json();
+              const fbText = extractTextFromGeminiResponse(fbData);
+              if (fbText) {
+                activeGeminiModel = model;
+                setSavedGeminiModel(model);
+                return fbText;
+              }
+            }
+          }
 
           if (resp.status === 400 && errMsg.toLowerCase().includes("api key not valid")) {
             throw new Error("Mã API Key không hợp lệ! Vui lòng bấm nút 'Kiểm tra Key' hoặc lấy lại tại aistudio.google.com");
@@ -2278,17 +2333,17 @@ async function executeGeminiMultimodalRequest(parts, cleanKey, onProgress = null
     modelToUse = customInput.value.trim();
   }
 
-  if (!modelToUse || modelToUse === "auto" || modelToUse.includes("3.8") || modelToUse.includes("3.5") || modelToUse.includes("3.0") || modelToUse.includes("interactions") || modelToUse.includes("tts")) {
-    modelToUse = "gemini-2.5-flash";
-    activeGeminiModel = "gemini-2.5-flash";
-    setSavedGeminiModel("gemini-2.5-flash");
+  if (!modelToUse || modelToUse === "auto") {
+    modelToUse = "gemini-3.8-flash";
+    activeGeminiModel = "gemini-3.8-flash";
+    setSavedGeminiModel("gemini-3.8-flash");
   }
 
   const rawCandidates = [
     modelToUse,
     ...GEMINI_FALLBACK_MODELS.filter(m => m !== modelToUse)
   ];
-  const modelsToTry = [...new Set(rawCandidates)].filter(m => !m.includes("tts") && !m.includes("interactions") && !m.includes("3.8") && !m.includes("3.5"));
+  const modelsToTry = [...new Set(rawCandidates)].filter(m => !m.includes("tts") && !m.includes("interactions"));
 
   const payload = {
     contents: [
@@ -2299,7 +2354,10 @@ async function executeGeminiMultimodalRequest(parts, cleanKey, onProgress = null
     ],
     generationConfig: {
       temperature: 0.1,
-      maxOutputTokens: 8192
+      maxOutputTokens: 8192,
+      thinkingConfig: {
+        thinkingLevel: "low"
+      }
     }
   };
 
@@ -2320,7 +2378,7 @@ async function executeGeminiMultimodalRequest(parts, cleanKey, onProgress = null
 
         if (resp.ok) {
           const data = await resp.json();
-          const textOutput = data.candidates?.[0]?.content?.parts?.[0]?.text;
+          const textOutput = extractTextFromGeminiResponse(data);
           if (textOutput) {
             activeGeminiModel = model;
             setSavedGeminiModel(model);
@@ -2330,6 +2388,30 @@ async function executeGeminiMultimodalRequest(parts, cleanKey, onProgress = null
           const errJson = await resp.json().catch(() => ({}));
           const errMsg = errJson.error?.message || `HTTP ${resp.status}`;
           lastError = new Error(errMsg);
+
+          if (resp.status === 400 && errMsg.includes("thinkingConfig")) {
+            const fbPayload = {
+              contents: payload.contents,
+              generationConfig: {
+                temperature: 0.1,
+                maxOutputTokens: 8192
+              }
+            };
+            const fbResp = await fetchWithTimeout(url, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(fbPayload)
+            }, 45000);
+            if (fbResp.ok) {
+              const fbData = await fbResp.json();
+              const fbText = extractTextFromGeminiResponse(fbData);
+              if (fbText) {
+                activeGeminiModel = model;
+                setSavedGeminiModel(model);
+                return fbText;
+              }
+            }
+          }
 
           if (resp.status === 400 && errMsg.toLowerCase().includes("api key not valid")) {
             throw new Error("Mã API Key không hợp lệ! Vui lòng bấm nút 'Cài đặt Gemini API Key' để kiểm tra lại.");
@@ -6981,7 +7063,7 @@ Giải thích: HDMI (High-Definition Multimedia Interface) truyền tải cả v
       if (val === "custom") {
         if (containerCustomModel) containerCustomModel.style.display = "block";
         if (inputCustomModel) {
-          const customVal = inputCustomModel.value.trim() || getSavedGeminiCustomModel() || "gemini-2.5-flash";
+          const customVal = inputCustomModel.value.trim() || getSavedGeminiCustomModel() || "gemini-3.8-flash";
           inputCustomModel.value = customVal;
           inputCustomModel.focus();
           activeGeminiModel = customVal;
@@ -6996,9 +7078,9 @@ Giải thích: HDMI (High-Definition Multimedia Interface) truyền tải cả v
           if (modelBadge) modelBadge.textContent = `Đang chọn: ${val}`;
           showToast(`Đã chuyển sang mô hình: ${val}`, "info");
         } else {
-          activeGeminiModel = "gemini-2.5-flash";
-          setSavedGeminiModel("gemini-2.5-flash");
-          if (modelBadge) modelBadge.textContent = "Tự động chọn (Ưu tiên Gemini 2.5 Flash / 2.0 Flash)";
+          activeGeminiModel = "gemini-3.8-flash";
+          setSavedGeminiModel("gemini-3.8-flash");
+          if (modelBadge) modelBadge.textContent = "Tự động chọn (Ưu tiên Gemini 3.8 Flash / 3.5 Flash-Lite)";
         }
       }
     });
@@ -7119,15 +7201,15 @@ Giải thích: HDMI (High-Definition Multimedia Interface) truyền tải cả v
       }
       setSavedGeminiKey(key);
 
-      let modelChoice = selectModel ? selectModel.value : "gemini-2.5-flash";
+      let modelChoice = selectModel ? selectModel.value : "gemini-3.8-flash";
       if (modelChoice === "custom") {
-        modelChoice = (inputCustomModel ? inputCustomModel.value.trim() : "") || "gemini-2.5-flash";
+        modelChoice = (inputCustomModel ? inputCustomModel.value.trim() : "") || "gemini-3.8-flash";
       } else if (modelChoice === "auto") {
-        modelChoice = "gemini-2.5-flash";
+        modelChoice = "gemini-3.8-flash";
       }
 
-      if (modelChoice.includes("3.8") || modelChoice.includes("3.5") || modelChoice.includes("3.0")) {
-        modelChoice = "gemini-2.5-flash";
+      if (modelChoice.includes("1.5") || modelChoice.includes("2.0") || modelChoice.includes("2.5") || modelChoice.includes("1.0")) {
+        modelChoice = "gemini-3.8-flash";
       }
 
       activeGeminiModel = modelChoice;
@@ -8237,7 +8319,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (genCustomBox) genCustomBox.style.display = "block";
         if (genCustomInput) {
           genCustomInput.focus();
-          const customVal = genCustomInput.value.trim() || getSavedGeminiCustomModel() || "gemini-2.5-flash";
+          const customVal = genCustomInput.value.trim() || getSavedGeminiCustomModel() || "gemini-3.8-flash";
           genCustomInput.value = customVal;
           activeGeminiModel = customVal;
           setSavedGeminiModel(customVal);
