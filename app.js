@@ -75,6 +75,7 @@ const pdfImageRegistry = (typeof window !== "undefined" && window.pdfImageRegist
 const AppState = {
   quizzes: [],
   selectedQuiz: null,
+  currentEditingQuizId: null,
   activeFilter: "ALL",
   searchQuery: "",
   autoAdvance: "1.5",
@@ -384,6 +385,9 @@ function renderDashboard() {
         <div class="quiz-card-header">
           <span class="badge badge-primary">${escapeHtml(catLabel)}</span>
           <div class="card-header-actions">
+            <button class="card-tool-btn btn-tool-edit" onclick="openEditQuiz('${quiz.id}', event)" title="Chỉnh sửa bộ đề thi này (sửa câu hỏi, đáp án, thời gian...)">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+            </button>
             <button class="card-tool-btn btn-tool-share" onclick="openShareQuizModal('${quiz.id}', event)" title="Chia sẻ bộ đề thi qua đường link trực tiếp (Gửi bạn bè, Zalo, Messenger)">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
             </button>
@@ -1593,6 +1597,10 @@ function resetCreatorForm() {
   const btnToggleParsed = document.getElementById("btn-toggle-parsed-preview");
   if (btnToggleParsed) btnToggleParsed.textContent = "Xem chi tiết các câu đã phân tích";
 
+  // Reset trạng thái chỉnh sửa đề thi
+  AppState.currentEditingQuizId = null;
+  updateCreatorEditModeUI(false);
+
   // Reset câu hỏi soạn thủ công
   manualQuestionsList = [];
   renderManualQuestions();
@@ -1606,22 +1614,147 @@ function resetCreatorForm() {
   if (firstPane) firstPane.style.display = "block";
 }
 
+/**
+ * Chuyển đổi danh sách câu hỏi dạng Object sang chuỗi văn bản định dạng NovaQuiz Smart Text
+ * Giữ nguyên 100% nội dung câu hỏi, hình ảnh [HINHANH:...], các lựa chọn và đáp án đúng (*)
+ */
+function convertQuestionsToSmartText(questions) {
+  if (!Array.isArray(questions) || questions.length === 0) return "";
+
+  return questions.map((q, idx) => {
+    const lines = [];
+
+    // Làm sạch tiêu đề câu hỏi để tránh lặp "Câu 1: Câu 1: ..."
+    let cleanText = (q.text || "").trim();
+    cleanText = cleanText.replace(/^(?:Câu|Bài|Question|Part)\s*\d+[\.\:\/\s]*/i, "").trim();
+    lines.push(`Câu ${idx + 1}: ${cleanText}`);
+
+    // Đính kèm các hình ảnh của câu hỏi (nếu có)
+    const images = Array.isArray(q.images) && q.images.length > 0
+      ? q.images
+      : (q.image ? [q.image] : []);
+    images.forEach(img => {
+      if (img && typeof img === "string") {
+        lines.push(`[HINHANH:${img.trim()}]`);
+      }
+    });
+
+    // Các lựa chọn phương án
+    if (Array.isArray(q.options)) {
+      q.options.forEach((opt, optIdx) => {
+        const letter = String.fromCharCode(65 + optIdx);
+        let cleanOpt = (opt || "").trim().replace(/^[A-Fa-f][\.\)\:\/\-]\s*/, "").trim();
+        const isCorrect = (optIdx === q.correctIndex);
+        const prefix = isCorrect ? `*${letter}.` : `${letter}.`;
+        lines.push(`${prefix} ${cleanOpt}`);
+      });
+    }
+
+    // Lời giải thích nếu có
+    if (q.explanation && typeof q.explanation === "string" && q.explanation.trim()) {
+      let cleanExpl = q.explanation.trim();
+      cleanExpl = cleanExpl.replace(/^(?:Giải\s*thích|Lời\s*giải|Hướng\s*dẫn|Explanation)[\s\:\-\.]*/i, "").trim();
+      lines.push(`Giải thích: ${cleanExpl}`);
+    }
+
+    return lines.join("\n");
+  }).join("\n\n");
+}
+
+/**
+ * Cập nhật giao diện Creator giữa 2 chế độ: Tạo Đề Mới hoặc Đang Chỉnh Sửa Đề
+ */
+function updateCreatorEditModeUI(isEditing, quiz = null) {
+  const titleEl = document.getElementById("creator-main-title");
+  const descEl = document.getElementById("creator-main-desc");
+  const badgeEl = document.getElementById("creator-edit-badge");
+  const saveBtnText = document.getElementById("btn-save-quiz-text");
+  const saveStartBtnText = document.getElementById("btn-save-and-start-quiz-text");
+  const saveCopyBtn = document.getElementById("btn-save-as-copy-quiz");
+
+  if (isEditing && quiz) {
+    if (titleEl) titleEl.textContent = "Chỉnh Sửa Bộ Đề Thi";
+    if (descEl) descEl.textContent = `Đang chỉnh sửa bộ đề: "${quiz.title}". Bạn có thể sửa câu hỏi, đáp án, thêm/bớt câu hỏi hoặc cập nhật thời gian.`;
+    if (badgeEl) {
+      badgeEl.style.display = "inline-flex";
+      badgeEl.textContent = `✏️ Đang sửa: ${quiz.title}`;
+    }
+    if (saveBtnText) saveBtnText.textContent = "Cập Nhật Bộ Đề";
+    if (saveStartBtnText) saveStartBtnText.textContent = "Cập Nhật & Làm Bài";
+    if (saveCopyBtn) saveCopyBtn.style.display = "inline-flex";
+  } else {
+    if (titleEl) titleEl.textContent = "Tạo & Nhập Đề Thi Mới";
+    if (descEl) descEl.textContent = "Hỗ trợ nhận diện tự động định dạng câu hỏi Word, PDF, NovaQuiz hoặc tải file lên.";
+    if (badgeEl) badgeEl.style.display = "none";
+    if (saveBtnText) saveBtnText.textContent = "Lưu Vào Thư Viện";
+    if (saveStartBtnText) saveStartBtnText.textContent = "Lưu & Bắt Đầu Làm Bài Ngay";
+    if (saveCopyBtn) saveCopyBtn.style.display = "none";
+  }
+}
+
+/**
+ * Mở giao diện tạo đề mới hoàn toàn
+ */
 function openCreator(editQuiz = null) {
+  if (editQuiz) {
+    const qId = typeof editQuiz === "object" ? editQuiz.id : editQuiz;
+    openEditQuiz(qId);
+    return;
+  }
   switchView("view-creator");
   resetCreatorForm();
+  updateSmartParsePreview();
+}
 
-  if (editQuiz) {
-    const titleInput = document.getElementById("input-quiz-title");
-    const catInput = document.getElementById("input-quiz-category");
-    const timeInput = document.getElementById("input-quiz-time");
-    const descInput = document.getElementById("input-quiz-desc");
-    if (titleInput) titleInput.value = editQuiz.title || "";
-    if (catInput) catInput.value = editQuiz.category || "";
-    if (timeInput) timeInput.value = editQuiz.timeLimit || 15;
-    if (descInput) descInput.value = editQuiz.description || "";
+/**
+ * Mở giao diện chỉnh sửa bộ đề thi đã có
+ */
+function openEditQuiz(quizId, event = null) {
+  if (event) {
+    event.stopPropagation();
+  }
+  const quiz = AppState.quizzes.find(q => String(q.id) === String(quizId));
+  if (!quiz) {
+    showToast("Không tìm thấy bộ đề thi để chỉnh sửa!", "danger");
+    return;
   }
 
+  // 1. Chuyển sang View Creator
+  switchView("view-creator");
+
+  // 2. Reset các trạng thái file/audit cũ
+  resetCreatorForm();
+
+  // 3. Đánh dấu ID đang chỉnh sửa
+  AppState.currentEditingQuizId = quiz.id;
+
+  // 4. Điền metadata bộ đề
+  const titleInput = document.getElementById("input-quiz-title");
+  const catInput = document.getElementById("input-quiz-category");
+  const timeInput = document.getElementById("input-quiz-time");
+  const descInput = document.getElementById("input-quiz-desc");
+  if (titleInput) titleInput.value = quiz.title || "";
+  if (catInput) catInput.value = quiz.category || "Chung";
+  if (timeInput) timeInput.value = quiz.timeLimit || 15;
+  if (descInput) descInput.value = quiz.description || "";
+
+  // 5. Chuyển đổi và nạp danh sách câu hỏi vào khung Dán văn bản nhanh
+  const smartText = convertQuestionsToSmartText(quiz.questions || []);
+  const textarea = document.getElementById("smart-text-input");
+  if (textarea) textarea.value = smartText;
+
+  // 6. Nạp danh sách câu hỏi vào Soạn thủ công
+  manualQuestionsList = JSON.parse(JSON.stringify(quiz.questions || []));
+  renderManualQuestions();
+
+  // 7. Cập nhật preview thời gian thực và đếm câu hỏi
   updateSmartParsePreview();
+
+  // 8. Chuyển giao diện sang chế độ Đang chỉnh sửa
+  updateCreatorEditModeUI(true, quiz);
+
+  showToast(`✏️ Đang chỉnh sửa bộ đề: "${quiz.title}" (${(quiz.questions || []).length} câu)`, "info");
+  playSound("click");
 }
 
 function renderManualQuestions() {
@@ -1655,22 +1788,42 @@ function renderManualQuestions() {
           </div>
         </div>
 
+        ${q.image ? `
+          <div style="margin-bottom: 0.85rem; display: flex; align-items: center; gap: 0.75rem; background: var(--bg-app); padding: 0.5rem; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle);">
+            <img src="${q.image}" style="max-height: 90px; max-width: 160px; object-fit: contain; border-radius: 4px;" alt="Hình ảnh câu hỏi">
+            <div style="display: flex; flex-direction: column; gap: 0.25rem;">
+              <span style="font-size: 0.8rem; color: var(--text-muted);">Hình ảnh đính kèm câu hỏi</span>
+              <button type="button" class="btn btn-outline-danger btn-sm" onclick="removeManualQuestionImage(${idx})" style="padding: 0.2rem 0.5rem; font-size: 0.75rem;">Xóa ảnh</button>
+            </div>
+          </div>
+        ` : ''}
+
         <div class="form-group" style="margin-bottom: 1rem;">
           <label class="form-label">Nội dung câu hỏi:</label>
-          <input type="text" class="form-input" value="${escapeHtml(q.text)}" onchange="updateManualQuestionText(${idx}, this.value)" placeholder="Nhập câu hỏi...">
+          <input type="text" class="form-input" value="${escapeHtml(q.text)}" oninput="updateManualQuestionText(${idx}, this.value)" placeholder="Nhập câu hỏi...">
         </div>
 
         <div style="margin-bottom: 1rem;">
-          <label class="form-label">Các lựa chọn (Tích chọn đáp án ĐÚNG):</label>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">
+            <label class="form-label" style="margin-bottom: 0;">Các lựa chọn (Tích chọn đáp án ĐÚNG):</label>
+            <button type="button" class="btn btn-ghost btn-sm" onclick="addManualOption(${idx})" style="font-size: 0.78rem; padding: 0.2rem 0.5rem; color: var(--primary);">
+              + Thêm phương án
+            </button>
+          </div>
           <div style="display: flex; flex-direction: column; gap: 0.5rem; margin-top: 0.35rem;">
             ${q.options.map((opt, optIdx) => {
               const letter = String.fromCharCode(65 + optIdx);
               const isChecked = optIdx === q.correctIndex;
               return `
                 <div style="display: flex; align-items: center; gap: 0.5rem;">
-                  <input type="radio" name="manual-correct-${idx}" ${isChecked ? 'checked' : ''} onchange="setManualCorrect(${idx}, ${optIdx})" style="cursor: pointer; width: 18px; height: 18px;">
-                  <strong style="width: 24px;">${letter}.</strong>
-                  <input type="text" class="form-input" value="${escapeHtml(opt)}" onchange="updateManualOptionText(${idx}, ${optIdx}, this.value)" placeholder="Lựa chọn ${letter}..." style="flex: 1;">
+                  <input type="radio" name="manual-correct-${idx}" ${isChecked ? 'checked' : ''} onchange="setManualCorrect(${idx}, ${optIdx})" style="cursor: pointer; width: 18px; height: 18px;" title="Tích chọn làm đáp án đúng">
+                  <strong style="width: 24px; text-align: center;">${letter}.</strong>
+                  <input type="text" class="form-input" value="${escapeHtml(opt)}" oninput="updateManualOptionText(${idx}, ${optIdx}, this.value)" placeholder="Lựa chọn ${letter}..." style="flex: 1;">
+                  ${q.options.length > 2 ? `
+                    <button type="button" class="btn btn-ghost btn-sm" onclick="removeManualOption(${idx}, ${optIdx})" title="Xóa phương án này" style="color: var(--danger); padding: 0.25rem 0.4rem;">
+                      ✕
+                    </button>
+                  ` : ''}
                 </div>
               `;
             }).join("")}
@@ -1679,7 +1832,7 @@ function renderManualQuestions() {
 
         <div class="form-group">
           <label class="form-label">Giải thích chi tiết (tùy chọn):</label>
-          <input type="text" class="form-input" value="${escapeHtml(q.explanation || '')}" onchange="updateManualExplanation(${idx}, this.value)" placeholder="Giải thích vì sao đáp án này đúng...">
+          <input type="text" class="form-input" value="${escapeHtml(q.explanation || '')}" oninput="updateManualExplanation(${idx}, this.value)" placeholder="Giải thích vì sao đáp án này đúng...">
         </div>
       </div>
     `;
@@ -1700,6 +1853,32 @@ function addManualQuestion() {
 function removeManualQuestion(idx) {
   manualQuestionsList.splice(idx, 1);
   renderManualQuestions();
+}
+
+function addManualOption(qIdx) {
+  if (manualQuestionsList[qIdx]) {
+    manualQuestionsList[qIdx].options.push("");
+    renderManualQuestions();
+  }
+}
+
+function removeManualOption(qIdx, optIdx) {
+  if (manualQuestionsList[qIdx] && manualQuestionsList[qIdx].options.length > 2) {
+    manualQuestionsList[qIdx].options.splice(optIdx, 1);
+    if (manualQuestionsList[qIdx].correctIndex >= manualQuestionsList[qIdx].options.length) {
+      manualQuestionsList[qIdx].correctIndex = manualQuestionsList[qIdx].options.length - 1;
+    }
+    renderManualQuestions();
+  }
+}
+
+function removeManualQuestionImage(qIdx) {
+  if (manualQuestionsList[qIdx]) {
+    manualQuestionsList[qIdx].image = null;
+    manualQuestionsList[qIdx].images = [];
+    renderManualQuestions();
+    showToast(`Đã xóa hình ảnh của Câu hỏi ${qIdx + 1}`, "info");
+  }
 }
 
 function updateManualQuestionText(idx, val) {
@@ -4491,8 +4670,8 @@ function handleFileUpload(file) {
   reader.readAsText(file, "UTF-8");
 }
 
-// Save Quiz Handler
-function saveCurrentQuiz(autoStart = false) {
+// Save Quiz Handler (Hỗ trợ Tạo Mới, Chỉnh Sửa Cập Nhật, hoặc Lưu Bản Sao Mới)
+function saveCurrentQuiz(autoStart = false, saveAsCopy = false) {
   const title = (document.getElementById("input-quiz-title").value || "").trim();
   const category = (document.getElementById("input-quiz-category").value || "").trim() || "Chung";
   const timeLimit = parseInt(document.getElementById("input-quiz-time").value) || 15;
@@ -4511,33 +4690,74 @@ function saveCurrentQuiz(autoStart = false) {
   if (activeTab === "tab-smart-paste" || activeTab === "tab-upload-file" || activeTab === "tab-ai-ocr") {
     const rawText = (document.getElementById("smart-text-input").value || "").trim();
     const parsed = parseRawQuestions(rawText);
-    if (parsed.questions.length === 0) {
+    if (!parsed || parsed.questions.length === 0) {
       showToast("Chưa có câu hỏi nào hợp lệ! Vui lòng kiểm tra lại văn bản.", "danger");
       return null;
     }
     finalQuestions = parsed.questions;
   } else if (activeTab === "tab-manual-builder") {
-    finalQuestions = manualQuestionsList.filter(q => q.text.trim() && q.options.some(opt => opt.trim()));
+    finalQuestions = manualQuestionsList.filter(q => q && q.text && q.text.trim() && q.options && q.options.some(opt => opt && opt.trim()));
     if (finalQuestions.length === 0) {
       showToast("Vui lòng nhập ít nhất một câu hỏi trong phần soạn thủ công!", "danger");
       return null;
     }
   }
 
-  const newQuiz = {
-    id: `quiz-${Date.now()}`,
-    title: title,
-    category: category,
-    timeLimit: timeLimit,
-    description: description || `Bộ đề ${category} gồm ${finalQuestions.length} câu hỏi.`,
-    createdAt: new Date().toISOString(),
-    isCustom: true,
-    questions: finalQuestions
-  };
+  let targetQuizId = null;
 
-  AppState.quizzes.unshift(newQuiz);
-  saveQuizzes();
-  showToast(`Đã lưu đề thi "${title}" (${finalQuestions.length} câu) thành công!`, "success");
+  // Nếu đang ở chế độ chỉnh sửa và người dùng không yêu cầu lưu bản sao mới -> CẬP NHẬT ĐỀ CŨ
+  if (AppState.currentEditingQuizId && !saveAsCopy) {
+    const editIndex = AppState.quizzes.findIndex(q => String(q.id) === String(AppState.currentEditingQuizId));
+    if (editIndex !== -1) {
+      const existing = AppState.quizzes[editIndex];
+      const updatedQuiz = {
+        ...existing,
+        title: title,
+        category: category,
+        timeLimit: timeLimit,
+        description: description || `Bộ đề ${category} gồm ${finalQuestions.length} câu hỏi.`,
+        updatedAt: new Date().toISOString(),
+        questions: finalQuestions
+      };
+      AppState.quizzes[editIndex] = updatedQuiz;
+      saveQuizzes();
+      showToast(`✓ Đã cập nhật thành công bộ đề thi "${title}" (${finalQuestions.length} câu)!`, "success");
+      targetQuizId = updatedQuiz.id;
+    } else {
+      // Trường hợp dự phòng nếu không tìm thấy ID cũ
+      const newQuiz = {
+        id: `quiz-${Date.now()}`,
+        title: title,
+        category: category,
+        timeLimit: timeLimit,
+        description: description || `Bộ đề ${category} gồm ${finalQuestions.length} câu hỏi.`,
+        createdAt: new Date().toISOString(),
+        isCustom: true,
+        questions: finalQuestions
+      };
+      AppState.quizzes.unshift(newQuiz);
+      saveQuizzes();
+      showToast(`Đã lưu bộ đề thi "${title}" (${finalQuestions.length} câu) thành công!`, "success");
+      targetQuizId = newQuiz.id;
+    }
+  } else {
+    // TẠO MỚI HOẶC LƯU THÀNH BẢN SAO MỚI
+    const finalTitle = saveAsCopy ? `${title} (Bản sao)` : title;
+    const newQuiz = {
+      id: `quiz-${Date.now()}`,
+      title: finalTitle,
+      category: category,
+      timeLimit: timeLimit,
+      description: description || `Bộ đề ${category} gồm ${finalQuestions.length} câu hỏi.`,
+      createdAt: new Date().toISOString(),
+      isCustom: true,
+      questions: finalQuestions
+    };
+    AppState.quizzes.unshift(newQuiz);
+    saveQuizzes();
+    showToast(`✓ Đã ${saveAsCopy ? 'nhân bản và lưu thành đề mới' : 'lưu bộ đề thi'} "${finalTitle}" (${finalQuestions.length} câu) thành công!`, "success");
+    targetQuizId = newQuiz.id;
+  }
 
   // Đặt lại sạch sẽ form tạo đề như lúc reload trang web
   resetCreatorForm();
@@ -4545,12 +4765,12 @@ function saveCurrentQuiz(autoStart = false) {
   renderDashboard();
 
   if (autoStart) {
-    openSetupModal(newQuiz.id, "PRACTICE");
+    openSetupModal(targetQuizId, "PRACTICE");
   } else {
     switchView("view-dashboard");
   }
 
-  return newQuiz;
+  return targetQuizId;
 }
 
 // =============================================================================
@@ -6884,8 +7104,14 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("btn-theme-toggle").addEventListener("click", toggleTheme);
   document.getElementById("btn-open-create").addEventListener("click", () => openCreator());
   document.getElementById("btn-hero-create").addEventListener("click", () => openCreator());
-  document.getElementById("btn-back-from-creator").addEventListener("click", () => switchView("view-dashboard"));
-  document.getElementById("btn-cancel-creator").addEventListener("click", () => switchView("view-dashboard"));
+  document.getElementById("btn-back-from-creator").addEventListener("click", () => {
+    resetCreatorForm();
+    switchView("view-dashboard");
+  });
+  document.getElementById("btn-cancel-creator").addEventListener("click", () => {
+    resetCreatorForm();
+    switchView("view-dashboard");
+  });
   document.getElementById("btn-result-to-home").addEventListener("click", () => switchView("view-dashboard"));
 
   // 3. Search & Category Filters
@@ -6930,12 +7156,35 @@ document.addEventListener("DOMContentLoaded", () => {
     btnDeleteAll.addEventListener("click", deleteAllQuizzes);
   }
 
-  // 5. Creator Tabs
+  // 5. Creator Tabs (Đồng bộ hai chiều giữa Dán văn bản nhanh và Soạn thủ công)
   document.querySelectorAll(".creator-tab").forEach(tab => {
     tab.addEventListener("click", () => {
+      const prevActive = document.querySelector(".creator-tab.active");
+      const prevTabId = prevActive ? prevActive.getAttribute("data-tab") : null;
+      const targetId = tab.getAttribute("data-tab");
+
+      // Nếu chuyển từ Dán văn bản sang Soạn thủ công: đồng bộ sang manualQuestionsList
+      if (prevTabId === "tab-smart-paste" && targetId === "tab-manual-builder") {
+        const raw = (document.getElementById("smart-text-input").value || "").trim();
+        if (raw) {
+          const parsed = parseRawQuestions(raw);
+          if (parsed && parsed.questions && parsed.questions.length > 0) {
+            manualQuestionsList = parsed.questions;
+            renderManualQuestions();
+          }
+        }
+      }
+      // Nếu chuyển từ Soạn thủ công sang Dán văn bản: đồng bộ ngược lại smart-text-input
+      else if (prevTabId === "tab-manual-builder" && targetId === "tab-smart-paste") {
+        const activeQuestions = manualQuestionsList.filter(q => q && q.text && q.text.trim() && q.options && q.options.some(opt => opt && opt.trim()));
+        if (activeQuestions.length > 0) {
+          document.getElementById("smart-text-input").value = convertQuestionsToSmartText(activeQuestions);
+          updateSmartParsePreview();
+        }
+      }
+
       document.querySelectorAll(".creator-tab").forEach(t => t.classList.remove("active"));
       tab.classList.add("active");
-      const targetId = tab.getAttribute("data-tab");
       document.querySelectorAll(".tab-pane").forEach(p => p.style.display = "none");
       const targetPane = document.getElementById(targetId);
       if (targetPane) targetPane.style.display = "block";
@@ -7271,6 +7520,34 @@ Giải thích: HDMI (High-Definition Multimedia Interface) truyền tải cả v
   const btnSaveAndStart = document.getElementById("btn-save-and-start-quiz");
   if (btnSaveAndStart) {
     btnSaveAndStart.addEventListener("click", () => saveCurrentQuiz(true));
+  }
+
+  // Save as copy button
+  const btnSaveAsCopy = document.getElementById("btn-save-as-copy-quiz");
+  if (btnSaveAsCopy) {
+    btnSaveAsCopy.addEventListener("click", () => saveCurrentQuiz(false, true));
+  }
+
+  // Setup modal edit quiz button
+  const btnSetupEditQuiz = document.getElementById("btn-setup-edit-quiz");
+  if (btnSetupEditQuiz) {
+    btnSetupEditQuiz.addEventListener("click", () => {
+      if (targetQuizForSetup) {
+        const qId = targetQuizForSetup.id;
+        closeSetupModal();
+        openEditQuiz(qId);
+      }
+    });
+  }
+
+  // Result view edit quiz button
+  const btnEditCurrentResult = document.getElementById("btn-edit-current-quiz-result");
+  if (btnEditCurrentResult) {
+    btnEditCurrentResult.addEventListener("click", () => {
+      if (AppState.session && AppState.session.quizId) {
+        openEditQuiz(AppState.session.quizId);
+      }
+    });
   }
 
   // 6. Setup Modal Listeners

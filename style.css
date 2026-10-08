@@ -944,6 +944,20 @@ a {
   background: rgba(139, 92, 246, 0.12);
 }
 
+.card-tool-btn.btn-tool-edit {
+  color: #10b981;
+  background: rgba(16, 185, 129, 0.08);
+  border-color: rgba(16, 185, 129, 0.25);
+}
+
+.card-tool-btn.btn-tool-edit:hover {
+  color: #ffffff;
+  background: #10b981;
+  border-color: #10b981;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.4);
+  transform: translateY(-1.5px) scale(1.05);
+}
+
 .card-tool-btn.btn-tool-delete {
   color: #ef4444;
   background: rgba(239, 68, 68, 0.08);
