@@ -38,20 +38,15 @@ function setSavedGeminiKey(val) {
 }
 
 function getSavedGeminiModel() {
-  let m = localStorage.getItem(STORAGE_KEYS.GEMINI_MODEL) || localStorage.getItem(STORAGE_KEYS.GEMINI_MODEL_LEGACY) || "gemini-3.8-flash";
-  // Tự động nâng cấp lên thế hệ Gemini 3.8 Flash mới nhất nếu chưa có hoặc là auto hoặc chứa các model cũ đã bị ngừng
-  if (!m || m === "auto" || m.includes("interactions") || m.includes("tts") || m.includes("embedding") || m.includes("1.5") || m.includes("2.0") || m.includes("2.5") || m.includes("1.0")) {
-    m = "gemini-3.8-flash";
-    setSavedGeminiModel(m);
+  const m = localStorage.getItem(STORAGE_KEYS.GEMINI_MODEL) || localStorage.getItem(STORAGE_KEYS.GEMINI_MODEL_LEGACY);
+  if (!m || m.trim() === "" || m === "auto") {
+    return "gemini-3.8-flash";
   }
-  return m;
+  return m.trim();
 }
 
 function setSavedGeminiModel(val) {
-  let modelVal = val || "gemini-3.8-flash";
-  if (modelVal.includes("1.5") || modelVal.includes("2.0") || modelVal.includes("2.5") || modelVal.includes("1.0")) {
-    modelVal = "gemini-3.8-flash";
-  }
+  const modelVal = (val || "").trim() || "gemini-3.8-flash";
   localStorage.setItem(STORAGE_KEYS.GEMINI_MODEL, modelVal);
   localStorage.setItem(STORAGE_KEYS.GEMINI_MODEL_LEGACY, modelVal);
 }
@@ -2150,18 +2145,17 @@ function populateGeminiModelDropdown(modelsList, preferredModel) {
   select.innerHTML = "";
 
   const autoOpt = document.createElement("option");
-  autoOpt.value = "auto";
-  autoOpt.textContent = "🚀 Tự động chọn mô hình tối ưu (Ưu tiên Gemini 3.8 Flash / 3.5 Flash-Lite)";
+  autoOpt.value = "gemini-3.8-flash";
+  autoOpt.textContent = "🔥 Mặc định: Gemini 3.8 Flash (Tối ưu & đỉnh cao trí tuệ)";
   select.appendChild(autoOpt);
 
   if (modelsList && modelsList.length > 0) {
     modelsList.forEach(m => {
-      if (m.id.includes("interactions") || m.id.includes("deep-research") || m.id.includes("tts")) return;
+      if (m.id.includes("interactions") || m.id.includes("deep-research") || m.id.includes("tts") || m.id === "gemini-3.8-flash") return;
       const opt = document.createElement("option");
       opt.value = m.id;
       let label = m.displayName || m.id;
-      if (m.id.includes("3.8-flash")) label = `🔥 ${label} (Thế hệ 3.8 MỚI NHẤT - Đỉnh cao trí tuệ & siêu tốc)`;
-      else if (m.id.includes("3.8-pro")) label = `🧠 ${label} (Tư duy suy luận sâu thế hệ 3.8)`;
+      if (m.id.includes("3.8-pro")) label = `🧠 ${label} (Tư duy suy luận sâu thế hệ 3.8)`;
       else if (m.id.includes("3.5-flash-lite")) label = `⚡ ${label} (Siêu nhanh, ổn định & tối ưu Quota)`;
       else if (m.id.includes("3.5-flash")) label = `⚡ ${label} (Thế hệ 3.5 toàn diện & chính xác cao)`;
       else if (m.id.includes("3.5-pro")) label = `🧠 ${label} (Tư duy chuyên gia 3.5)`;
@@ -2173,11 +2167,11 @@ function populateGeminiModelDropdown(modelsList, preferredModel) {
     });
   } else {
     GEMINI_FALLBACK_MODELS.forEach(id => {
+      if (id === "gemini-3.8-flash") return;
       const opt = document.createElement("option");
       opt.value = id;
       let label = id;
-      if (id.includes("3.8-flash")) label = `🔥 ${id} (Thế hệ 3.8 MỚI NHẤT - Đỉnh cao trí tuệ & siêu tốc)`;
-      else if (id.includes("3.8-pro")) label = `🧠 ${id} (Tư duy suy luận sâu thế hệ 3.8)`;
+      if (id.includes("3.8-pro")) label = `🧠 ${id} (Tư duy suy luận sâu thế hệ 3.8)`;
       else if (id.includes("3.5-flash-lite")) label = `⚡ ${id} (Siêu nhanh, ổn định & tối ưu Quota)`;
       else if (id.includes("3.5-flash")) label = `⚡ ${id} (Thế hệ 3.5 toàn diện & chính xác cao)`;
       else if (id.includes("3.5-pro")) label = `🧠 ${id} (Tư duy chuyên gia 3.5)`;
@@ -2193,14 +2187,22 @@ function populateGeminiModelDropdown(modelsList, preferredModel) {
   customOpt.textContent = "✏️ Nhập mã mô hình tùy chọn khác...";
   select.appendChild(customOpt);
 
-  if (currentVal && currentVal !== "auto" && Array.from(select.options).some(o => o.value === currentVal)) {
-    select.value = currentVal;
+  if (currentVal && currentVal !== "auto") {
+    if (Array.from(select.options).some(o => o.value === currentVal)) {
+      select.value = currentVal;
+    } else {
+      select.value = "custom";
+      const customInput = document.getElementById("input-custom-gemini-model");
+      const customContainer = document.getElementById("container-custom-gemini-model");
+      if (customInput && !customInput.value.trim()) customInput.value = currentVal;
+      if (customContainer) customContainer.style.display = "block";
+    }
   } else {
     select.value = "gemini-3.8-flash";
   }
 }
 
-// Hàm kiểm tra API Key trực tiếp với Google AI, tự động nhận diện mô hình hoạt động
+// Hàm kiểm tra API Key trực tiếp với Google AI, kiểm tra đúng mô hình người dùng đã chọn
 async function testGeminiApiKey(apiKey) {
   const resultDiv = document.getElementById("gemini-key-test-result");
   const modelBadge = document.getElementById("gemini-model-badge-info");
@@ -2219,7 +2221,7 @@ async function testGeminiApiKey(apiKey) {
   resultDiv.style.display = "block";
   resultDiv.style.background = "var(--bg-accent)";
   resultDiv.style.color = "var(--text-main)";
-  resultDiv.innerHTML = "⏳ Đang kết nối Google AI để xác thực và chọn mô hình Gemini 3+ mới nhất...";
+  resultDiv.innerHTML = "⏳ Đang kết nối Google AI để xác thực mã API Key & kiểm tra mô hình...";
 
   try {
     let availableModels = [];
@@ -2239,12 +2241,6 @@ async function testGeminiApiKey(apiKey) {
         resultDiv.innerHTML = `❌ <strong>API Key bị hạn chế quyền (403):</strong><br><small>${errMsg}</small><br>👉 Hãy kiểm tra cài đặt của Key trên Google Cloud Console (đảm bảo đã bật Generative Language API).`;
         return;
       }
-      if (errMsg.includes("429")) {
-        resultDiv.style.background = "var(--warning-light)";
-        resultDiv.style.color = "var(--warning)";
-        resultDiv.innerHTML = `⚠️ <strong>Hết hạn mức yêu cầu (Quota)!</strong><br>Key đúng nhưng tài khoản Google đã tạm hết quota miễn phí. Hãy bấm dùng nút <strong>"⚡ Dùng AI Lọc Tự Động (Offline)"</strong> có sẵn!`;
-        return;
-      }
       availableModels = GEMINI_FALLBACK_MODELS.map(id => ({ id, name: `models/${id}`, displayName: id }));
     }
 
@@ -2255,126 +2251,91 @@ async function testGeminiApiKey(apiKey) {
     // Cập nhật dropdown mô hình
     populateGeminiModelDropdown(availableModels);
 
-    // Xác định mô hình ưu tiên kiểm tra
-    let userSelected = selectModel ? selectModel.value : "auto";
+    // Xác định mô hình người dùng đang chọn để kiểm tra (không tự ý đổi)
+    let targetModel = selectModel ? selectModel.value : "gemini-3.8-flash";
     const customInput = document.getElementById("input-custom-gemini-model");
-    if (userSelected === "custom" && customInput && customInput.value.trim()) {
-      userSelected = customInput.value.trim();
+    if (targetModel === "custom" && customInput && customInput.value.trim()) {
+      targetModel = customInput.value.trim();
+    } else if (!targetModel || targetModel === "auto") {
+      targetModel = activeGeminiModel || getSavedGeminiModel() || "gemini-3.8-flash";
     }
-    let candidateIds = [];
-
-    // Nếu người dùng chọn mô hình tương thích hợp lệ
-    if (userSelected && userSelected !== "auto" && !userSelected.includes("interactions")) {
-      candidateIds = [userSelected, ...availableModels.map(m => m.id).filter(id => id !== userSelected)];
-    } else {
-      candidateIds = availableModels.map(m => m.id);
-    }
-
-    // Đảm bảo các mô hình Gemini 3+ chuẩn luôn có mặt trong danh sách thử
-    GEMINI_FALLBACK_MODELS.forEach(fb => {
-      if (!candidateIds.includes(fb)) candidateIds.push(fb);
-    });
 
     let testSuccess = false;
     let lastErrMsg = "";
+    let isRateLimited = false;
 
-    // Thử từng mô hình tương thích cho tới khi tìm thấy mô hình hoạt động hoàn hảo
-    for (const modelCandidate of candidateIds) {
-      if (modelCandidate.includes("interactions") || modelCandidate.includes("deep-research") || modelCandidate.includes("tts")) {
-        continue;
-      }
-
-      // Ưu tiên v1beta (chuẩn cho Gemini 3+), sau đó thử v1
-      for (const apiVer of ["v1beta", "v1"]) {
-        try {
-          const testPayload = {
-            contents: [
-              {
-                role: "user",
-                parts: [{ text: "hi" }]
-              }
-            ],
-            generationConfig: {
-              maxOutputTokens: 10,
-              thinkingConfig: {
-                thinkingLevel: "low"
-              }
+    // Kiểm tra duy nhất mô hình targetModel (thử v1beta, nếu lỗi thì thử v1)
+    for (const apiVer of ["v1beta", "v1"]) {
+      try {
+        const testPayload = {
+          contents: [
+            {
+              role: "user",
+              parts: [{ text: "hi" }]
             }
-          };
-
-          const testResp = await fetchWithTimeout(`https://generativelanguage.googleapis.com/${apiVer}/models/${modelCandidate}:generateContent?key=${cleanKey}`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(testPayload)
-          }, 12000);
-
-          if (testResp.ok) {
-            activeGeminiModel = modelCandidate;
-            setSavedGeminiModel(modelCandidate);
-            setSavedGeminiKey(cleanKey);
-            testSuccess = true;
-
-            if (selectModel) {
-              if (Array.from(selectModel.options).some(o => o.value === modelCandidate)) {
-                selectModel.value = modelCandidate;
-                const customContainer = document.getElementById("container-custom-gemini-model");
-                if (customContainer) customContainer.style.display = "none";
-              } else {
-                selectModel.value = "custom";
-                if (customInput) customInput.value = modelCandidate;
-                const customContainer = document.getElementById("container-custom-gemini-model");
-                if (customContainer) customContainer.style.display = "block";
-              }
-            }
-            if (modelBadge) {
-              modelBadge.textContent = `Đang kết nối: ${modelCandidate}`;
-            }
-
-            let noteExtra = "";
-            if (userSelected && userSelected !== "auto" && userSelected !== modelCandidate) {
-              noteExtra = `<div style="margin-top: 0.45rem; padding: 0.4rem 0.65rem; border-radius: var(--radius-sm); background: rgba(59, 130, 246, 0.12); color: var(--primary); font-size: 0.8rem; line-height: 1.4;">
-                💡 <em>Lưu ý: Mô hình <code>${userSelected}</code> tạm thời chạm hạn mức (Rate limit) hoặc không hỗ trợ. Hệ thống đã tự động kết nối mô hình thay thế tốt nhất: <strong>${modelCandidate}</strong>!</em>
-              </div>`;
-            }
-
-            resultDiv.style.background = "var(--success-light)";
-            resultDiv.style.color = "var(--success)";
-            resultDiv.innerHTML = `✅ <strong>API Key hoạt động xuất sắc!</strong><br>Đã kết nối thành công mô hình: <code style="font-weight: 700; font-size: 0.95rem;">${modelCandidate}</code>.<br><small>Hệ thống đã sẵn sàng giải đề, rà soát và sinh đề thi bằng Google Gemini 3+!</small>${noteExtra}`;
-            showToast(`Đã kết nối thành công Google Gemini (${modelCandidate})!`, "success");
-            return;
-          } else {
-            const errJson = await testResp.json().catch(() => ({}));
-            const errMsg = errJson.error?.message || `HTTP ${testResp.status}`;
-            lastErrMsg = errMsg;
-
-            if (testResp.status === 400 && errMsg.toLowerCase().includes("api key not valid")) {
-              resultDiv.style.background = "var(--danger-light)";
-              resultDiv.style.color = "var(--danger)";
-              resultDiv.innerHTML = `❌ <strong>API Key không hợp lệ!</strong><br><small>${errMsg}</small><br>👉 Vui lòng tạo hoặc copy lại Key mới tại Google AI Studio.`;
-              return;
-            }
-            if (testResp.status === 429) {
-              console.warn(`Mô hình ${modelCandidate} (${apiVer}) tạm hết hạn mức (429 Rate Limit/Quota), thử tiếp...`);
-              lastErrMsg = `Mô hình ${modelCandidate} tạm hết hạn mức (429 Quota/RPM)`;
-              continue;
-            }
-
-            if (errMsg.includes("no longer available") || errMsg.includes("is not found")) {
-              console.warn(`Mô hình ${modelCandidate} không khả dụng trên ${apiVer}, chuyển tiếp...`);
-            } else {
-              console.warn(`Mô hình ${modelCandidate} (${apiVer}) không tương thích (${errMsg}), chuyển sang mô hình tiếp theo...`);
-            }
+          ],
+          generationConfig: {
+            maxOutputTokens: 10
           }
-        } catch (err) {
-          lastErrMsg = err.message;
+        };
+
+        const testResp = await fetchWithTimeout(`https://generativelanguage.googleapis.com/${apiVer}/models/${targetModel}:generateContent?key=${cleanKey}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(testPayload)
+        }, 15000);
+
+        if (testResp.ok) {
+          activeGeminiModel = targetModel;
+          setSavedGeminiModel(targetModel);
+          setSavedGeminiKey(cleanKey);
+          testSuccess = true;
+
+          if (modelBadge) {
+            modelBadge.textContent = `Đang kết nối: ${targetModel}`;
+          }
+
+          resultDiv.style.background = "var(--success-light)";
+          resultDiv.style.color = "var(--success)";
+          resultDiv.innerHTML = `✅ <strong>API Key & mô hình hoạt động xuất sắc!</strong><br>Đã kết nối thành công mô hình: <code style="font-weight: 700; font-size: 0.95rem;">${targetModel}</code>.<br><small>Hệ thống giữ cố định mô hình đã chọn, sẵn sàng giải đề, rà soát và sinh đề thi!</small>`;
+          showToast(`Đã kết nối thành công mô hình: ${targetModel}!`, "success");
+          return;
+        } else {
+          const errJson = await testResp.json().catch(() => ({}));
+          const errMsg = errJson.error?.message || `HTTP ${testResp.status}`;
+          lastErrMsg = errMsg;
+
+          if (testResp.status === 400 && errMsg.toLowerCase().includes("api key not valid")) {
+            resultDiv.style.background = "var(--danger-light)";
+            resultDiv.style.color = "var(--danger)";
+            resultDiv.innerHTML = `❌ <strong>API Key không hợp lệ!</strong><br><small>${errMsg}</small><br>👉 Vui lòng tạo hoặc copy lại Key mới tại Google AI Studio.`;
+            return;
+          }
+
+          if (testResp.status === 429) {
+            isRateLimited = true;
+            lastErrMsg = errMsg;
+            break; // Dừng ngay, không tự ý chuyển sang mô hình khác
+          }
         }
+      } catch (err) {
+        lastErrMsg = err.message;
       }
+    }
+
+    if (isRateLimited) {
+      resultDiv.style.background = "rgba(239, 68, 68, 0.12)";
+      resultDiv.style.color = "#dc2626";
+      resultDiv.innerHTML = `⚠️ <strong>Mô hình <code>${targetModel}</code> đã chạm giới hạn (HTTP 429 Quota Exceeded / Rate Limit)!</strong><br><small>Tài khoản Google AI của bạn đã tạm thời hết hạn mức cho mô hình này. Hệ thống <strong>giữ nguyên</strong> mô hình bạn chọn (không tự ý đổi). Bạn có thể đợi một chút rồi thử lại hoặc tự chọn mô hình khác trong danh sách.</small>`;
+      showToast(`Mô hình ${targetModel} đã chạm giới hạn (HTTP 429 Quota Exceeded)!`, "warning");
+      return;
     }
 
     if (!testSuccess) {
       resultDiv.style.background = "var(--danger-light)";
       resultDiv.style.color = "var(--danger)";
-      resultDiv.innerHTML = `❌ Không thể kích hoạt mô hình: ${lastErrMsg}. Bạn hãy dùng nút <strong>"⚡ Dùng AI Lọc Tự Động (Offline)"</strong> có sẵn!`;
+      resultDiv.innerHTML = `❌ <strong>Lỗi kết nối mô hình <code>${targetModel}</code>:</strong> ${lastErrMsg}.<br><small>Hệ thống không tự ý đổi mô hình. Vui lòng kiểm tra lại quyền truy cập hoặc đổi mô hình khác trong danh sách.</small>`;
+      showToast(`Lỗi mô hình ${targetModel}: ${lastErrMsg}`, "danger");
     }
   } catch (netErr) {
     resultDiv.style.background = "var(--danger-light)";
@@ -2383,27 +2344,18 @@ async function testGeminiApiKey(apiKey) {
   }
 }
 
-// Thực hiện một lệnh gọi sinh nội dung đơn lẻ tới Google Gemini với cơ chế thử tự động & có timeout
+// Thực hiện một lệnh gọi sinh nội dung đơn lẻ tới Google Gemini (giữ cố định mô hình đã chọn, không tự ý đổi mô hình)
 async function executeSingleGeminiRequest(promptText, cleanKey, onProgress = null) {
-  let modelToUse = activeGeminiModel || getSavedGeminiModel();
+  let modelToUse = activeGeminiModel || getSavedGeminiModel() || "gemini-3.8-flash";
   const selectModel = document.getElementById("select-gemini-model");
   const customInput = document.getElementById("input-custom-gemini-model");
   if (selectModel && selectModel.value === "custom" && customInput && customInput.value.trim()) {
     modelToUse = customInput.value.trim();
+  } else if (selectModel && selectModel.value && selectModel.value !== "auto") {
+    modelToUse = selectModel.value;
   }
 
-  // Tự động chuẩn hóa nếu model rỗng hoặc là auto
-  if (!modelToUse || modelToUse === "auto") {
-    modelToUse = "gemini-3.8-flash";
-    activeGeminiModel = "gemini-3.8-flash";
-    setSavedGeminiModel("gemini-3.8-flash");
-  }
-
-  const rawCandidates = [
-    modelToUse,
-    ...GEMINI_FALLBACK_MODELS.filter(m => m !== modelToUse)
-  ];
-  const modelsToTry = [...new Set(rawCandidates)].filter(m => !m.includes("tts") && !m.includes("interactions"));
+  if (onProgress) onProgress(`Đang gửi yêu cầu tới mô hình Google AI (${modelToUse})...`);
 
   const payload = {
     contents: [
@@ -2422,107 +2374,93 @@ async function executeSingleGeminiRequest(promptText, cleanKey, onProgress = nul
   };
 
   let lastError = null;
+  const apiVersions = ["v1beta", "v1"];
 
-  for (const model of modelsToTry) {
-    if (onProgress) onProgress(`Đang gửi yêu cầu tới mô hình Google AI (${model})...`);
-    
-    // Ưu tiên v1beta (chuẩn cho Gemini 3.8 Flash)
-    const apiVersions = ["v1beta", "v1"];
-    for (const apiVer of apiVersions) {
-      const url = `https://generativelanguage.googleapis.com/${apiVer}/models/${model}:generateContent?key=${cleanKey}`;
-      try {
-        const resp = await fetchWithTimeout(url, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload)
-        }, 32000); // 32s timeout tối đa cho mỗi request
+  for (const apiVer of apiVersions) {
+    const url = `https://generativelanguage.googleapis.com/${apiVer}/models/${modelToUse}:generateContent?key=${cleanKey}`;
+    try {
+      const resp = await fetchWithTimeout(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      }, 35000); // 35s timeout tối đa cho mỗi request
 
-        if (resp.ok) {
-          const data = await resp.json();
-          const textOutput = extractTextFromGeminiResponse(data);
-          if (textOutput) {
-            activeGeminiModel = model;
-            setSavedGeminiModel(model);
-            return textOutput;
-          }
-        } else {
-          const errJson = await resp.json().catch(() => ({}));
-          const errMsg = errJson.error?.message || `HTTP ${resp.status}`;
-          lastError = new Error(errMsg);
+      if (resp.ok) {
+        const data = await resp.json();
+        const textOutput = extractTextFromGeminiResponse(data);
+        if (textOutput) {
+          activeGeminiModel = modelToUse;
+          setSavedGeminiModel(modelToUse);
+          return textOutput;
+        }
+      } else {
+        const errJson = await resp.json().catch(() => ({}));
+        const errMsg = errJson.error?.message || `HTTP ${resp.status}`;
+        lastError = new Error(errMsg);
 
-          // Nếu model không hỗ trợ thinkingConfig, tự động thử lại payload cơ bản
-          if (resp.status === 400 && errMsg.includes("thinkingConfig")) {
-            const fallbackPayload = {
-              contents: payload.contents,
-              generationConfig: {
-                temperature: 0.25,
-                maxOutputTokens: 8192
-              }
-            };
-            const fbResp = await fetchWithTimeout(url, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify(fallbackPayload)
-            }, 32000);
-            if (fbResp.ok) {
-              const fbData = await fbResp.json();
-              const fbText = extractTextFromGeminiResponse(fbData);
-              if (fbText) {
-                activeGeminiModel = model;
-                setSavedGeminiModel(model);
-                return fbText;
-              }
+        // Nếu model không hỗ trợ thinkingConfig, tự động thử lại payload cơ bản trên chính model đó
+        if (resp.status === 400 && errMsg.includes("thinkingConfig")) {
+          const fallbackPayload = {
+            contents: payload.contents,
+            generationConfig: {
+              temperature: 0.25,
+              maxOutputTokens: 8192
+            }
+          };
+          const fbResp = await fetchWithTimeout(url, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(fallbackPayload)
+          }, 35000);
+          if (fbResp.ok) {
+            const fbData = await fbResp.json();
+            const fbText = extractTextFromGeminiResponse(fbData);
+            if (fbText) {
+              activeGeminiModel = modelToUse;
+              setSavedGeminiModel(modelToUse);
+              return fbText;
             }
           }
+        }
 
-          if (resp.status === 400 && errMsg.toLowerCase().includes("api key not valid")) {
-            throw new Error("Mã API Key không hợp lệ! Vui lòng bấm nút 'Kiểm tra Key' hoặc lấy lại tại aistudio.google.com");
-          }
-          if (resp.status === 429) {
-            console.warn(`[NovaQuiz AI] Model ${model} đạt giới hạn tốc độ (Rate Limit / Quota), tự động thử mô hình tiếp theo...`);
-            if (onProgress) onProgress(`Mô hình ${model} tạm hết hạn mức, đang chuyển sang mô hình thay thế...`);
-            break; // Thử model khác ngay
-          }
-          if (errMsg.includes("no longer available") || errMsg.includes("is not found") || errMsg.includes("Interactions API")) {
-            console.warn(`[NovaQuiz AI] Model ${model} không khả dụng trên ${apiVer}, chuyển tiếp...`);
-            continue;
-          } else {
-            console.warn(`[NovaQuiz AI] Model ${model} (${apiVer}) không phản hồi: ${errMsg}`);
-          }
+        if (resp.status === 400 && errMsg.toLowerCase().includes("api key not valid")) {
+          throw new Error("Mã API Key không hợp lệ! Vui lòng bấm nút 'Kiểm tra Key' hoặc lấy lại tại aistudio.google.com");
         }
-      } catch (e) {
-        if (e.message && (e.message.includes("API Key") || e.message.includes("hạn mức"))) {
-          throw e;
+
+        if (resp.status === 429) {
+          // Báo lỗi hết hạn mức ngay lập tức, tuyệt đối KHÔNG tự ý đổi mô hình khác!
+          throw new Error(`Mô hình "${modelToUse}" tạm thời chạm giới hạn yêu cầu (HTTP 429 Quota Exceeded / Rate Limit). Vui lòng đợi ít phút hoặc kiểm tra quota API của bạn! (${errMsg})`);
         }
-        lastError = e;
-        console.warn(`[NovaQuiz AI] Thử ${model} (${apiVer}) thất bại:`, e.message);
+
+        if (errMsg.includes("no longer available") || errMsg.includes("is not found")) {
+          continue; // Thử sang API version khác nếu có
+        } else {
+          lastError = new Error(`Mô hình "${modelToUse}" báo lỗi (${apiVer}): ${errMsg}`);
+        }
       }
+    } catch (e) {
+      if (e.message && (e.message.includes("API Key") || e.message.includes("429") || e.message.includes("giới hạn yêu cầu"))) {
+        throw e;
+      }
+      lastError = e;
     }
   }
 
-  throw lastError || new Error("Không thể kết nối đến Google Gemini AI. Vui lòng kiểm tra lại API Key hoặc sử dụng bộ lọc AI Offline!");
+  throw lastError || new Error(`Không thể kết nối đến mô hình Google Gemini "${modelToUse}". Vui lòng kiểm tra lại mạng hoặc API Key!`);
 }
 
 // Thực hiện một lệnh gọi đa phương tiện Multimodal (văn bản + nhiều hình ảnh) tới Google Gemini Vision
 async function executeGeminiMultimodalRequest(parts, cleanKey, onProgress = null) {
-  let modelToUse = activeGeminiModel || getSavedGeminiModel();
+  let modelToUse = activeGeminiModel || getSavedGeminiModel() || "gemini-3.8-flash";
   const selectModel = document.getElementById("select-gemini-model");
   const customInput = document.getElementById("input-custom-gemini-model");
   if (selectModel && selectModel.value === "custom" && customInput && customInput.value.trim()) {
     modelToUse = customInput.value.trim();
+  } else if (selectModel && selectModel.value && selectModel.value !== "auto") {
+    modelToUse = selectModel.value;
   }
 
-  if (!modelToUse || modelToUse === "auto") {
-    modelToUse = "gemini-3.8-flash";
-    activeGeminiModel = "gemini-3.8-flash";
-    setSavedGeminiModel("gemini-3.8-flash");
-  }
-
-  const rawCandidates = [
-    modelToUse,
-    ...GEMINI_FALLBACK_MODELS.filter(m => m !== modelToUse)
-  ];
-  const modelsToTry = [...new Set(rawCandidates)].filter(m => !m.includes("tts") && !m.includes("interactions"));
+  if (onProgress) onProgress(`AI Vision đang đọc & xử lý ảnh qua mô hình ${modelToUse}...`);
 
   const payload = {
     contents: [
@@ -2541,82 +2479,77 @@ async function executeGeminiMultimodalRequest(parts, cleanKey, onProgress = null
   };
 
   let lastError = null;
+  const apiVersions = ["v1beta", "v1"];
 
-  for (const model of modelsToTry) {
-    if (onProgress) onProgress(`AI Vision đang đọc & xử lý ảnh qua mô hình ${model}...`);
-    
-    const apiVersions = ["v1beta", "v1"];
-    for (const apiVer of apiVersions) {
-      const url = `https://generativelanguage.googleapis.com/${apiVer}/models/${model}:generateContent?key=${cleanKey}`;
-      try {
-        const resp = await fetchWithTimeout(url, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload)
-        }, 45000); // 45s cho xử lý nhiều ảnh
+  for (const apiVer of apiVersions) {
+    const url = `https://generativelanguage.googleapis.com/${apiVer}/models/${modelToUse}:generateContent?key=${cleanKey}`;
+    try {
+      const resp = await fetchWithTimeout(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      }, 50000); // 50s cho xử lý nhiều ảnh
 
-        if (resp.ok) {
-          const data = await resp.json();
-          const textOutput = extractTextFromGeminiResponse(data);
-          if (textOutput) {
-            activeGeminiModel = model;
-            setSavedGeminiModel(model);
-            return textOutput;
-          }
-        } else {
-          const errJson = await resp.json().catch(() => ({}));
-          const errMsg = errJson.error?.message || `HTTP ${resp.status}`;
-          lastError = new Error(errMsg);
+      if (resp.ok) {
+        const data = await resp.json();
+        const textOutput = extractTextFromGeminiResponse(data);
+        if (textOutput) {
+          activeGeminiModel = modelToUse;
+          setSavedGeminiModel(modelToUse);
+          return textOutput;
+        }
+      } else {
+        const errJson = await resp.json().catch(() => ({}));
+        const errMsg = errJson.error?.message || `HTTP ${resp.status}`;
+        lastError = new Error(errMsg);
 
-          if (resp.status === 400 && errMsg.includes("thinkingConfig")) {
-            const fbPayload = {
-              contents: payload.contents,
-              generationConfig: {
-                temperature: 0.1,
-                maxOutputTokens: 8192
-              }
-            };
-            const fbResp = await fetchWithTimeout(url, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify(fbPayload)
-            }, 45000);
-            if (fbResp.ok) {
-              const fbData = await fbResp.json();
-              const fbText = extractTextFromGeminiResponse(fbData);
-              if (fbText) {
-                activeGeminiModel = model;
-                setSavedGeminiModel(model);
-                return fbText;
-              }
+        if (resp.status === 400 && errMsg.includes("thinkingConfig")) {
+          const fbPayload = {
+            contents: payload.contents,
+            generationConfig: {
+              temperature: 0.1,
+              maxOutputTokens: 8192
+            }
+          };
+          const fbResp = await fetchWithTimeout(url, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(fbPayload)
+          }, 50000);
+          if (fbResp.ok) {
+            const fbData = await fbResp.json();
+            const fbText = extractTextFromGeminiResponse(fbData);
+            if (fbText) {
+              activeGeminiModel = modelToUse;
+              setSavedGeminiModel(modelToUse);
+              return fbText;
             }
           }
+        }
 
-          if (resp.status === 400 && errMsg.toLowerCase().includes("api key not valid")) {
-            throw new Error("Mã API Key không hợp lệ! Vui lòng bấm nút 'Cài đặt Gemini API Key' để kiểm tra lại.");
-          }
-          if (resp.status === 429) {
-            console.warn(`[NovaQuiz AI OCR] Model ${model} đạt giới hạn tốc độ (Rate Limit / Quota), tự động thử mô hình tiếp theo...`);
-            if (onProgress) onProgress(`Mô hình ${model} tạm hết hạn mức, chuyển sang mô hình tiếp theo...`);
-            break;
-          }
-          if (errMsg.includes("no longer available") || errMsg.includes("is not found") || errMsg.includes("Interactions API")) {
-            console.warn(`[NovaQuiz AI OCR] Model ${model} không khả dụng trên ${apiVer}, chuyển tiếp...`);
-            continue;
-          } else {
-            console.warn(`[NovaQuiz AI OCR] Model ${model} (${apiVer}) không phản hồi: ${errMsg}`);
-          }
+        if (resp.status === 400 && errMsg.toLowerCase().includes("api key not valid")) {
+          throw new Error("Mã API Key không hợp lệ! Vui lòng bấm nút 'Cài đặt Gemini API Key' để kiểm tra lại.");
         }
-      } catch (e) {
-        if (e.message && (e.message.includes("API Key") || e.message.includes("hạn mức"))) {
-          throw e;
+
+        if (resp.status === 429) {
+          throw new Error(`Mô hình Vision "${modelToUse}" tạm thời chạm giới hạn yêu cầu (HTTP 429 Quota Exceeded / Rate Limit). Vui lòng đợi ít phút rồi thử lại! (${errMsg})`);
         }
-        lastError = e;
+
+        if (errMsg.includes("no longer available") || errMsg.includes("is not found")) {
+          continue;
+        } else {
+          lastError = new Error(`Mô hình Vision "${modelToUse}" báo lỗi (${apiVer}): ${errMsg}`);
+        }
       }
+    } catch (e) {
+      if (e.message && (e.message.includes("API Key") || e.message.includes("429") || e.message.includes("giới hạn yêu cầu"))) {
+        throw e;
+      }
+      lastError = e;
     }
   }
 
-  throw lastError || new Error("Không thể kết nối đến Google Gemini Vision. Vui lòng kiểm tra lại API Key hoặc chất lượng ảnh!");
+  throw lastError || new Error(`Không thể kết nối đến Google Gemini Vision "${modelToUse}". Vui lòng kiểm tra lại API Key hoặc chất lượng ảnh!`);
 }
 
 // Nén và tối ưu kích thước ảnh trước khi gửi sang AI (Đảm bảo chạy mượt và siêu nhẹ trên cả điện thoại 4G)
@@ -7329,7 +7262,7 @@ Giải thích: HDMI (High-Definition Multimedia Interface) truyền tải cả v
         } else {
           activeGeminiModel = "gemini-3.8-flash";
           setSavedGeminiModel("gemini-3.8-flash");
-          if (modelBadge) modelBadge.textContent = "Tự động chọn (Ưu tiên Gemini 3.8 Flash / 3.5 Flash-Lite)";
+          if (modelBadge) modelBadge.textContent = "Mặc định: Gemini 3.8 Flash";
         }
       }
     });
@@ -7454,10 +7387,6 @@ Giải thích: HDMI (High-Definition Multimedia Interface) truyền tải cả v
       if (modelChoice === "custom") {
         modelChoice = (inputCustomModel ? inputCustomModel.value.trim() : "") || "gemini-3.8-flash";
       } else if (modelChoice === "auto") {
-        modelChoice = "gemini-3.8-flash";
-      }
-
-      if (modelChoice.includes("1.5") || modelChoice.includes("2.0") || modelChoice.includes("2.5") || modelChoice.includes("1.0")) {
         modelChoice = "gemini-3.8-flash";
       }
 
