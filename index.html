@@ -547,22 +547,148 @@ Giải thích: Số 2 là số nguyên tố chẵn duy nhất trong tập hợp 
           <!-- Actions -->
           <div class="creator-actions" style="display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 2rem; border-top: 1px solid var(--border-subtle); padding-top: 1.5rem; flex-wrap: wrap;">
             <button class="btn btn-secondary" id="btn-cancel-creator">Hủy bỏ</button>
-            <button class="btn btn-secondary btn-lg" id="btn-save-as-copy-quiz" style="display: none;" title="Lưu thành một bộ đề mới độc lập mà không ghi đè lên bộ đề đang sửa">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+            <button class="btn btn-secondary" id="btn-save-as-copy-quiz" style="display: none;" title="Lưu thành một bộ đề mới độc lập mà không ghi đè lên bộ đề đang sửa">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
               <span>Lưu Bản Sao Mới</span>
             </button>
-            <button class="btn btn-secondary btn-lg" id="btn-save-quiz">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <button class="btn btn-secondary" id="btn-save-quiz">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
                 <polyline points="17 21 17 13 7 13 7 21"></polyline>
                 <polyline points="7 3 7 8 15 8"></polyline>
               </svg>
               <span id="btn-save-quiz-text">Lưu Vào Thư Viện</span>
             </button>
-            <button class="btn btn-primary btn-lg" id="btn-save-and-start-quiz">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+            <button class="btn btn-primary" id="btn-save-and-start-quiz">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
               <span id="btn-save-and-start-quiz-text">Lưu & Bắt Đầu Làm Bài Ngay</span>
             </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== VIEW: CHỈNH SỬA BỘ ĐỀ THI (CHUYÊN BIỆT & ĐỘC LẬP) ==================== -->
+    <section class="view" id="view-edit-quiz">
+      <div class="edit-quiz-top-bar" style="margin-bottom: 1.25rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem;">
+        <button class="btn btn-ghost" id="btn-back-from-edit-quiz">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="19" y1="12" x2="5" y2="12"></line>
+            <polyline points="12 19 5 12 12 5"></polyline>
+          </svg>
+          Quay lại Thư viện
+        </button>
+        <div class="edit-quiz-top-actions" style="display: flex; gap: 0.65rem; align-items: center; flex-wrap: wrap;">
+          <button type="button" class="btn btn-secondary" id="btn-edit-quiz-cancel-top">Hủy Bỏ</button>
+          <button type="button" class="btn btn-secondary" id="btn-edit-quiz-save-copy-top" title="Lưu thành một bộ đề mới độc lập mà không ghi đè lên bộ đề gốc">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+            Lưu Bản Sao Mới
+          </button>
+          <button type="button" class="btn btn-primary" id="btn-edit-quiz-save-top">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            Lưu Thay Đổi
+          </button>
+        </div>
+      </div>
+
+      <div class="creator-card edit-quiz-card">
+        <div class="creator-header edit-quiz-header" style="padding-bottom: 1.25rem; border-bottom: 1px solid var(--border-subtle);">
+          <div>
+            <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
+              <h2 style="font-size: 1.35rem; font-weight: 800; margin: 0;">✏️ Chỉnh Sửa Bộ Đề Thi</h2>
+              <span id="edit-quiz-badge-count" class="badge badge-primary" style="font-weight: 700; font-size: 0.85rem; padding: 0.3rem 0.75rem; border-radius: 999px;">0 câu hỏi</span>
+            </div>
+            <p style="color: var(--text-muted); font-size: 0.875rem; margin: 0.4rem 0 0 0;">
+              Chỉnh sửa thông tin, trực tiếp sửa câu hỏi, thay đổi đáp án đúng hoặc thêm bớt câu hỏi một cách trực quan.
+            </p>
+          </div>
+
+          <div class="creator-tabs edit-mode-tabs" style="margin-top: 1rem;">
+            <button type="button" class="creator-tab active" id="tab-btn-edit-cards" data-edit-tab="edit-tab-cards">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
+              Sửa từng câu hỏi (Trực quan)
+            </button>
+            <button type="button" class="creator-tab" id="tab-btn-edit-text" data-edit-tab="edit-tab-text">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
+              Sửa nhanh dạng văn bản
+            </button>
+          </div>
+        </div>
+
+        <div class="creator-body" style="padding-top: 1.5rem;">
+          <!-- Metadata Bộ Đề -->
+          <div class="form-grid">
+            <div class="form-group">
+              <label class="form-label" for="edit-quiz-title">Tên bộ đề thi <span style="color: var(--danger);">*</span></label>
+              <input type="text" class="form-input" id="edit-quiz-title" placeholder="VD: Đề thi Trắc nghiệm Lịch sử 12...">
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="edit-quiz-category">Môn học / Phân loại</label>
+              <input type="text" class="form-input" id="edit-quiz-category" placeholder="VD: Lịch sử, Tin học...">
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="edit-quiz-time">Thời gian làm bài mặc định (phút)</label>
+              <input type="number" class="form-input" id="edit-quiz-time" min="1" max="180" value="15">
+            </div>
+          </div>
+
+          <div class="form-group" style="margin-bottom: 1.5rem;">
+            <label class="form-label" for="edit-quiz-desc">Mô tả bộ đề (tùy chọn)</label>
+            <input type="text" class="form-input" id="edit-quiz-desc" placeholder="VD: 30 câu hỏi trọng tâm ôn tập học kỳ...">
+          </div>
+
+          <!-- TAB 1: SỬA TỪNG CÂU HỎI TRỰC QUAN (Cards) -->
+          <div class="edit-tab-pane active" id="edit-tab-cards">
+            <div class="edit-questions-toolbar" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.5rem;">
+              <span class="edit-questions-summary" id="edit-questions-summary-text" style="font-weight: 700; font-size: 0.95rem;">
+                Danh sách các câu hỏi trong đề:
+              </span>
+              <button type="button" class="btn btn-secondary btn-sm" id="btn-edit-add-question-top">
+                ➕ Thêm câu hỏi mới
+              </button>
+            </div>
+
+            <!-- Container danh sách câu hỏi -->
+            <div id="edit-questions-container" class="edit-questions-container" style="display: flex; flex-direction: column; gap: 1rem;">
+              <!-- Render động bởi app.js -->
+            </div>
+
+            <!-- Nút thêm câu hỏi phía dưới -->
+            <div style="margin-top: 1.5rem; text-align: center;">
+              <button type="button" class="btn btn-secondary" id="btn-edit-add-question-bottom" style="width: 100%; max-width: 320px;">
+                ➕ Thêm Câu Hỏi Mới
+              </button>
+            </div>
+          </div>
+
+          <!-- TAB 2: SỬA NHANH DẠNG VĂN BẢN (Smart Text) -->
+          <div class="edit-tab-pane" id="edit-tab-text" style="display: none;">
+            <div style="margin-bottom: 0.75rem; padding: 0.75rem 1rem; border-radius: var(--radius-md); background: var(--bg-muted); border: 1px solid var(--border-subtle); font-size: 0.85rem; color: var(--text-muted); line-height: 1.5;">
+              💡 <em>Mẹo: Bạn có thể sửa trực tiếp nội dung các câu hỏi dưới dạng văn bản. Đặt dấu <strong>*</strong> trước phương án đúng (ví dụ <code>*A. Hà Nội</code>) hoặc ghi <code>Đáp án: A</code> ở cuối câu. Bấm "Cập nhật vào danh sách" để đồng bộ ngay lập tức!</em>
+            </div>
+            <textarea class="form-textarea smart-textarea" id="edit-quiz-raw-text" rows="18" placeholder="Nội dung đề thi trắc nghiệm..." style="font-family: inherit; font-size: 0.9rem; line-height: 1.6;"></textarea>
+            <div style="display: flex; justify-content: flex-end; gap: 0.65rem; margin-top: 0.75rem;">
+              <button type="button" class="btn btn-secondary btn-sm" id="btn-edit-sync-from-text">
+                🔄 Cập nhật vào danh sách câu hỏi
+              </button>
+            </div>
+          </div>
+
+          <!-- FOOTER NÚT BẤM CỦA VIEW CHỈNH SỬA -->
+          <div class="edit-quiz-footer" style="margin-top: 2rem; border-top: 1px solid var(--border-subtle); padding-top: 1.25rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem;">
+            <button type="button" class="btn btn-secondary" id="btn-edit-quiz-cancel-bottom">
+              Quay lại Thư viện
+            </button>
+            <div style="display: flex; gap: 0.65rem; flex-wrap: wrap;">
+              <button type="button" class="btn btn-secondary" id="btn-edit-quiz-save-copy-bottom">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                Lưu Bản Sao Mới
+              </button>
+              <button type="button" class="btn btn-primary" id="btn-edit-quiz-save-bottom">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                Lưu Thay Đổi
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -947,33 +1073,33 @@ Giải thích: Số 2 là số nguyên tố chẵn duy nhất trong tập hợp 
         </div>
 
         <!-- Action Buttons -->
-        <div class="result-actions-group" style="display: flex; justify-content: center; gap: 1rem; margin-top: 2rem; flex-wrap: wrap;">
-          <button class="btn btn-primary btn-lg" id="btn-retry-all">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"></polyline><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path></svg>
+        <div class="result-actions-group" style="display: flex; justify-content: center; gap: 0.75rem; margin-top: 2rem; flex-wrap: wrap;">
+          <button class="btn btn-primary" id="btn-retry-all">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"></polyline><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path></svg>
             Làm lại toàn bộ đề
           </button>
-          <button class="btn btn-danger btn-lg" id="btn-retry-wrongs">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
+          <button class="btn btn-danger" id="btn-retry-wrongs">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
             Chỉ làm lại các câu SAI
           </button>
-          <button class="btn btn-ai btn-lg" id="btn-ai-tutor-wrongs" style="display: none; align-items: center; gap: 0.5rem;" title="Nhờ AI Gemini phân tích cặn kẽ vì sao các câu trên bạn làm sai và cách khắc phục">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+          <button class="btn btn-ai" id="btn-ai-tutor-wrongs" style="display: none; align-items: center; gap: 0.5rem;" title="Nhờ AI Gemini phân tích cặn kẽ vì sao các câu trên bạn làm sai và cách khắc phục">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
             🤖 AI Chữa & Giải Thích Các Câu Sai
           </button>
-          <button class="btn btn-secondary btn-lg" id="btn-print-result" title="In hoặc lưu kết quả bài thi ra file PDF chuẩn A4">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+          <button class="btn btn-secondary" id="btn-print-result" title="In hoặc lưu kết quả bài thi ra file PDF chuẩn A4">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
             In Đề / PDF
           </button>
-          <button class="btn btn-secondary btn-lg" id="btn-export-docx-result" title="Xuất toàn bộ đề thi và đáp án ra file Microsoft Word (.docx)">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
+          <button class="btn btn-secondary" id="btn-export-docx-result" title="Xuất toàn bộ đề thi và đáp án ra file Microsoft Word (.docx)">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
             Xuất Word (.docx)
           </button>
-          <button class="btn btn-secondary btn-lg" id="btn-edit-current-quiz-result" title="Chỉnh sửa nội dung bộ đề thi này (sửa câu hỏi, đáp án, thời gian...)">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+          <button class="btn btn-secondary" id="btn-edit-current-quiz-result" title="Chỉnh sửa nội dung bộ đề thi này (sửa câu hỏi, đáp án, thời gian...)">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
             Chỉnh sửa đề
           </button>
-          <button class="btn btn-secondary btn-lg" id="btn-result-to-home">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+          <button class="btn btn-secondary" id="btn-result-to-home">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
             Về thư viện đề thi
           </button>
         </div>
@@ -1137,8 +1263,8 @@ Giải thích: Số 2 là số nguyên tố chẵn duy nhất trong tập hợp 
         </div>
         <div style="display: flex; gap: 0.65rem;">
           <button class="btn btn-secondary" id="btn-cancel-setup">Hủy</button>
-          <button class="btn btn-primary btn-lg" id="btn-start-quiz-now">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+          <button class="btn btn-primary" id="btn-start-quiz-now">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
             Bắt Đầu Ngay
           </button>
         </div>
@@ -1478,64 +1604,6 @@ Giải thích: Số 2 là số nguyên tố chẵn duy nhất trong tập hợp 
         <button type="button" class="btn btn-primary" id="btn-submit-ai-generator" style="background: linear-gradient(135deg, #d97706, #ea580c); border: none; font-weight: 700;">
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
           🚀 Bắt đầu Tạo Đề Bằng AI Gemini
-        </button>
-      </div>
-    </div>
-  </div>
-
-  <!-- ==================== SEPARATE ANSWERS MODAL ==================== -->
-  <div class="modal-backdrop" id="modal-separate-answers">
-    <div class="modal-dialog" style="max-width: 620px; max-height: 92vh; display: flex; flex-direction: column;">
-      <div class="modal-header" style="padding: 1.25rem 1.75rem;">
-        <div style="display: flex; align-items: center; gap: 0.6rem;">
-          <div style="width: 38px; height: 38px; border-radius: var(--radius-md); background: linear-gradient(135deg, #10b981, #059669); color: white; display: flex; align-items: center; justify-content: center; font-size: 1.15rem;">
-            📋
-          </div>
-          <div>
-            <h3 class="modal-title" style="font-size: 1.15rem;">Ghép Bảng Đáp Án Riêng Vào Đề Thi</h3>
-            <p style="font-size: 0.8rem; color: var(--text-muted);">Dành cho đề thi không tô đậm/màu, có bảng đáp án ở cuối hoặc ở tệp riêng</p>
-          </div>
-        </div>
-        <button class="btn-ghost btn-sm" id="btn-close-separate-answers" style="width: 34px; height: 34px; padding: 0; display: inline-flex; align-items: center; justify-content: center; border-radius: var(--radius-btn);">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-        </button>
-      </div>
-
-      <div class="modal-body" style="padding: 1.25rem 1.75rem; display: flex; flex-direction: column; gap: 0.95rem; overflow-y: auto; flex: 1;">
-        <div style="background: var(--primary-light); padding: 0.75rem 1rem; border-radius: var(--radius-md); font-size: 0.825rem; line-height: 1.5; color: var(--text-main); border: 1px solid var(--border-subtle);">
-          💡 <strong>Cách hoạt động:</strong> Hệ thống tự động nhận biết mọi định dạng đáp án (ví dụ: <code>1.A 2.B 3.C...</code> hoặc <code>1-A, 2-B...</code> hoặc <code>1A 2B 3C...</code> hoặc <code>Câu 1: A, Câu 2: B...</code>) và tự động gắn dấu <code>*</code> vào phương án đúng của từng câu hỏi trong đề!
-        </div>
-
-        <div class="form-group">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.4rem;">
-            <label class="form-label" for="textarea-separate-answers" style="margin-bottom: 0;">
-              Dán nội dung bảng đáp án:
-            </label>
-            <input type="file" id="input-separate-answers-file" accept=".txt,.docx,.pdf,.csv" style="display: none;">
-            <button type="button" class="btn btn-secondary btn-sm" id="btn-upload-separate-answers-file" style="padding: 0.35rem 0.65rem; font-size: 0.8rem;">
-              📎 Tải tệp đáp án (.txt, .docx, .pdf)
-            </button>
-          </div>
-          <textarea class="form-textarea" id="textarea-separate-answers" rows="6" placeholder="Dán bảng đáp án tại đây...&#10;Ví dụ:&#10;1.A  2.B  3.C  4.D  5.A&#10;6.B  7.C  8.D  9.A  10.C&#10;Hoặc: 1-A, 2-B, 3-C, 4-D...&#10;Hoặc: Câu 1: A, Câu 2: B..." style="font-family: monospace; font-size: 0.85rem; line-height: 1.5;"></textarea>
-          
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.4rem;">
-            <span id="separate-answers-status" style="font-size: 0.8rem; color: var(--text-muted);">Chưa nhập đáp án</span>
-            <button type="button" class="btn btn-ghost btn-sm" id="btn-clear-separate-answers" style="font-size: 0.75rem; padding: 0.2rem 0.5rem;">
-              Xóa trắng
-            </button>
-          </div>
-        </div>
-
-        <div id="separate-answers-preview-badge" style="display: none; background: var(--success-light); color: var(--success); padding: 0.6rem 0.85rem; border-radius: var(--radius-sm); font-size: 0.825rem; border: 1px solid rgba(16, 185, 129, 0.2);">
-          <!-- Dynamic summary: Đã phát hiện 40 đáp án: 1:A, 2:B... -->
-        </div>
-      </div>
-
-      <div class="modal-footer" style="display: flex; justify-content: flex-end; gap: 0.75rem; padding: 1rem 1.75rem;">
-        <button class="btn btn-secondary" id="btn-cancel-separate-answers">Đóng</button>
-        <button class="btn btn-primary" id="btn-apply-separate-answers">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
-          ⚡ Ghép Đáp Án Vào Đề Thi
         </button>
       </div>
     </div>

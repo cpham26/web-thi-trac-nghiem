@@ -1702,7 +1702,10 @@ function openCreator(editQuiz = null) {
 }
 
 /**
- * Mở giao diện chỉnh sửa bộ đề thi đã có
+let editQuizQuestionsList = [];
+
+/**
+ * Mở giao diện chuyên biệt ĐỘC LẬP để chỉnh sửa bộ đề thi đã có
  */
 function openEditQuiz(quizId, event = null) {
   if (event) {
@@ -1714,42 +1717,327 @@ function openEditQuiz(quizId, event = null) {
     return;
   }
 
-  // 1. Chuyển sang View Creator
-  switchView("view-creator");
-
-  // 2. Reset các trạng thái file/audit cũ
-  resetCreatorForm();
-
-  // 3. Đánh dấu ID đang chỉnh sửa
+  // 1. Lưu lại ID đang chỉnh sửa
   AppState.currentEditingQuizId = quiz.id;
 
-  // 4. Điền metadata bộ đề
-  const titleInput = document.getElementById("input-quiz-title");
-  const catInput = document.getElementById("input-quiz-category");
-  const timeInput = document.getElementById("input-quiz-time");
-  const descInput = document.getElementById("input-quiz-desc");
+  // 2. Chuyển sang View Chuyên Biệt Edit Quiz
+  switchView("view-edit-quiz");
+
+  // 3. Điền thông tin metadata bộ đề
+  const titleInput = document.getElementById("edit-quiz-title");
+  const catInput = document.getElementById("edit-quiz-category");
+  const timeInput = document.getElementById("edit-quiz-time");
+  const descInput = document.getElementById("edit-quiz-desc");
+  const badgeCount = document.getElementById("edit-quiz-badge-count");
+
   if (titleInput) titleInput.value = quiz.title || "";
   if (catInput) catInput.value = quiz.category || "Chung";
   if (timeInput) timeInput.value = quiz.timeLimit || 15;
   if (descInput) descInput.value = quiz.description || "";
 
-  // 5. Chuyển đổi và nạp danh sách câu hỏi vào khung Dán văn bản nhanh
-  const smartText = convertQuestionsToSmartText(quiz.questions || []);
-  const textarea = document.getElementById("smart-text-input");
-  if (textarea) textarea.value = smartText;
+  // 4. Sao chép sâu danh sách câu hỏi
+  editQuizQuestionsList = JSON.parse(JSON.stringify(quiz.questions || []));
 
-  // 6. Nạp danh sách câu hỏi vào Soạn thủ công
-  manualQuestionsList = JSON.parse(JSON.stringify(quiz.questions || []));
-  renderManualQuestions();
+  // Chuẩn hóa câu hỏi nếu thiếu thuộc tính
+  editQuizQuestionsList.forEach(q => {
+    if (!Array.isArray(q.options)) q.options = ["", "", "", ""];
+    if (typeof q.correctIndex !== "number" || q.correctIndex < 0 || q.correctIndex >= q.options.length) {
+      q.correctIndex = 0;
+    }
+    if (typeof q.explanation !== "string") q.explanation = "";
+  });
 
-  // 7. Cập nhật preview thời gian thực và đếm câu hỏi
-  updateSmartParsePreview();
+  if (badgeCount) {
+    badgeCount.textContent = `${editQuizQuestionsList.length} câu hỏi`;
+  }
 
-  // 8. Chuyển giao diện sang chế độ Đang chỉnh sửa
-  updateCreatorEditModeUI(true, quiz);
+  // 5. Render danh sách thẻ câu hỏi
+  renderEditQuestionsList();
 
-  showToast(`✏️ Đang chỉnh sửa bộ đề: "${quiz.title}" (${(quiz.questions || []).length} câu)`, "info");
+  // 6. Cập nhật nội dung văn bản raw
+  const rawTextarea = document.getElementById("edit-quiz-raw-text");
+  if (rawTextarea) {
+    rawTextarea.value = convertQuestionsToSmartText(editQuizQuestionsList);
+  }
+
+  // 7. Kích hoạt mặc định Tab 1 (Sửa từng câu hỏi)
+  switchEditQuizTab("edit-tab-cards");
+
+  showToast(`✏️ Mở trình chỉnh sửa: "${quiz.title}" (${editQuizQuestionsList.length} câu)`, "info");
   playSound("click");
+}
+
+function switchEditQuizTab(tabId) {
+  document.querySelectorAll(".edit-mode-tabs .creator-tab").forEach(btn => {
+    if (btn.getAttribute("data-edit-tab") === tabId) {
+      btn.classList.add("active");
+    } else {
+      btn.classList.remove("active");
+    }
+  });
+
+  const paneCards = document.getElementById("edit-tab-cards");
+  const paneText = document.getElementById("edit-tab-text");
+
+  if (tabId === "edit-tab-cards") {
+    if (paneCards) paneCards.style.display = "block";
+    if (paneText) paneText.style.display = "none";
+  } else {
+    // Khi chuyển sang tab văn bản, tự động đồng bộ từ thẻ sang văn bản mới nhất
+    const rawTextarea = document.getElementById("edit-quiz-raw-text");
+    if (rawTextarea) {
+      rawTextarea.value = convertQuestionsToSmartText(editQuizQuestionsList);
+    }
+    if (paneCards) paneCards.style.display = "none";
+    if (paneText) paneText.style.display = "block";
+  }
+}
+
+function renderEditQuestionsList() {
+  const container = document.getElementById("edit-questions-container");
+  const badgeCount = document.getElementById("edit-quiz-badge-count");
+  const summaryText = document.getElementById("edit-questions-summary-text");
+
+  if (badgeCount) badgeCount.textContent = `${editQuizQuestionsList.length} câu hỏi`;
+  if (summaryText) summaryText.textContent = `Danh sách các câu hỏi trong đề (${editQuizQuestionsList.length} câu):`;
+
+  if (!container) return;
+
+  if (editQuizQuestionsList.length === 0) {
+    container.innerHTML = `
+      <div style="text-align: center; padding: 2.5rem 1rem; color: var(--text-muted); background: var(--bg-muted); border-radius: var(--radius-lg); border: 2px dashed var(--border-subtle);">
+        <div style="font-size: 2rem; margin-bottom: 0.5rem;">📝</div>
+        <p style="font-weight: 600; margin-bottom: 0.75rem;">Chưa có câu hỏi nào trong đề thi này.</p>
+        <button type="button" class="btn btn-secondary btn-sm" onclick="addNewEditQuestion()">
+          ➕ Thêm câu hỏi đầu tiên
+        </button>
+      </div>
+    `;
+    return;
+  }
+
+  container.innerHTML = editQuizQuestionsList.map((q, idx) => {
+    const optionsHtml = (q.options || []).map((opt, optIdx) => {
+      const letter = String.fromCharCode(65 + optIdx);
+      const isCorrect = (optIdx === q.correctIndex);
+      return `
+        <div class="edit-opt-row ${isCorrect ? 'correct' : ''}" id="edit-opt-row-${idx}-${optIdx}">
+          <label class="edit-opt-radio-label" title="Chọn ${letter} là đáp án đúng">
+            <input type="radio" name="edit-correct-${idx}" value="${optIdx}" ${isCorrect ? 'checked' : ''} onchange="setEditQuestionCorrect(${idx}, ${optIdx})">
+            <span>${letter}.</span>
+          </label>
+          <input type="text" class="form-input edit-opt-input" value="${escapeHtml(opt || '')}" placeholder="Nội dung phương án ${letter}..." oninput="updateEditOptionText(${idx}, ${optIdx}, this.value)">
+        </div>
+      `;
+    }).join("");
+
+    const imageHtml = q.image ? `
+      <div style="margin: 0.65rem 0; display: flex; align-items: center; gap: 0.75rem;">
+        <img src="${q.image}" style="max-height: 80px; max-width: 140px; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle); object-fit: contain;">
+        <button type="button" class="btn btn-outline-danger btn-xs" onclick="removeEditQuestionImage(${idx})">Gỡ ảnh</button>
+      </div>
+    ` : '';
+
+    return `
+      <div class="edit-question-card" id="edit-q-card-${idx}">
+        <div class="edit-q-header">
+          <div class="edit-q-number">
+            <span>Câu ${idx + 1}</span>
+            ${(idx === 0) ? '<span style="font-size: 0.75rem; color: var(--text-muted); font-weight: 500;">(Đầu đề)</span>' : ''}
+          </div>
+          <div class="edit-q-actions">
+            ${idx > 0 ? `<button type="button" class="btn btn-ghost btn-sm" style="padding: 0.25rem 0.45rem;" onclick="moveEditQuestion(${idx}, -1)" title="Di chuyển lên trên">⬆️</button>` : ''}
+            ${idx < editQuizQuestionsList.length - 1 ? `<button type="button" class="btn btn-ghost btn-sm" style="padding: 0.25rem 0.45rem;" onclick="moveEditQuestion(${idx}, 1)" title="Di chuyển xuống dưới">⬇️</button>` : ''}
+            <button type="button" class="btn btn-ghost btn-sm" style="padding: 0.25rem 0.45rem;" onclick="duplicateEditQuestion(${idx})" title="Nhân bản câu này">📋</button>
+            <button type="button" class="btn btn-ghost btn-sm" style="padding: 0.25rem 0.45rem; color: var(--danger);" onclick="deleteEditQuestion(${idx})" title="Xóa câu hỏi này">🗑️</button>
+          </div>
+        </div>
+
+        <div style="margin-bottom: 0.65rem;">
+          <textarea class="form-textarea edit-q-text" rows="2" placeholder="Nhập câu hỏi tại đây..." oninput="updateEditQuestionText(${idx}, this.value)" style="font-weight: 600; font-size: 0.925rem;">${escapeHtml(q.text || '')}</textarea>
+        </div>
+
+        ${imageHtml}
+
+        <div class="edit-options-grid">
+          ${optionsHtml}
+        </div>
+
+        <div style="margin-top: 0.75rem;">
+          <input type="text" class="form-input edit-expl-input" value="${escapeHtml(q.explanation || '')}" placeholder="Lời giải thích / Hướng dẫn giải (tùy chọn)..." oninput="updateEditExplanation(${idx}, this.value)" style="font-size: 0.85rem; color: var(--text-muted);">
+        </div>
+      </div>
+    `;
+  }).join("");
+}
+
+function addNewEditQuestion() {
+  editQuizQuestionsList.push({
+    text: "",
+    options: ["", "", "", ""],
+    correctIndex: 0,
+    explanation: ""
+  });
+  renderEditQuestionsList();
+  const lastCard = document.getElementById(`edit-q-card-${editQuizQuestionsList.length - 1}`);
+  if (lastCard) {
+    lastCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    const textarea = lastCard.querySelector('textarea');
+    if (textarea) textarea.focus();
+  }
+}
+
+function deleteEditQuestion(idx) {
+  if (idx < 0 || idx >= editQuizQuestionsList.length) return;
+  editQuizQuestionsList.splice(idx, 1);
+  renderEditQuestionsList();
+  showToast(`Đã xóa câu hỏi #${idx + 1}`, "info");
+}
+
+function duplicateEditQuestion(idx) {
+  if (idx < 0 || idx >= editQuizQuestionsList.length) return;
+  const clone = JSON.parse(JSON.stringify(editQuizQuestionsList[idx]));
+  editQuizQuestionsList.splice(idx + 1, 0, clone);
+  renderEditQuestionsList();
+  showToast(`Đã nhân bản câu hỏi #${idx + 1}`, "success");
+}
+
+function moveEditQuestion(idx, direction) {
+  const targetIdx = idx + direction;
+  if (targetIdx < 0 || targetIdx >= editQuizQuestionsList.length) return;
+  const temp = editQuizQuestionsList[idx];
+  editQuizQuestionsList[idx] = editQuizQuestionsList[targetIdx];
+  editQuizQuestionsList[targetIdx] = temp;
+  renderEditQuestionsList();
+  const movedCard = document.getElementById(`edit-q-card-${targetIdx}`);
+  if (movedCard) movedCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function setEditQuestionCorrect(qIdx, optIdx) {
+  if (editQuizQuestionsList[qIdx]) {
+    editQuizQuestionsList[qIdx].correctIndex = optIdx;
+    // Cập nhật class hiển thị nhanh không cần re-render toàn bộ DOM
+    for (let i = 0; i < 4; i++) {
+      const row = document.getElementById(`edit-opt-row-${qIdx}-${i}`);
+      if (row) {
+        if (i === optIdx) {
+          row.classList.add("correct");
+        } else {
+          row.classList.remove("correct");
+        }
+      }
+    }
+  }
+}
+
+function updateEditQuestionText(idx, val) {
+  if (editQuizQuestionsList[idx]) {
+    editQuizQuestionsList[idx].text = val;
+  }
+}
+
+function updateEditOptionText(qIdx, optIdx, val) {
+  if (editQuizQuestionsList[qIdx] && editQuizQuestionsList[qIdx].options) {
+    editQuizQuestionsList[qIdx].options[optIdx] = val;
+  }
+}
+
+function updateEditExplanation(qIdx, val) {
+  if (editQuizQuestionsList[qIdx]) {
+    editQuizQuestionsList[qIdx].explanation = val;
+  }
+}
+
+function removeEditQuestionImage(qIdx) {
+  if (editQuizQuestionsList[qIdx]) {
+    delete editQuizQuestionsList[qIdx].image;
+    delete editQuizQuestionsList[qIdx].images;
+    renderEditQuestionsList();
+  }
+}
+
+function syncEditQuestionsFromRawText() {
+  const textarea = document.getElementById("edit-quiz-raw-text");
+  if (!textarea || !textarea.value.trim()) {
+    showToast("Nội dung văn bản đang trống!", "warning");
+    return;
+  }
+  const parsed = parseSmartTextInput(textarea.value);
+  if (!parsed || parsed.length === 0) {
+    showToast("Không nhận diện được câu hỏi nào từ văn bản!", "warning");
+    return;
+  }
+  editQuizQuestionsList = parsed;
+  renderEditQuestionsList();
+  switchEditQuizTab("edit-tab-cards");
+  showToast(`✓ Đã cập nhật thành công ${parsed.length} câu hỏi vào danh sách!`, "success");
+}
+
+function saveEditedQuiz(saveAsCopy = false) {
+  const titleInput = document.getElementById("edit-quiz-title");
+  const catInput = document.getElementById("edit-quiz-category");
+  const timeInput = document.getElementById("edit-quiz-time");
+  const descInput = document.getElementById("edit-quiz-desc");
+
+  const title = titleInput ? titleInput.value.trim() : "";
+  if (!title) {
+    showToast("Vui lòng nhập tên bộ đề thi!", "warning");
+    if (titleInput) titleInput.focus();
+    return;
+  }
+
+  // Lọc lấy các câu hỏi có nội dung hợp lệ
+  const validQuestions = editQuizQuestionsList.filter(q => (q.text && q.text.trim()) || (q.options && q.options.some(o => o && o.trim())));
+  if (validQuestions.length === 0) {
+    showToast("Bộ đề phải có ít nhất 1 câu hỏi hợp lệ!", "warning");
+    return;
+  }
+
+  const category = catInput && catInput.value.trim() ? catInput.value.trim() : "Chung";
+  const timeLimit = timeInput && parseInt(timeInput.value, 10) > 0 ? parseInt(timeInput.value, 10) : 15;
+  const description = descInput ? descInput.value.trim() : "";
+
+  if (saveAsCopy) {
+    const newQuiz = {
+      id: "quiz_" + Date.now(),
+      title: `${title} (Bản sao)`,
+      category,
+      timeLimit,
+      description,
+      questions: validQuestions,
+      createdAt: Date.now(),
+      updatedAt: Date.now()
+    };
+    AppState.quizzes.unshift(newQuiz);
+    saveQuizzesToStorage();
+    renderQuizList();
+    switchView("view-dashboard");
+    showToast(`🎉 Đã tạo bản sao bộ đề thi mới: "${newQuiz.title}"!`, "success");
+    playSound("fanfare");
+    return;
+  }
+
+  // Cập nhật bộ đề thi gốc đang sửa
+  const quizIndex = AppState.quizzes.findIndex(q => String(q.id) === String(AppState.currentEditingQuizId));
+  if (quizIndex === -1) {
+    showToast("Không tìm thấy bộ đề thi gốc để cập nhật!", "danger");
+    return;
+  }
+
+  const existingQuiz = AppState.quizzes[quizIndex];
+  existingQuiz.title = title;
+  existingQuiz.category = category;
+  existingQuiz.timeLimit = timeLimit;
+  existingQuiz.description = description;
+  existingQuiz.questions = validQuestions;
+  existingQuiz.updatedAt = Date.now();
+
+  AppState.quizzes[quizIndex] = existingQuiz;
+  saveQuizzesToStorage();
+  renderQuizList();
+  switchView("view-dashboard");
+  showToast(`✓ Đã cập nhật thành công bộ đề thi: "${title}" (${validQuestions.length} câu)!`, "success");
+  playSound("fanfare");
 }
 
 function renderManualQuestions() {
@@ -7478,6 +7766,43 @@ Giải thích: HDMI (High-Definition Multimedia Interface) truyền tải cả v
       }
     });
   }
+
+  // 5B. Dedicated Edit Quiz View Listeners
+  const btnBackEditQuiz = document.getElementById("btn-back-from-edit-quiz");
+  if (btnBackEditQuiz) btnBackEditQuiz.addEventListener("click", () => switchView("view-dashboard"));
+
+  const btnCancelEditTop = document.getElementById("btn-edit-quiz-cancel-top");
+  if (btnCancelEditTop) btnCancelEditTop.addEventListener("click", () => switchView("view-dashboard"));
+
+  const btnCancelEditBottom = document.getElementById("btn-edit-quiz-cancel-bottom");
+  if (btnCancelEditBottom) btnCancelEditBottom.addEventListener("click", () => switchView("view-dashboard"));
+
+  const btnSaveEditTop = document.getElementById("btn-edit-quiz-save-top");
+  if (btnSaveEditTop) btnSaveEditTop.addEventListener("click", () => saveEditedQuiz(false));
+
+  const btnSaveEditBottom = document.getElementById("btn-edit-quiz-save-bottom");
+  if (btnSaveEditBottom) btnSaveEditBottom.addEventListener("click", () => saveEditedQuiz(false));
+
+  const btnSaveCopyTop = document.getElementById("btn-edit-quiz-save-copy-top");
+  if (btnSaveCopyTop) btnSaveCopyTop.addEventListener("click", () => saveEditedQuiz(true));
+
+  const btnSaveCopyBottom = document.getElementById("btn-edit-quiz-save-copy-bottom");
+  if (btnSaveCopyBottom) btnSaveCopyBottom.addEventListener("click", () => saveEditedQuiz(true));
+
+  const tabBtnEditCards = document.getElementById("tab-btn-edit-cards");
+  if (tabBtnEditCards) tabBtnEditCards.addEventListener("click", () => switchEditQuizTab("edit-tab-cards"));
+
+  const tabBtnEditText = document.getElementById("tab-btn-edit-text");
+  if (tabBtnEditText) tabBtnEditText.addEventListener("click", () => switchEditQuizTab("edit-tab-text"));
+
+  const btnAddQTop = document.getElementById("btn-edit-add-question-top");
+  if (btnAddQTop) btnAddQTop.addEventListener("click", addNewEditQuestion);
+
+  const btnAddQBottom = document.getElementById("btn-edit-add-question-bottom");
+  if (btnAddQBottom) btnAddQBottom.addEventListener("click", addNewEditQuestion);
+
+  const btnSyncFromText = document.getElementById("btn-edit-sync-from-text");
+  if (btnSyncFromText) btnSyncFromText.addEventListener("click", syncEditQuestionsFromRawText);
 
   // 6. Setup Modal Listeners
   document.getElementById("btn-close-setup-modal").addEventListener("click", closeSetupModal);
